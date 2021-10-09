@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Sample, Project, Location, Researcher
+from .models import (
+    Sample, Project, Location, Researcher, Event, Subject)
 
 
 class DateInput(forms.DateInput):
@@ -36,3 +37,41 @@ class ResearcherForm(ModelForm):
     class Meta:
         model = Researcher
         fields = ['name', 'email', 'phone']
+
+
+class EventForm(ModelForm):
+    class Meta:
+        model = Event
+        fields = ['name', 'location', 'date',
+        'researcher'
+        ]
+        widgets = {
+            'date': DateInput()
+        }
+    def __init__(self, *args, **kwargs):
+        super(EventForm, self).__init__(*args, **kwargs)
+        self.fields['location'].label_from_instance = self.label_from_instance
+        self.fields['researcher'].label_from_instance = self.label_from_instance
+
+    @staticmethod
+    def label_from_instance(obj):
+        return "%s" % obj.name
+
+
+class SubjectForm(ModelForm):
+    class Meta:
+        model = Subject
+        fields = ['subject_ui', 'location', 'first_name',
+        'last_name', 'birthdate', 'sex', 'vaccine_status',
+        'covid'
+        ]
+        widgets = {
+            'birthdate': DateInput()
+        }
+    def __init__(self, *args, **kwargs):
+        super(SubjectForm, self).__init__(*args, **kwargs)
+        self.fields['location'].label_from_instance = self.label_from_instance
+
+    @staticmethod
+    def label_from_instance(obj):
+        return "%s" % obj.name

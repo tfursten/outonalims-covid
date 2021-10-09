@@ -1,12 +1,13 @@
 {% extends "lims/base.html" %}
 {% block content %}
 <div class="card"">
-    <h1 class="card-header">{{ location.name }}</h1>
+    <h1 class="card-header">Location: {{ location.name }}</h1>
     <div class="card-body">
-      <p class="card-text"><strong>Address:</strong> {{ location.address }}</p>
-      <p class="card-text"><strong>Description:</strong> {{ location.description }}</p>
+      <p class="card-text"><strong>Description:</strong> {{ location.description }}</p>      
     </div>
     <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Project:</strong> <a href="{% url 'lims:project_detail' location.project.id %}">{{ location.project.name }}</a></li>
+      <li class="list-group-item"><strong>Address:</strong> {{ location.address }}</li>
       <li class="list-group-item"><strong>Contact Name:</strong> {{ location.contact_name }}</li>
       <li class="list-group-item"><strong>Contact Email:</strong> {{ location.contact_email }}</li>
       <li class="list-group-item"><Strong>Contact Phone:</Strong> {{ location.contact_phone }}</li>
