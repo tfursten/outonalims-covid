@@ -25,5 +25,14 @@ urlpatterns = [
     path('researchers/detail/<str:pk>/', views.ResearcherDetailView.as_view(), name="researcher_detail"),
     path('researchers/detail/<str:pk>/edit/', views.ResearcherUpdateView.as_view(), name="edit_researcher"),
     path('researchers/detail/<str:pk>/remove/', views.ResearcherDeleteView.as_view(), name="delete_researcher"),
-
+    path('subject/', views.SubjectListView.as_view(), name="subject_list"),
+    path('subject/new/', views.SubjectFormView.as_view(), name="new_subject"),
+    path('subject/detail/<str:pk>/', views.SubjectDetailView.as_view(), name="subject_detail"),
+    path('subject/detail/<str:pk>/edit/', views.SubjectUpdateView.as_view(), name="edit_subject"),
+    path('subject/detail/<str:pk>/remove/', views.SubjectDeleteView.as_view(), name="delete_subject"),
+    path('event/', views.EventListView.as_view(), name="event_list"),
+    path('event/new/', views.EventFormView.as_view(), name="new_event"),
+    path('event/detail/<str:pk>/', views.EventDetailView.as_view(), name="event_detail"),
+    path('event/detail/<str:pk>/edit/', views.EventUpdateView.as_view(), name="edit_event"),
+    path('event/detail/<str:pk>/remove/', views.EventDeleteView.as_view(), name="delete_event"),
 ]
