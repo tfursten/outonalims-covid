@@ -1,0 +1,17 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div>
+<form action="{% url 'lims:submit_update' sample.sample_id %}" method="post">
+{% csrf_token %}
+    <fieldset>
+        <legend><h1>{{ sample.sample_id }}</h1></legend>
+        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+        <input type="radio" name="choice" id="choice1" value="1">
+            <label for="choice1">Collected</label><br>
+        <input type="radio" name="choice" id="choice0" value="0">
+            <label for="choice0">Not Collected</label><br>
+    </fieldset>
+    <input type="submit" value="Update">
+</form>
+</div>
+{% endblock content %}

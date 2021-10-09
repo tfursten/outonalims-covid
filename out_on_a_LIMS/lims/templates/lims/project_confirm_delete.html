@@ -1,0 +1,16 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="card">
+    <h1 class="card-header">Delete Project: {{ project.name }}</h1>
+        <div class="card-body">
+            <form method="post">{% csrf_token %}
+                <h3>Are you sure you want to delete project: {{ object }}?</h3>
+                <p class="text-danger">This will permenently delete all data associated with this project!!!</p>
+                <button class="btn btn-outline-danger" type="submit">Delete <span data-feather="x-octagon"></span></button>
+                <a class="btn btn-success btn" href="{% url 'lims:project_list' %}" role="button">Cancel <span data-feather="corner-up-left"></span></a>
+            </form>
+        </div>
+</div>
+
+{% endblock content %}
