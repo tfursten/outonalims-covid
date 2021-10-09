@@ -1,0 +1,23 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div class="card"">
+    <h1 class="card-header">Subject ID: {{ subject.subject_ui }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>
+      <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></li>
+      <li class="list-group-item"><strong>First Name:</strong> {{ subject.first_name }}</li>
+      <li class="list-group-item"><strong>Last Name:</strong> {{ subject.last_name }}</li>
+      <li class="list-group-item"><Strong>Date of Birth:</Strong> {{ subject.birthdate }}</li>
+      <li class="list-group-item"><Strong>Sex:</Strong> {{ subject.sex}}</li>
+      <li class="list-group-item"><Strong>Vaccine Status:</Strong> {{ subject.vaccine_status }}</li>
+      <li class="list-group-item"><Strong>Covid Status:</Strong> {{ subject.covid }}</li>
+    </ul>
+    <div class="card-body">
+        <a class="btn btn-primary btn" href="{% url 'lims:edit_subject' subject.id %}" role="button">Edit <span data-feather="edit"></span></a>
+        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_subject' subject.id %}" role="button">Delete <span data-feather="trash"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:subject_list' %}" role="button">Subjects <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+    </div>
+  </div>
+
+{% endblock content %}
