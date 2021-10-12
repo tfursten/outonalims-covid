@@ -14,9 +14,10 @@
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_subject' subject.id %}" role="button">Edit <span data-feather="edit"></span></a>
-        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_subject' subject.id %}" role="button">Delete <span data-feather="trash"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:new_subject' %}" role="button">Add New Subject <span data-feather="plus"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:subject_list' %}" role="button">Subjects <span data-feather="corner-up-left"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_subject' subject.id %}" role="button">Delete <span data-feather="trash"></span></a>
     </div>
   </div>
 
