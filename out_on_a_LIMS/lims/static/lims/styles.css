@@ -169,3 +169,7 @@ body {
 .table-link:hover {
   color: black;
 }
+
+main {
+  overflow-x:scroll;
+}
