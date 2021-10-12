@@ -1,0 +1,13 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div class="card"">
+    <h1 class="card-header">User: {{ user.username }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+    </ul>
+    <div class="card-body">        
+        <a class="btn btn-outline-primary btn" href="{% url 'password_change' %}" role="button">Change Password <span data-feather="edit"></span></a>
+    </div>
+  </div>
+
+{% endblock content %}
