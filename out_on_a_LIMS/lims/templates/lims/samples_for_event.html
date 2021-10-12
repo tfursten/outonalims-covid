@@ -26,7 +26,7 @@
     </table>
 
 
-<a class="btn btn-primary btn" href="#" role="button">Print Labels <span data-feather="printer"></span></a>
+<a class="btn btn-primary btn" href="{% url 'lims:sample_label_pdf' event.id %}" role="button">Print Labels <span data-feather="printer"></span></a>
 <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
 <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
 

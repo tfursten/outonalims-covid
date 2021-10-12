@@ -7,9 +7,9 @@
 {% block content %}
     <div class="mt-3 mb-3">
         <a class="btn btn-primary btn" href="{% url 'lims:new_samples' %}" role="button">Add Samples <span data-feather="plus"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:print_sample_labels' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
+        <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
     </div>
-    <table id="sample_table" class="display table table-hover"  align="center"  style="width:90%"> 
+    <table id="sample_table" class="display table table-hover"> 
         <thead>
             <tr>
                 <th>Sample ID</th>
