@@ -1,5 +1,6 @@
+import io
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.template import loader
@@ -12,7 +13,11 @@ from .models import (
     Sample, Project, Location, Researcher, Event, Subject)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm, EventForm, SubjectForm, SelectEventForm)
-
+from cualid import create_ids
+import reportlab
+from reportlab.graphics.barcode import code128
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
 # Create your views here.
 
 def index(request):
@@ -264,7 +269,7 @@ def add_samples(request):
 
 
 def verify_subjects(request, event_id):
-    event = Event.objects.filter(id=int(event_id))[0]
+    event = Event.objects.get(pk=event_id)
     subjects = Sample.get_subjects_at_event(event)
     if request.method == "GET":
         return render(
@@ -273,24 +278,29 @@ def verify_subjects(request, event_id):
             'not_created': subjects['not_created'],
             'event_name': event.name})
     elif request.method == "POST":
-        for i, subject in enumerate(subjects['not_created']):
+        print("POST")
+        n = len(subjects['not_created'])
+        size = 6
+        # TODO limit unique ids to a project
+        existing_ids =[sample.sample_id for sample in Sample.objects.all()]
+        cual_ids = [cid[0] for cid in create_ids(n, size, existing_ids=existing_ids)]
+        for cual_id, subject in zip(cual_ids, subjects['not_created']):
             # create new samples for subjects that have
             # not been added.
-            # TODO: add UUID creation here
-            sample = Sample(sample_id = i, subject=subject, collection_event=event)
+            sample = Sample(sample_id = cual_id, subject=subject, collection_event=event)
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
 
 def event_samples(request, event_id):
-    event = Event.objects.filter(id=int(event_id))[0]
+    event = Event.objects.get(pk=event_id)
     samples = Sample.get_samples_for_event(event)
     context = {'samples': samples, 'event': event}
     return render(request, 'lims/samples_for_event.html', context)
     
 
 
-def print_sample_labels(request):
+def select_event_for_sample(request):
     form = SelectEventForm()
     if request.method == "POST":
         form = SelectEventForm(request.POST)
@@ -299,7 +309,62 @@ def print_sample_labels(request):
             return redirect('lims:event_samples', event_id=event)
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
-    
+
+def get_x_y_coordinates(columns, rows, x_start, y_start):
+    x = 51.6
+    y = -28.42
+    for column in range(columns):
+        for row in range(rows):
+            x_coord = x_start + (x*column)
+            y_coord = y_start + (y*row)
+            yield (x_coord*mm, y_coord*mm)
+
+
+
+def sample_labels_pdf(request, event_id):
+    # Create a file-like buffer to receive PDF data.
+    event = Event.objects.get(pk=event_id)
+    samples = Sample.get_samples_for_event(event)
+    ids = [sample.sample_id for sample in samples]
+    first_names = [str(sample.subject.first_name) for sample in samples]
+    last_names = [str(sample.subject.last_name) for sample in samples]
+    subject_ids = [str(sample.subject.subject_ui) for sample in samples]
+    print(last_names)
+    columns=4
+    rows=9
+    x_start=1.9
+    y_start=257.2
+    xy_coords = list(get_x_y_coordinates(columns, rows, x_start, y_start))
+    buffer = io.BytesIO()
+
+    # Create the PDF object, using the buffer as its "file."
+    barcode_canvas = canvas.Canvas(buffer)
+    c = 0
+    for (id_, fn, ln, sid) in zip(ids, first_names, last_names, subject_ids):
+        x = xy_coords[c][0]
+        y = xy_coords[c][1]
+        barcode = code128.Code128(id_, barWidth=0.19*mm,
+                                      barHeight=11*mm)
+        barcode.drawOn(barcode_canvas, x, y)
+        barcode_canvas.setFont("Helvetica", 8)
+        barcode_canvas.drawString((x + 12 * mm), (y - 4 * mm), id_)
+        barcode_canvas.drawString((x + 6 * mm), (y - 8 * mm), "{0}, {1}".format(ln, fn))
+        if c < ((rows*columns) - 1):
+            c += 1
+        else:
+            c = 0
+
+    # Close the PDF object cleanly, and we're done.
+    barcode_canvas.showPage()
+    barcode_canvas.save()
+
+    # FileResponse sets the Content-Disposition header so that browsers
+    # present the option to save the file.
+    buffer.seek(0)
+    return FileResponse(
+        buffer, as_attachment=True,
+        filename='{}_sample_labels.pdf'.format(event.name.replace(" ", "_")))
+
 
 class SampleDetailView(LoginRequiredMixin, DetailView):
     model = Sample
