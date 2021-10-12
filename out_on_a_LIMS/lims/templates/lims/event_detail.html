@@ -7,15 +7,20 @@
     </div>
     <ul class="list-group list-group-flush">
       <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' event.location.id %}">{{ event.location.name }}</a></li>
+      {% if event.researcher %}
       <li class="list-group-item"><strong>Collected By: </strong><a href="{% url 'lims:researcher_detail' event.researcher.id %}" >{{ event.researcher.name }}</a></li>
+      {% else %}
+      <li class="list-group-item"><strong>Collected By: </strong>{{ event.researcher }}</li>
+      {% endif %}
       <li class="list-group-item"><Strong>Collection Date: </Strong>{{ event.date }}</li>
       <li class="list-group-item"><strong>Notes: </strong>{{ event.notes }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_event' event.id %}" role="button">Edit <span data-feather="edit"></span></a>
-        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_event' event.id %}" role="button">Delete <span data-feather="trash"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:new_event' %}" role="button">Add New Event <span data-feather="plus"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:event_list' %}" role="button">Events <span data-feather="corner-up-left"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_event' event.id %}" role="button">Delete <span data-feather="trash"></span></a>
     </div>
   </div>
 
