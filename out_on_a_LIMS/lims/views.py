@@ -1,15 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.template import loader
 from django.urls import reverse, reverse_lazy
-from django.views import generic
+from django.views.generic import (
+    ListView, CreateView, DeleteView, UpdateView, DetailView)
 from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
     Sample, Project, Location, Researcher, Event, Subject)
 from .forms import (
-    ProjectForm, LocationForm, ResearcherForm, EventForm, SubjectForm)
+    ProjectForm, LocationForm, ResearcherForm, EventForm, SubjectForm, SelectEventForm)
 
 # Create your views here.
 
@@ -19,7 +21,7 @@ def index(request):
 
 # ============== PROJECTS ================================
 
-class ProjectListView(generic.ListView):
+class ProjectListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'project_list'
 
@@ -29,7 +31,7 @@ class ProjectListView(generic.ListView):
         """
         return Project.objects.all()
 
-class ProjectFormView(SuccessMessageMixin, generic.CreateView):
+class ProjectFormView(LoginRequiredMixin, SuccessMessageMixin,CreateView):
     model = Project
     template_name_suffix = '_new'
     form_class = ProjectForm
@@ -39,12 +41,11 @@ class ProjectFormView(SuccessMessageMixin, generic.CreateView):
         return reverse('lims:project_detail', args=(self.object.id,))
 
 
-class ProjectDetailView(generic.DetailView):
+class ProjectDetailView(LoginRequiredMixin, DetailView):
     model = Project
 
-class ProjectUpdateView(SuccessMessageMixin, generic.UpdateView):
+class ProjectUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Project
-    # fields = ['investigator', 'start_date', 'end_date', 'description', 'notes']
     template_name_suffix = '_update'
     form_class = ProjectForm
     success_message = "Project was successfully updated:  %(name)s"
@@ -53,7 +54,7 @@ class ProjectUpdateView(SuccessMessageMixin, generic.UpdateView):
         return reverse('lims:project_detail', args=(self.object.id,))
 
 
-class ProjectDeleteView(generic.DeleteView):
+class ProjectDeleteView(LoginRequiredMixin, DeleteView):
     model = Project
     success_url = reverse_lazy('lims:project_list', args=())
     
@@ -65,7 +66,7 @@ class ProjectDeleteView(generic.DeleteView):
 
 # ============== LOCATIONS ================================
 
-class LocationListView(generic.ListView):
+class LocationListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'location_list'
 
@@ -75,7 +76,7 @@ class LocationListView(generic.ListView):
         """
         return Location.objects.all()
 
-class LocationFormView(SuccessMessageMixin, generic.CreateView):
+class LocationFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Location
     template_name_suffix = '_new'
     form_class = LocationForm
@@ -85,10 +86,10 @@ class LocationFormView(SuccessMessageMixin, generic.CreateView):
         return reverse('lims:location_detail', args=(self.object.id,))
 
 
-class LocationDetailView(generic.DetailView):
+class LocationDetailView(LoginRequiredMixin, DetailView):
     model = Location
 
-class LocationUpdateView(SuccessMessageMixin, generic.UpdateView):
+class LocationUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Location
     template_name_suffix = '_update'
     form_class = LocationForm
@@ -97,7 +98,7 @@ class LocationUpdateView(SuccessMessageMixin, generic.UpdateView):
         return reverse('lims:location_detail', args=(self.object.id,))
 
 
-class LocationDeleteView(generic.DeleteView):
+class LocationDeleteView(LoginRequiredMixin, DeleteView):
     model = Location
     success_url = reverse_lazy('lims:location_list', args=())
     def post(self, request, *args, **kwargs):
@@ -110,7 +111,7 @@ class LocationDeleteView(generic.DeleteView):
 # ============== RESEARCHER ================================
 
 
-class ResearcherListView(generic.ListView):
+class ResearcherListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'researcher_list'
 
@@ -120,7 +121,7 @@ class ResearcherListView(generic.ListView):
         """
         return Researcher.objects.all()
 
-class ResearcherFormView(SuccessMessageMixin, generic.CreateView):
+class ResearcherFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Researcher
     template_name_suffix = '_new'
     form_class = ResearcherForm
@@ -129,11 +130,11 @@ class ResearcherFormView(SuccessMessageMixin, generic.CreateView):
     def get_success_url(self):
         return reverse('lims:researcher_detail', args=(self.object.id,))
 
-class ResearcherDetailView(generic.DetailView):
+class ResearcherDetailView(LoginRequiredMixin, DetailView):
     model = Researcher
 
 
-class ResearcherUpdateView(SuccessMessageMixin, generic.UpdateView):
+class ResearcherUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Researcher
     template_name_suffix = '_update'
     form_class = ResearcherForm
@@ -142,7 +143,7 @@ class ResearcherUpdateView(SuccessMessageMixin, generic.UpdateView):
         return reverse('lims:researcher_detail', args=(self.object.id,))
 
 
-class ResearcherDeleteView(generic.DeleteView):
+class ResearcherDeleteView(LoginRequiredMixin, DeleteView):
     model = Researcher
     success_url = reverse_lazy('lims:researcher_list', args=())
     def post(self, request, *args, **kwargs):
@@ -152,7 +153,7 @@ class ResearcherDeleteView(generic.DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== EVENTS ================================
-class EventListView(generic.ListView):
+class EventListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'event_list'
 
@@ -162,7 +163,7 @@ class EventListView(generic.ListView):
         """
         return Event.objects.all()
 
-class EventFormView(SuccessMessageMixin, generic.CreateView):
+class EventFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Event
     template_name_suffix = '_new'
     form_class = EventForm
@@ -172,11 +173,11 @@ class EventFormView(SuccessMessageMixin, generic.CreateView):
         return reverse('lims:event_detail', args=(self.object.id,))
 
 
-class EventDetailView(generic.DetailView):
+class EventDetailView(LoginRequiredMixin, DetailView):
     model = Event
 
 
-class EventUpdateView(SuccessMessageMixin, generic.UpdateView):
+class EventUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Event
     template_name_suffix = '_update'
     form_class = EventForm
@@ -184,7 +185,7 @@ class EventUpdateView(SuccessMessageMixin, generic.UpdateView):
     def get_success_url(self):
         return reverse('lims:event_detail', args=(self.object.id,))
 
-class EventDeleteView(generic.DeleteView):
+class EventDeleteView(LoginRequiredMixin, DeleteView):
     model = Event
     success_url = reverse_lazy('lims:event_list', args=())
     def post(self, request, *args, **kwargs):
@@ -194,7 +195,7 @@ class EventDeleteView(generic.DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== SUBJECTS ================================
-class SubjectListView(generic.ListView):
+class SubjectListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'subject_list'
 
@@ -204,7 +205,7 @@ class SubjectListView(generic.ListView):
         """
         return Subject.objects.all()
 
-class SubjectFormView(SuccessMessageMixin, generic.CreateView):
+class SubjectFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Subject
     template_name_suffix = '_new'
     form_class = SubjectForm
@@ -214,11 +215,11 @@ class SubjectFormView(SuccessMessageMixin, generic.CreateView):
         return reverse('lims:subject_detail', args=(self.object.id,))
 
 
-class SubjectDetailView(generic.DetailView):
+class SubjectDetailView(LoginRequiredMixin, DetailView):
     model = Subject
 
 
-class SubjectUpdateView(SuccessMessageMixin, generic.UpdateView):
+class SubjectUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Subject
     template_name_suffix = '_update'
     form_class = SubjectForm
@@ -226,7 +227,7 @@ class SubjectUpdateView(SuccessMessageMixin, generic.UpdateView):
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
 
-class SubjectDeleteView(generic.DeleteView):
+class SubjectDeleteView(LoginRequiredMixin, DeleteView):
     model = Subject
     success_url = reverse_lazy('lims:subject_list', args=())
     def post(self, request, *args, **kwargs):
@@ -241,7 +242,7 @@ class SubjectDeleteView(generic.DeleteView):
 
 # ============== SAMPLES ================================
 
-class SampleListView(generic.ListView):
+class SampleListView(LoginRequiredMixin, ListView):
     template_name = "lims/sample_list.html"
     context_object_name = 'sample_list'
 
@@ -251,13 +252,58 @@ class SampleListView(generic.ListView):
         """
         return Sample.objects.all()
 
+def add_samples(request):
+    # TODO: add logic to mark an event as complete after collection date so that we don't add new samples
+    form = SelectEventForm()
+    if request.method == 'POST':
+        form = SelectEventForm(request.POST)
+        if form.is_valid():
+            event = request.POST.get('event')
+            return redirect('lims:verify_new_samples', event_id=event)
+    return render(request, 'lims/samples_new.html', {'form':form})
 
-class SampleDetailView(generic.DetailView):
-    model = Sample
+
+def verify_subjects(request, event_id):
+    event = Event.objects.filter(id=int(event_id))[0]
+    subjects = Sample.get_subjects_at_event(event)
+    if request.method == "GET":
+        return render(
+            request, 'lims/verify_new_samples.html',
+            {'created': subjects['created'],
+            'not_created': subjects['not_created'],
+            'event_name': event.name})
+    elif request.method == "POST":
+        for i, subject in enumerate(subjects['not_created']):
+            # create new samples for subjects that have
+            # not been added.
+            # TODO: add UUID creation here
+            sample = Sample(sample_id = i, subject=subject, collection_event=event)
+            sample.save(force_insert=True)
+        return redirect('lims:event_samples', event_id=event_id)
 
 
+def event_samples(request, event_id):
+    event = Event.objects.filter(id=int(event_id))[0]
+    samples = Sample.get_samples_for_event(event)
+    context = {'samples': samples, 'event': event}
+    return render(request, 'lims/samples_for_event.html', context)
+    
+
+
+def print_sample_labels(request):
+    form = SelectEventForm()
+    if request.method == "POST":
+        form = SelectEventForm(request.POST)
+        if form.is_valid():
+            event = request.POST.get('event')
+            return redirect('lims:event_samples', event_id=event)
+    return render(request, 'lims/samples_print_labels.html', {'form': form})
 
     
 
+class SampleDetailView(LoginRequiredMixin, DetailView):
+    model = Sample
+    
+
 def help(request):
-    return render(request, 'lims/base.html')
+    return render(request, 'lims/help.html')
