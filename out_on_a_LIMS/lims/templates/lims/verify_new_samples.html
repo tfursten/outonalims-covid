@@ -1,0 +1,43 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h2 class="border-bottom">Verify Subjects for Event: {{ event_name }}</h1>
+
+{% if created %}
+    <h5 class="mt-3">Samples have already been created for the following subjects for this event</h5>
+    <p class='text-muted'>New samples will not be created for these subjects.</p>
+    <ul class="list-group">
+    {% for subject in created %}
+        <a href="{% url 'lims:subject_detail' subject.id %}" class="list-group-item list-group-item-action">{{ subject.subject_ui }}</a>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% if not_created %}
+    <h5 class="mt-3">Samples will be added for the following subjects for this event</h5>
+        <ul class="list-group">
+        {% for subject in not_created %}
+            <a href="{% url 'lims:subject_detail' subject.id %}" class="list-group-item list-group-item-action">{{ subject.subject_ui }}</a>
+        {% endfor %}
+        </ul>
+        <form method="POST">
+            {% csrf_token %}
+           <div class="form-group pt-3">
+               <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_list' %}" role="button">Cancel</a>
+               <button class="btn btn-success" type="submit">Confirm</button>
+           </div>
+        </form>
+{% endif %}
+
+
+
+
+{% if not not_created %}
+<p class="text-danger">No samples to add.</p>
+   <div class="form-group pt-3">
+       <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_list' %}" role="button">Done</a>
+   </div>
+</form>
+{% endif %}
+
+{% endblock %}

@@ -75,3 +75,17 @@ class SubjectForm(ModelForm):
     @staticmethod
     def label_from_instance(obj):
         return "%s" % obj.name
+
+
+
+
+class SelectEventForm(forms.Form):
+    events = Event.objects.all()
+    print(events)
+    # we don't want to update completed events
+    pending_events = [(event.id, event) for event in events if not event.is_complete]
+    event = forms.ChoiceField(
+        choices=pending_events,
+        help_text="If an event is not listed it is because the event date has passed and event is completed. If the event date is incorrect, you can edit it on the Event page."
+        )
+

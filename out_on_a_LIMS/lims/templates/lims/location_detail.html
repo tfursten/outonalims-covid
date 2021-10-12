@@ -14,9 +14,10 @@
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_location' location.id %}" role="button">Edit <span data-feather="edit"></span></a>
-        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_location' location.id %}" role="button">Delete <span data-feather="trash"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:new_location' %}" role="button">Add New Location <span data-feather="plus"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:location_list' %}" role="button">Locations <span data-feather="corner-up-left"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_location' location.id %}" role="button">Delete <span data-feather="trash"></span></a>
     </div>
   </div>
 
