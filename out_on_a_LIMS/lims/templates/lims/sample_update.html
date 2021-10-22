@@ -1,17 +1,12 @@
 {% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
-<div>
-<form action="{% url 'lims:submit_update' sample.sample_id %}" method="post">
-{% csrf_token %}
-    <fieldset>
-        <legend><h1>{{ sample.sample_id }}</h1></legend>
-        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-        <input type="radio" name="choice" id="choice1" value="1">
-            <label for="choice1">Collected</label><br>
-        <input type="radio" name="choice" id="choice0" value="0">
-            <label for="choice0">Not Collected</label><br>
-    </fieldset>
-    <input type="submit" value="Update">
+<legend class="border-bottom mb-6">Update Sample</legend>
+<form method="post">{% csrf_token %}
+    {{ form | crispy }}
+    <div class="form-group pt-3">
+        <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_detail' sample.id %}" role="button">Cancel</a>
+        <button class="btn btn-success" type="submit">Update</button>
+    </div>
 </form>
-</div>
 {% endblock content %}
