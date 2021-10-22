@@ -1,0 +1,10 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class='content-section'>
+<h1>Sample not Found</h1>
+<p>Sample <mark color="grey">{{ sample }}</mark> not found. Please try again using a valid 6 digit sample ID.
+If the sample ID is not fully legible, try using the <a href="{% url 'lims:fix_ids' %}"">fix id</a> tool.
+</p>
+</div>
+{% endblock content %}
