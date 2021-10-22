@@ -10,14 +10,19 @@ from django.views.generic import (
 from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
-    Sample, Project, Location, Researcher, Event, Subject)
+    Sample, Project, Location, Researcher, Event, Subject, Box)
 from .forms import (
-    ProjectForm, LocationForm, ResearcherForm, EventForm, SubjectForm, SelectEventForm)
+    ProjectForm, LocationForm, ResearcherForm,
+    EventForm, SubjectForm, SampleForm, BoxForm,
+    SelectEventForm,
+    FixIDS)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
+from reportlab_qrcode import QRCodeImage
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
+from difflib import get_close_matches
 # Create your views here.
 
 def index(request):
@@ -214,7 +219,8 @@ class SubjectFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Subject
     template_name_suffix = '_new'
     form_class = SubjectForm
-    success_message = "Subject was successfully added: %(subject_ui)s"
+    
+    success_message = "Subject was successfully added"
 
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
@@ -228,7 +234,7 @@ class SubjectUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Subject
     template_name_suffix = '_update'
     form_class = SubjectForm
-    success_message = "Subject was successfully updated:  %(subject_ui)s"
+    success_message = "Subject was successfully updated"
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
 
@@ -258,7 +264,6 @@ class SampleListView(LoginRequiredMixin, ListView):
         return Sample.objects.all()
 
 def add_samples(request):
-    # TODO: add logic to mark an event as complete after collection date so that we don't add new samples
     form = SelectEventForm()
     if request.method == 'POST':
         form = SelectEventForm(request.POST)
@@ -282,12 +287,12 @@ def verify_subjects(request, event_id):
         n = len(subjects['not_created'])
         size = 6
         # TODO limit unique ids to a project
-        existing_ids =[sample.sample_id for sample in Sample.objects.all()]
+        existing_ids =[sample.name for sample in Sample.objects.all()]
         cual_ids = [cid[0] for cid in create_ids(n, size, existing_ids=existing_ids)]
         for cual_id, subject in zip(cual_ids, subjects['not_created']):
             # create new samples for subjects that have
             # not been added.
-            sample = Sample(sample_id = cual_id, subject=subject, collection_event=event)
+            sample = Sample(name = cual_id, subject=subject, collection_event=event)
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
@@ -322,14 +327,16 @@ def get_x_y_coordinates(columns, rows, x_start, y_start):
 
 
 def sample_labels_pdf(request, event_id):
+    """
+    Use Cual-id code to generate labels with barcodes
+    """
     # Create a file-like buffer to receive PDF data.
     event = Event.objects.get(pk=event_id)
     samples = Sample.get_samples_for_event(event)
-    ids = [sample.sample_id for sample in samples]
+    ids = [sample.name for sample in samples]
     first_names = [str(sample.subject.first_name) for sample in samples]
     last_names = [str(sample.subject.last_name) for sample in samples]
     subject_ids = [str(sample.subject.subject_ui) for sample in samples]
-    print(last_names)
     columns=4
     rows=9
     x_start=1.9
@@ -343,9 +350,11 @@ def sample_labels_pdf(request, event_id):
     for (id_, fn, ln, sid) in zip(ids, first_names, last_names, subject_ids):
         x = xy_coords[c][0]
         y = xy_coords[c][1]
-        barcode = code128.Code128(id_, barWidth=0.19*mm,
-                                      barHeight=11*mm)
-        barcode.drawOn(barcode_canvas, x, y)
+        qr_code = QRCodeImage(id_, size=11*mm)
+        qr_code.drawOn(barcode_canvas, x+8, y)
+        # barcode = code128.Code128(id_, barWidth=0.19*mm,
+        #                               barHeight=11*mm)
+        # barcode.drawOn(barcode_canvas, x, y)
         barcode_canvas.setFont("Helvetica", 8)
         barcode_canvas.drawString((x + 12 * mm), (y - 4 * mm), id_)
         barcode_canvas.drawString((x + 6 * mm), (y - 8 * mm), "{0}, {1}".format(ln, fn))
@@ -368,7 +377,110 @@ def sample_labels_pdf(request, event_id):
 
 class SampleDetailView(LoginRequiredMixin, DetailView):
     model = Sample
+
+class SampleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Sample
+    template_name_suffix = '_update'
+    form_class = SampleForm
+    success_message = "Sample was successfully updated"
+    def get_success_url(self):
+        return reverse('lims:sample_detail', args=(self.object.id,))
     
+
+
+# ============== BOXES ================================
+class BoxListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'box_list'
+
+    def get_queryset(self):
+        """
+        Return all boxes
+        """
+        return Box.objects.all()
+
+class BoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = Box
+    template_name_suffix = '_new'
+    form_class = BoxForm
+    success_message = "Storage box was successfully added: %(box_name)s"
+
+    def get_success_url(self):
+        return reverse('lims:box_detail', args=(self.object.id,))
+
+
+class BoxDetailView(LoginRequiredMixin, DetailView):
+    model = Box
+
+
+class BoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Box
+    template_name_suffix = '_update'
+    form_class = BoxForm
+    success_message = "Box was successfully updated:  %(box_name)s"
+    def get_success_url(self):
+        return reverse('lims:box_detail', args=(self.object.id,))
+
+class BoxDeleteView(LoginRequiredMixin, DeleteView):
+    model = Box
+    success_url = reverse_lazy('lims:box_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+
+
+
+# ============== HELP =================================
+
 
 def help(request):
     return render(request, 'lims/help.html')
+
+
+    
+
+
+# ============== FIX IDS =================
+
+def fix_cualid_function(existing_ids, check_id, thresh=0.5):
+    if not check_id:
+        # if there was no id to check
+        return ''
+    fixed_id = get_close_matches(check_id, existing_ids, 1, thresh)
+    if not len(fixed_id):
+        fixed_id = 'Cannot Correct ID!'
+    else:
+        fixed_id = fixed_id[0]
+    return fixed_id
+
+
+def fix_ids(request):
+    form = FixIDS()
+    if request.method == "POST":
+        form = FixIDS(request.POST)
+        if form.is_valid():
+            sample_id = request.POST.get('sample_id')
+            subject_id = request.POST.get('subject_id')
+            existing_sample_ids = [s.name for s in Sample.objects.all()]
+            existing_subject_ids = [s.subject_ui for s in Subject.objects.all()]
+            fixed_sample = fix_cualid_function(existing_sample_ids, sample_id)
+            fixed_subject = fix_cualid_function(existing_subject_ids, subject_id)
+            return render(request, 'lims/fix_ids.html', {
+                'form': form,
+                'fixed_sample': fixed_sample,
+                'fixed_subject': fixed_subject})
+            
+    return render(request, 'lims/fix_ids.html', {'form': form})
+
+
+
+def search_view(request):
+    code = request.GET.get('code')
+    sample = Sample.objects.filter(name=code)
+    if len(sample):
+        return redirect('lims:sample_detail', pk=int(sample[0].id))
+    else:
+        return render(request, 'lims/sample_not_found.html', {'sample': code})
