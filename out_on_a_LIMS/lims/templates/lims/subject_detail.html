@@ -1,6 +1,6 @@
 {% extends "lims/base.html" %}
 {% block content %}
-<div class="card"">
+<div class="card">
     <h1 class="card-header">Subject ID: {{ subject.subject_ui }}</h1>
     <ul class="list-group list-group-flush">
       <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>

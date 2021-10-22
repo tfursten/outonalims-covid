@@ -16,7 +16,7 @@
     <tbody>
         {% for sample in samples %} 
         <tr>
-        <td><a href="#">{{ sample.sample_id }}</a></td>
+        <td><a href="{% url 'lims:sample_detail' sample.id %}">{{ sample.name }}</a></td>
         <td><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
         <td>{{ sample.subject.first_name }}</td>
         <td>{{ sample.subject.last_name }}</td>

@@ -1,4 +1,57 @@
 {% extends "lims/base.html" %}
+
+
 {% block content %}
-{{ sample.sample_id }} - {{ sample.collected }}
+<div class="card">
+    <h1 class="card-header">Sample: {{ sample.name }}</h1>
+    <div class="card-header">
+        <strong>Collection Status: </strong>
+        {% if sample.collection_status == "Pending" %}
+            <span class="badge bg-secondary">Pending</span>
+        {% elif sample.collection_status == "Collected" %}
+            <span class="badge bg-success">Collected</span>
+        {% else %}
+            <span class="badge bg-danger">Not Collected</span>
+        {% endif %}
+    </div>
+    <div class="card-header">
+        <strong>Subject: </strong><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a>
+    </div>
+    <div class="card-body">
+        <p class="card-text">Name: {{ sample.subject.first_name }} {{ sample.subject.last_name }}</p>
+    </div>
+    <div class="card-header">
+        <strong>Collection Event: </strong><a href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a>
+    </div>
+    <div class="card-body">
+        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.collection_event.location %}">{{ sample.collection_event.location.name }}</a>
+        <p class="card-text">Event Date: {{ sample.collection_event.date }}</p>
+        <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
+    </div>
+    <div class="card-header">
+        {% if sample.box.id %}
+            <strong>Sample Box: </strong><a href="{% url 'lims:box_detail' sample.box.id %}">{{ sample.box.box_name }}</a>
+            <div class="card-body">
+                <p class="card-text">Box Position: {{ sample.box_postion }}</p>
+                <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
+                <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
+            </div>
+        {% else %}
+            <strong>Sample Box: </strong> None
+        {% endif %}
+    </div>
+
+
+    <div class="card-header">
+        <strong>Project: </strong><a href="{% url 'lims:location_detail' sample.collection_event.location.project %}">{{ sample.collection_event.location.project.name }}</a>
+    </div>
+
+    <div class="card-body">
+        <a class="btn btn-primary btn" href="{% url 'lims:edit_sample' sample.id %}" role="button">Edit <span data-feather="edit"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+    </div>
+  </div>
+
 {% endblock content %}
+

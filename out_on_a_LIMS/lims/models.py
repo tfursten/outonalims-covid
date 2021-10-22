@@ -3,8 +3,13 @@ from phone_field import PhoneField
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from datetime import datetime
+from cualid import create_ids
+from django.contrib.auth.models import User
 
+# 
 # Create your models here.
+
+User._meta.get_field('email').blank = False
 
 class Project(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -20,6 +25,7 @@ class Project(models.Model):
 class Location(models.Model):
     name = models.CharField(max_length=100, unique=True)
     address = models.CharField(max_length=100, blank=True, null=True)
+    classroom = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     contact_name = models.CharField(max_length=100, blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
@@ -45,25 +51,52 @@ class Subject(models.Model):
         ('Yes', 'Yes'),
         ('No', 'No')
     ]
-    subject_ui = models.CharField(max_length=6, unique=True)
+    GRADE_CHOICES = [
+        ('K', 'K'),
+        ('NH', 'NH')
+    ]
+    GRADE_CHOICES += [(str(i), str(i)) for i in range(1, 13)]
+    subject_ui = models.CharField(max_length=6, blank=True, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
-    birthdate = models.DateField(null=True, blank=True)
-    sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
-    vaccine_status = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
-    covid = models.CharField(max_length=10, choices=COVID_CHOICES, null=True, blank=True, help_text="Has subject been infected with COVID-19 prior to study")
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
-    
+    age = models.PositiveIntegerField(null=True, blank=True)
+    sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
+    race = models.CharField(max_length=100, null=True, blank=True)
+    ethnicity = models.CharField(max_length=100, null=True, blank=True)
+    grade = models.CharField(max_length=2, choices=GRADE_CHOICES, blank=True, null=True)
+    phone = PhoneField(blank=True, null=True)
+    email = models.EmailField(null=True, blank=True)
+    gardian_name = models.CharField(max_length=100, null=True, blank=True)
+    gardian_relationship = models.CharField(max_length=100, null=True, blank=True)
+    teacher_name = models.CharField(max_length=100, null=True, blank=True)
+    vaccine_status = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
+    dose_1 = models.DateField(null=True, blank=True)
+    dose_2 = models.DateField(null=True, blank=True)
+    dose_3 = models.DateField(null=True, blank=True)
+    prior_covid = models.CharField(
+        max_length=10, choices=COVID_CHOICES, null=True, blank=True,
+        help_text="Has subject been infected with COVID-19 prior to study")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.subject_ui: # only if subject_ui is blank
+            existing_ids = [subj.subject_ui for subj in Subject.objects.all() if subj.subject_ui]
+            print(existing_ids)
+            cualid = create_ids(1, 6, existing_ids=existing_ids)
+            self.subject_ui = [cid[0] for cid in create_ids(1, 6, existing_ids=existing_ids)][0]
+            self.save()
+
     def __str__(self):
         return self.subject_ui
 
 class Box(models.Model):
-    box_id = models.IntegerField(unique=True)
+    box_name = models.CharField(max_length=100, unique=True)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
     
     def __str__(self):
-        return str(self.box_id)
+        return str(self.box_name)
     class Meta:
         # ordering = ["box_id"]
         verbose_name_plural = "boxes"
@@ -102,23 +135,23 @@ class Event(models.Model):
             return False
 
 
-
+ 
 
 class Sample(models.Model):
     COLLECTION_CHOICES = [
-    ('COLLECTED', 'Collected'),
-    ('NOT_COLLECTED', 'Not Collected'),
-    ('PENDING', 'Pending')
+    ('Collected', 'Collected'),
+    ('Not Collected', 'Not Collected'),
+    ('Pending', 'Pending')
     ]
-    sample_id = models.CharField(max_length=6, unique=False)
+    name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     box_position = models.IntegerField(null=True, blank=True)
     collection_event = models.ForeignKey(Event, on_delete=models.PROTECT)
-    collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='PENDING')
+    collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='Pending')
     
     def __str__(self):
-        return str(self.sample_id)
+        return str(self.name)
 
     def get_samples_for_event(event):
         samples = Sample.objects.filter(collection_event=event)
