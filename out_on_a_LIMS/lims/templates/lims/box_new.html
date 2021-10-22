@@ -1,0 +1,17 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class='content-section'>
+    <form method="POST">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-6">Add new storage box</legend>
+            {{ form | crispy }}
+        </fieldset>
+       <div class="form-group pt-3">
+           <a class="btn btn-outline-danger mr-5" href="{% url 'lims:box_list' %}" role="button">Cancel</a>
+           <button class="btn btn-success" type="submit">Add</button>
+       </div>
+    </form>
+</div>
+{% endblock content %}
