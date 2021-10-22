@@ -5,6 +5,7 @@
 {% endblock head %}
 
 {% block content %}
+<h1 class="border-bottom">Samples</h1>
     <div class="mt-3 mb-3">
         <a class="btn btn-primary btn" href="{% url 'lims:new_samples' %}" role="button">Add Samples <span data-feather="plus"></span></a>
         <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
@@ -25,15 +26,15 @@
         <tbody>
             {% for sample in sample_list %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.sample_id%}">
-                        {{sample.sample_id}}
+                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id%}">
+                        {{sample.name}}
                     </a></td>
                     <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:project_detail' sample.collection_event.location.project.id %}">{{ sample.collection_event.location.project.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:location_detail' sample.collection_event.location.id %}">{{ sample.collection_event.location.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
                     <td>{{ sample.collection_status }}</td>
-                    <td>{{ sample.box.box_id }}</td>
+                    <td>{{ sample.box.box_name }}</td>
                     <td>{{ sample.box_position }}</td>
                 </tr>
             {% endfor %}

@@ -5,6 +5,7 @@
 {% endblock head %}
 
 {% block content %}
+<h1 class="border-bottom">Locations</h1>
     <div class="mt-3 mb-3">
         <a class="btn btn-primary btn" href="{% url 'lims:new_location' %}" role="button">New Location <span data-feather="plus"></span></a>
     </div>
@@ -17,6 +18,7 @@
                 <th>Location Name</th>
                 <th>Project</th>
                 <th>Address</th>
+                <th>Room</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +29,7 @@
                     </a></td>
                     <td>{{ location.project.name }}</td>
                     <td>{{ location.address }}</td>
+                    <td>{{ location.classroom }}</td>
                 </tr>
             {% endfor %}
         </tbody>
