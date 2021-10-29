@@ -1,9 +1,15 @@
 import datetime
+import json
 from django import forms
-from django.forms import ModelForm
+from django.forms import ModelForm, CheckboxInput, SelectMultiple
 from .models import (
-    Sample, Project, Location, Researcher, Event, Subject, Box)
+    Sample, Project, Location, Researcher, Event, Subject, Box, Pool)
+from string import capwords
+from django.utils.encoding import force_text
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
+# from django.forms import widgets
 
 class DateInput(forms.DateInput):
     input_type = 'date'
@@ -48,7 +54,8 @@ class EventForm(ModelForm):
         'researcher'
         ]
         widgets = {
-            'date': DateInput()
+            'date': DateInput(),
+            'location': forms.SelectMultiple(attrs={'size': '20'})
         }
     def __init__(self, *args, **kwargs):
         super(EventForm, self).__init__(*args, **kwargs)
@@ -88,8 +95,18 @@ class SubjectForm(ModelForm):
 class SampleForm(ModelForm):
     class Meta:
         model = Sample
-        fields = ['collection_status', 'box', 'box_position']
+        fields = ['collection_status', 'box', 'box_position', 'notes']
 
+
+class SamplePrint(forms.Form):
+    start_position = forms.IntegerField(min_value=1, initial=1,
+        help_text="Change starting position of the labels on the label sheet. Positions start at 1 and increment down each column.")
+    replicates = forms.IntegerField(min_value=1, initial=1,
+        help_text="Enter the number of labels to print per sample.")
+    label_paper = forms.ChoiceField(choices = [('CL-13T1', 'CL-13T1')], initial="CL-13T1")
+    sort_by1 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Sort by", initial='GRADE')
+    sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Then by", initial="NAME")
+    sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Finally by", initial="LOCATION")
 
 class BoxForm(ModelForm):
     class Meta:
@@ -106,6 +123,18 @@ class SelectEventForm(forms.Form):
         )
 
 
+class PoolForm(ModelForm):
+    class Meta:
+        model = Pool
+        fields = ['name', 'status', 'box', 'box_position', 'notes']
+
+class PoolUpdateForm(ModelForm):
+    class Meta:
+        model = Pool
+        fields = ['name', 'status', 'box', 'box_position', 'notes', 'samples', 'pools']
+    def __init__(self, *args, **kwargs):
+        super(PoolUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])
 
 
 class FixIDS(forms.Form):

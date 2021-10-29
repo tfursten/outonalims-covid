@@ -31,6 +31,9 @@ class Location(models.Model):
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = PhoneField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.PROTECT)
+    
+    class Meta:
+        ordering = ('name', )
 
     def __str__(self):
         return self.name
@@ -82,7 +85,6 @@ class Subject(models.Model):
         super().save(*args, **kwargs)
         if not self.subject_ui: # only if subject_ui is blank
             existing_ids = [subj.subject_ui for subj in Subject.objects.all() if subj.subject_ui]
-            print(existing_ids)
             cualid = create_ids(1, 6, existing_ids=existing_ids)
             self.subject_ui = [cid[0] for cid in create_ids(1, 6, existing_ids=existing_ids)][0]
             self.save()
@@ -112,7 +114,7 @@ class Researcher(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    location = models.ForeignKey(Location, on_delete=models.PROTECT)
+    location = models.ManyToManyField(Location)
     researcher = models.ForeignKey(Researcher, on_delete=models.PROTECT, blank=True, null=True)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
@@ -121,7 +123,15 @@ class Event(models.Model):
         return str(self.name)
 
     def get_subjects_at_same_location(self):
-        subjects = Subject.objects.filter(location=self.location)
+        locations = self.location.all()
+        subjects = []
+        subjects = Subject.objects.filter(location__in=locations)
+        print(subjects)
+        # for location in locations:
+        #     print(location)
+        #     print(Subject.objects.filter(location=location))
+        #     subjects.append(Subject.objects.filter(location=location))[:]
+        # print(subjects)
         return subjects
     
     @property
@@ -146,15 +156,24 @@ class Sample(models.Model):
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
     box_position = models.IntegerField(null=True, blank=True)
     collection_event = models.ForeignKey(Event, on_delete=models.PROTECT)
     collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='Pending')
+    notes = models.TextField(blank=True, null=True)
+    
     
     def __str__(self):
         return str(self.name)
 
-    def get_samples_for_event(event):
-        samples = Sample.objects.filter(collection_event=event)
+    def get_samples_for_event(event, sort_by1="NAME", sort_by2="GRADE", sort_by3="LOCATION"):
+        sortby = {
+            'GRADE': 'subject__grade',
+            'NAME': 'subject__last_name',
+            'LOCATION': 'subject__location'
+            }
+        samples = Sample.objects.filter(collection_event=event).order_by(
+            sortby[sort_by1], sortby[sort_by2], sortby[sort_by3])
         return samples
 
     def get_subjects_at_event(event):
@@ -174,6 +193,37 @@ class Sample(models.Model):
             else:
                 subjects_dict['not_created'].append(subject)
         return subjects_dict
+
+
+
+class Pool(models.Model):
+    STATUS_CHOICES = [
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    ('Pending', 'Pending')
+    ]
+    name = models.CharField(max_length=100, unique=True)
+    samples = models.ManyToManyField(Sample, blank=True)
+    pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
+    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    box_position = models.IntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.name)
+
+    @property
+    def get_all_locations(self):
+        locations = set()
+        for sample in self.samples.all():
+            locations.add(sample.location)
+        for pool in self.pools.all():
+            for sample in pool.samples.all():
+                locations.add(sample.location)
+        return list(locations)
+
+
 
 
 

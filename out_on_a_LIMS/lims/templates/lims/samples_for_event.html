@@ -1,6 +1,8 @@
 {% extends "lims/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
+
+
 <h2 class="border-bottom">Samples for Event: {{ event.name }}</h1>
 
 
@@ -9,8 +11,8 @@
         <tr>
         <th scope="col">Sample ID</th>
         <th scope="col">Subject ID</th>
-        <th scope="col">Last Name</th>
         <th scope="col">First Name</th>
+        <th scope="col">Last Name</th>
         </tr>
     </thead>
     <tbody>
@@ -26,7 +28,7 @@
     </table>
 
 
-<a class="btn btn-primary btn" href="{% url 'lims:sample_label_pdf' event.id %}" role="button">Print Labels <span data-feather="printer"></span></a>
+<a class="btn btn-primary btn" href="{% url 'lims:sample_labels_options' event.id %}" role="button">Print Labels <span data-feather="printer"></span></a>
 <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
 <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
 

@@ -17,14 +17,11 @@
     <div class="card-header">
         <strong>Subject: </strong><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a>
     </div>
-    <div class="card-body">
-        <p class="card-text">Name: {{ sample.subject.first_name }} {{ sample.subject.last_name }}</p>
-    </div>
     <div class="card-header">
         <strong>Collection Event: </strong><a href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a>
     </div>
     <div class="card-body">
-        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.collection_event.location %}">{{ sample.collection_event.location.name }}</a>
+        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.location %}">{{ sample.location.name }}</a></p>
         <p class="card-text">Event Date: {{ sample.collection_event.date }}</p>
         <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
     </div>
@@ -40,10 +37,9 @@
             <strong>Sample Box: </strong> None
         {% endif %}
     </div>
-
-
-    <div class="card-header">
-        <strong>Project: </strong><a href="{% url 'lims:location_detail' sample.collection_event.location.project %}">{{ sample.collection_event.location.project.name }}</a>
+    <div class="card-header"><strong>Notes:</strong></div>
+    <div class="card-body">
+        <p class="card-text">{{ sample.notes }}</p>
     </div>
 
     <div class="card-body">

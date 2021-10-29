@@ -10,15 +10,16 @@ from django.views.generic import (
 from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
-    Sample, Project, Location, Researcher, Event, Subject, Box)
+    Sample, Project, Location, Researcher, Event, Subject, Box, Pool)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
     EventForm, SubjectForm, SampleForm, BoxForm,
-    SelectEventForm,
+    SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
     FixIDS)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
+from reportlab.lib.pagesizes import letter
 from reportlab_qrcode import QRCodeImage
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
@@ -283,7 +284,6 @@ def verify_subjects(request, event_id):
             'not_created': subjects['not_created'],
             'event_name': event.name})
     elif request.method == "POST":
-        print("POST")
         n = len(subjects['not_created'])
         size = 6
         # TODO limit unique ids to a project
@@ -292,7 +292,8 @@ def verify_subjects(request, event_id):
         for cual_id, subject in zip(cual_ids, subjects['not_created']):
             # create new samples for subjects that have
             # not been added.
-            sample = Sample(name = cual_id, subject=subject, collection_event=event)
+            sample = Sample(name = cual_id, subject=subject, 
+                collection_event=event, location=subject.location)
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
@@ -315,53 +316,93 @@ def select_event_for_sample(request):
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
 
+def sample_label_options(request, event_id):
+    form = SamplePrint()
+    if request.method == "POST":
+        form = SamplePrint(request.POST)
+        if form.is_valid():
+            start_position = request.POST.get('start_position')
+            label_paper = request.POST.get('label_paper')
+            reps = request.POST.get('replicates')
+            sort_by1 = request.POST.get('sort_by1')
+            sort_by2 = request.POST.get('sort_by2')
+            sort_by3 = request.POST.get('sort_by3')
+
+            return redirect('lims:sample_label_pdf',
+                event_id=event_id, start_position=start_position,
+                label_paper=label_paper, replicates=reps,
+                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3)
+    return render(request, 'lims/sample_print_options.html', {'form': form})    
+
+
+
+
+
 def get_x_y_coordinates(columns, rows, x_start, y_start):
-    x = 51.6
-    y = -28.42
+    x = 44.5 + 7.87
+    y = -12.7
     for column in range(columns):
         for row in range(rows):
             x_coord = x_start + (x*column)
             y_coord = y_start + (y*row)
             yield (x_coord*mm, y_coord*mm)
 
+    
 
 
-def sample_labels_pdf(request, event_id):
+def sample_labels_pdf(
+    request, event_id, start_position,
+    label_paper, replicates, sort_by1,
+    sort_by2, sort_by3):
     """
     Use Cual-id code to generate labels with barcodes
     """
     # Create a file-like buffer to receive PDF data.
+
     event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event)
+    samples = Sample.get_samples_for_event(event, sort_by1, sort_by2, sort_by3)
     ids = [sample.name for sample in samples]
-    first_names = [str(sample.subject.first_name) for sample in samples]
+    locations = [str(sample.subject.location) for sample in samples]
+    grades = [str(sample.subject.grade) for sample in samples]
     last_names = [str(sample.subject.last_name) for sample in samples]
-    subject_ids = [str(sample.subject.subject_ui) for sample in samples]
-    columns=4
-    rows=9
-    x_start=1.9
-    y_start=257.2
-    xy_coords = list(get_x_y_coordinates(columns, rows, x_start, y_start))
+    first_names = [str(sample.subject.first_name) for sample in samples]
+
+
     buffer = io.BytesIO()
 
     # Create the PDF object, using the buffer as its "file."
-    barcode_canvas = canvas.Canvas(buffer)
-    c = 0
-    for (id_, fn, ln, sid) in zip(ids, first_names, last_names, subject_ids):
-        x = xy_coords[c][0]
-        y = xy_coords[c][1]
-        qr_code = QRCodeImage(id_, size=11*mm)
-        qr_code.drawOn(barcode_canvas, x+8, y)
-        # barcode = code128.Code128(id_, barWidth=0.19*mm,
-        #                               barHeight=11*mm)
-        # barcode.drawOn(barcode_canvas, x, y)
-        barcode_canvas.setFont("Helvetica", 8)
-        barcode_canvas.drawString((x + 12 * mm), (y - 4 * mm), id_)
-        barcode_canvas.drawString((x + 6 * mm), (y - 8 * mm), "{0}, {1}".format(ln, fn))
-        if c < ((rows*columns) - 1):
-            c += 1
-        else:
-            c = 0
+    barcode_canvas = canvas.Canvas(buffer, pagesize=letter)
+    page_width, page_height = letter 
+    print(page_width * mm, page_height * mm)
+    columns=4
+    rows=20
+    x_start=7
+    y_start=265
+    xy_coords = list(get_x_y_coordinates(columns, rows, x_start, y_start))
+
+
+    c = int(start_position) - 1
+    for (id_, ln, fn, loc, grade) in zip(ids, last_names, first_names, locations, grades):
+        for rep in range(int(replicates)):
+            x = xy_coords[c][0] + (1.5 * mm)
+            y = xy_coords[c][1] - (1.3 * mm)
+            qr_size = 13
+            qr_code = QRCodeImage(id_, size=qr_size * mm)
+            qr_code.drawOn(barcode_canvas, x , y - ((qr_size - 4) * mm))
+            # barcode = code128.Code128(id_, barWidth=0.19*mm,
+            #                               barHeight=11*mm)
+            # barcode.drawOn(barcode_canvas, x, y)
+        
+            barcode_canvas.setFont("Helvetica", 7)
+            barcode_canvas.drawString(x + (qr_size * mm), y, "{0}".format(id_))
+            barcode_canvas.drawString(x + (qr_size * mm), (y - (2.3 * mm)), "{0},{1}".format(ln[:15], fn[:15]))
+            barcode_canvas.drawString(x + (qr_size * mm), (y - (4.6 * mm)), "{0} Grade: {1}".format(event.name[:25], grade))
+            barcode_canvas.drawString(x + (qr_size * mm), (y - (6.9 * mm)), "{0}".format(loc)[:25])
+            if c < ((rows*columns) - 1):
+                c += 1
+            else:
+                c = 0
+                barcode_canvas.showPage()
 
     # Close the PDF object cleanly, and we're done.
     barcode_canvas.showPage()
@@ -431,7 +472,98 @@ class BoxDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 
+# ============== POOLS ================================
+class PoolListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'pool_list'
 
+    def get_queryset(self):
+        """
+        Return all pools
+        """
+        return Pool.objects.all()
+
+class PoolFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = Pool
+    template_name_suffix = '_new'
+    form_class = PoolForm
+    success_message = "Pool was successfully added: %(name)s"
+
+    def get_success_url(self):
+        return reverse('lims:pool_detail', args=(self.object.id,))
+
+class PoolAddSamples(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Pool
+    fields = []
+    template_name_suffix = '_add_samples'
+    success_message = "Samples were successfully added to pool"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sample_list']=Sample.objects.all()
+        return context
+        
+    def post(self, request, *args, **kwargs):
+        pool = self.get_object()
+        samples = [Sample.objects.get(pk=int(sample)) for sample in request.POST.getlist('ids')]
+        for sample in samples:
+            pool.samples.add(sample)
+        pool.save()
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('lims:pool_detail', args=(self.object.id,))
+
+
+class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Pool
+    fields = []
+    template_name_suffix = '_add_pools'
+    success_message = "Pools were successfully added to pool"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pool_id = self.object.id
+        # Get all pools that are not current pool
+        pools = Pool.objects.exclude(id__in=[pool_id])
+        context['pool_list'] = pools
+        return context
+        
+    def post(self, request, *args, **kwargs):
+        pool = self.get_object()
+        print(request.POST.getlist('ids'))
+        pools = [Pool.objects.get(pk=int(p)) for p in request.POST.getlist('ids')]
+        print(pools)
+        for p in pools:
+            pool.pools.add(p)
+        pool.save()
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('lims:pool_detail', args=(self.object.id,))
+
+
+class PoolDetailView(LoginRequiredMixin, DetailView):
+    model = Pool
+
+
+class PoolUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Pool
+    template_name_suffix = '_update'
+    form_class = PoolUpdateForm
+    success_message = "Pool was successfully updated:  %(name)s"
+
+    def get_success_url(self):
+        return reverse('lims:pool_detail', args=(self.object.id,))
+
+class PoolDeleteView(LoginRequiredMixin, DeleteView):
+    model = Pool
+    success_url = reverse_lazy('lims:pool_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
 
 # ============== HELP =================================
 
