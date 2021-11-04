@@ -1,0 +1,27 @@
+asgiref @ file:///tmp/build/80754af9/asgiref_1602513567813/work
+certifi==2020.6.20
+click==8.0.3
+cual-id @ file:///Users/tarafurstenau/anaconda3/conda-bld/cual-id_1636047761055/work
+Django @ file:///tmp/build/80754af9/django_1601563330930/work
+django-crispy-forms @ file:///home/conda/feedstock_root/build_artifacts/django-crispy-forms_1632605802473/work
+django-phone-field==1.8.1
+django-table-select-widget==1.1.0
+importlib-metadata==4.8.1
+mkl-fft==1.2.0
+mkl-random==1.1.1
+mkl-service==2.3.0
+numpy @ file:///opt/concourse/worker/volumes/live/40d975a3-7e82-44c8-53df-feccdbce8b96/volume/numpy_and_numpy_base_1596233859108/work
+olefile==0.46
+pandas @ file:///opt/concourse/worker/volumes/live/bfd63b8c-6035-4ed3-5bce-5690df409bf9/volume/pandas_1602088141563/work
+Pillow==8.3.2
+psycopg2 @ file:///opt/concourse/worker/volumes/live/6884d6f1-5998-4b8b-71eb-17678c398791/volume/psycopg2_1594305121338/work
+pylabels==1.2.1
+python-dateutil==2.8.1
+pytz==2020.1
+qrcode==7.3.1
+reportlab==3.6.1
+reportlab-qrcode==0.1.4
+six==1.15.0
+sqlparse @ file:///tmp/build/80754af9/sqlparse_1602184451250/work
+typing-extensions==3.10.0.2
+zipp==3.6.0
