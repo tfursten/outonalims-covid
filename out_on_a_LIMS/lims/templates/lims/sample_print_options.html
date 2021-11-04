@@ -9,6 +9,8 @@
             {{ form|crispy }}
         </fieldset>
        <div class="form-group pt-3">
+           <a class="btn btn-outline-success mr-5" href="{% url 'lims:new_label' %}" role="button">Add New Label Format</a>
+           <a class="btn btn-outline-success mr-5" href="{% url 'lims:label_list' %}" role="button">Edit Label Format</a>
            <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_list' %}" role="button">Cancel</a>
            <button class="btn btn-success" type="submit">Print</button>
        </div>

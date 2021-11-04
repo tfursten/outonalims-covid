@@ -132,11 +132,30 @@
               Storage Boxes
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lims:result_list' %}">
+              <span data-feather="thermometer"></span>
+              Test Results
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lims:test_list' %}">
+              <span data-feather="clipboard"></span>
+              Tests
+            </a>
+          </li>
           <hr class="mt-3 mb-3">
+          
           <li class="nav-item">
             <a class="nav-link" href="{% url 'lims:fix_ids' %}">
               <span data-feather="tool"></span>
               Fix IDs
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lims:label_list' %}">
+              <span data-feather="columns"></span>
+              Label Formats
             </a>
           </li>
 
@@ -215,7 +234,8 @@
         document.getElementById('scan-result').textContent = "";
         qrScanner.stop()
       })
-      function write_result (result) { 
+      function write_result (result) {
+        qrScanner.stop()
         document.getElementById('scan-result').textContent = result;
         let el = document.getElementById('scan-search');
         el.classList.remove('disabled')
