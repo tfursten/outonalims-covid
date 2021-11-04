@@ -1,9 +1,17 @@
 import datetime
+import json
 from django import forms
-from django.forms import ModelForm
+from django.forms import ModelForm, CheckboxInput, SelectMultiple
 from .models import (
-    Sample, Project, Location, Researcher, Event, Subject, Box)
+    Sample, Project, Location, Researcher,
+    Event, Subject, Box, Pool, Label, TestResult,
+    Test)
+from string import capwords
+from django.utils.encoding import force_text
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
+from django.forms import widgets
 
 class DateInput(forms.DateInput):
     input_type = 'date'
@@ -48,7 +56,8 @@ class EventForm(ModelForm):
         'researcher'
         ]
         widgets = {
-            'date': DateInput()
+            'date': DateInput(),
+            'location': forms.SelectMultiple(attrs={'size': '20'})
         }
     def __init__(self, *args, **kwargs):
         super(EventForm, self).__init__(*args, **kwargs)
@@ -88,8 +97,18 @@ class SubjectForm(ModelForm):
 class SampleForm(ModelForm):
     class Meta:
         model = Sample
-        fields = ['collection_status', 'box', 'box_position']
+        fields = ['collection_status', 'box', 'box_position', 'notes']
 
+
+class SamplePrint(forms.Form):
+    start_position = forms.IntegerField(min_value=1, initial=1,
+        help_text="Change starting position of the labels on the label sheet. Positions start at 1 and increment down each column.")
+    replicates = forms.IntegerField(min_value=1, initial=1,
+        help_text="Enter the number of labels to print per sample.")
+    label_paper = forms.ModelChoiceField(queryset=Label.objects.all(), initial="CL-13T1")
+    sort_by1 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Sort by", initial='GRADE')
+    sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Then by", initial="NAME")
+    sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Finally by", initial="LOCATION")
 
 class BoxForm(ModelForm):
     class Meta:
@@ -106,6 +125,18 @@ class SelectEventForm(forms.Form):
         )
 
 
+class PoolForm(ModelForm):
+    class Meta:
+        model = Pool
+        fields = ['name', 'status', 'box', 'box_position', 'notes']
+
+class PoolUpdateForm(ModelForm):
+    class Meta:
+        model = Pool
+        fields = ['name', 'status', 'box', 'box_position', 'notes', 'samples', 'pools']
+    def __init__(self, *args, **kwargs):
+        super(PoolUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])
 
 
 class FixIDS(forms.Form):
@@ -115,3 +146,46 @@ class FixIDS(forms.Form):
     subject_id = forms.CharField(
         label="Subject ID", max_length=10,
         help_text="Enter subject ID to correct", required=False)
+
+
+class LabelForm(ModelForm):
+    class Meta:
+        model = Label
+        exclude = ['created_on']
+    rows = forms.IntegerField(min_value=0, label="Number of Rows")
+    columns = forms.IntegerField(min_value=0, label="Number of Columns")
+    # paper_size = forms.ChoiceField(label="Paper Size", initial="LETTER")
+    top_margin = forms.FloatField(min_value=0.0, label="Margin from top of sheet to first row of labels (mm)")
+    left_margin = forms.FloatField(min_value=0.0, label="Margin from left of sheet to first column of labels (mm)")
+    label_width = forms.FloatField(min_value=0.0, label="Width of labels (mm)")
+    label_height = forms.FloatField(min_value=0.0, label="Height of labels (mm)")
+    row_margin = forms.FloatField(min_value=0.0, label="Margin between rows of labels (mm)")
+    col_margin = forms.FloatField(min_value=0.0, label="Margin between columns of labels (mm)")
+    top_padding = forms.FloatField(label="Padding from label top (mm)")
+    left_padding = forms.FloatField(label="Padding from left of label (mm)")
+    font_size = forms.FloatField(label="Font size for text", initial=7)
+    qr_size = forms.FloatField(min_value=5, label="Size of QR code (mm)", initial=12, help_text="Smaller than 5mm x 5mm will not scan")
+    max_chars = forms.IntegerField(min_value=10, label="Maximum number of characters per line", initial=25)
+    line_spacing = forms.FloatField(label="Spacing between lines (mm)", initial=2.3)
+
+    
+class TestForm(ModelForm):
+    class Meta:
+        model = Test
+        fields = ['name', 'protocol', 'detects']
+
+class TestResultForm(ModelForm):
+    class Meta:
+        model = TestResult
+        fields = ['name', 'test', 'sample', 'result', 'value', 'notes', 'researcher']
+    sample = forms.CharField(max_length=6)
+
+    def clean_sample(self):
+        sample_name = self.cleaned_data.get('sample')
+        sample = Sample.objects.filter(name=sample_name)
+        if len(sample):
+            sample = sample[0]
+        else:
+            raise forms.ValidationError('Sample does not exist')
+        return sample
+

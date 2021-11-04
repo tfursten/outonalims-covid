@@ -5,8 +5,16 @@
     <div class="card-body">
       <p class="card-text"><strong>Description:</strong> {{ event.description }}</p>
     </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' event.location.id %}">{{ event.location.name }}</a></li>
+    <h4 class="card-header">Locations:</h4>
+    <div class="card-body">
+      <ul class="list-group list-group-flush">
+          {% for location in event.location.all %}
+          <li class="list-group-item">
+          <a href="{% url 'lims:location_detail' location.id %}">{{ location.name }}</a></li>
+          {% endfor %}
+      </ul>
+    </div>
+    <ul class="list-group" list-group-flush">
       {% if event.researcher %}
       <li class="list-group-item"><strong>Collected By: </strong><a href="{% url 'lims:researcher_detail' event.researcher.id %}" >{{ event.researcher.name }}</a></li>
       {% else %}

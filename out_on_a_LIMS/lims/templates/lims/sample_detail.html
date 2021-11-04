@@ -17,14 +17,11 @@
     <div class="card-header">
         <strong>Subject: </strong><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a>
     </div>
-    <div class="card-body">
-        <p class="card-text">Name: {{ sample.subject.first_name }} {{ sample.subject.last_name }}</p>
-    </div>
     <div class="card-header">
         <strong>Collection Event: </strong><a href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a>
     </div>
     <div class="card-body">
-        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.collection_event.location %}">{{ sample.collection_event.location.name }}</a>
+        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.location %}">{{ sample.location.name }}</a></p>
         <p class="card-text">Event Date: {{ sample.collection_event.date }}</p>
         <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
     </div>
@@ -40,13 +37,23 @@
             <strong>Sample Box: </strong> None
         {% endif %}
     </div>
-
-
-    <div class="card-header">
-        <strong>Project: </strong><a href="{% url 'lims:location_detail' sample.collection_event.location.project %}">{{ sample.collection_event.location.project.name }}</a>
+    <div class="card-header"><strong>Notes:</strong></div>
+    <div class="card-body">
+        <p class="card-text">{{ sample.notes }}</p>
     </div>
+    {{ sample.results.all }}
+    {% for result in results %}
+    <div class="card-header"><strong>Result: </strong><a href="#">{{ result.name }}</a> </div>
+    <div class="card-body">
+        <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
+        <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
+        <p class="card-text"><strong>Status: </strong>{{ result.result }}</p>
+        <p class="card-text"><strong>Value: </strong>{{ result.value }}</p>
+    </div>
+    {% endfor %}
 
     <div class="card-body">
+        <a class="btn btn-primary btn" href="{% url 'lims:new_result_sample' sample.id %}" role="button">Add Result <span data-feather="edit"></span></a>
         <a class="btn btn-primary btn" href="{% url 'lims:edit_sample' sample.id %}" role="button">Edit <span data-feather="edit"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
         <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>

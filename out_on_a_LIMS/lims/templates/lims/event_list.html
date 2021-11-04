@@ -16,8 +16,6 @@
             
             <tr>
                 <th>Event Name</th>
-                <th>Project</th>
-                <th>Location</th>
                 <th>Event Status</th>
                 <th>Collection Date</th>
                 <th>Collected By</th>
@@ -29,8 +27,6 @@
                     <td><a class="table-link" href="{% url 'lims:event_detail' event.id %}">
                         {{ event.name }}
                     </a></td>
-                    <td><a class="table-link" href="{% url 'lims:project_detail' event.location.project.id %}">{{ event.location.project.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:location_detail' event.location.id %}">{{ event.location.name }}</a></td>
                     {% if event.is_complete %}
                         <td>Completed</td>
                     {% else %}

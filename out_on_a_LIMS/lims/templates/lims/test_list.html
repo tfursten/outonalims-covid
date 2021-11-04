@@ -5,37 +5,27 @@
 {% endblock head %}
 
 {% block content %}
-<h1 class="border-bottom">Samples</h1>
+<h1 class="border-bottom">Tests</h1>
     <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_samples' %}" role="button">Add Samples <span data-feather="plus"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:label_list' %}" role="button">Label Formats <span data-feather="columns"></span></a>
-
+        <a class="btn btn-primary btn" href="{% url 'lims:new_test' %}" role="button">New Test <span data-feather="plus"></span></a>
     </div>
-    <table id="sample_table" class="display table table-hover"> 
+    
+
+    <table id="test_table" class="display table table-hover"  align="center"  style="width:100%"> 
         <thead>
+            
             <tr>
-                <th>Sample ID</th>
-                <th>Subject ID</th>
-                <th>Collection Event</th>
-                <th>Location</th>
-                <th>Collection Status</th>
-                <th>Box ID</th>
-                <th>Box Position</th>
+                <th>Test Name</th>
+                <th>Detects</th>
             </tr>
         </thead>
         <tbody>
-            {% for sample in sample_list %}
+            {% for test in test_list %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id%}">
-                        {{sample.name}}
+                    <td><a class="table-link" href="{% url 'lims:test_detail' test.id %}">
+                        {{ test.name }}
                     </a></td>
-                    <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
-                    <td>{{ sample.collection_status }}</td>
-                    <td>{{ sample.box.box_name }}</td>
-                    <td>{{ sample.box_position }}</td>
+                    <td>{{ test.detects }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -52,7 +42,7 @@
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
     $(document).ready( function () {
-    $('#sample_table').DataTable({
+    $('#test_table').DataTable({
     rowReorder: true,
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',

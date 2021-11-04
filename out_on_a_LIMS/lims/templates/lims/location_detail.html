@@ -6,8 +6,13 @@
       <p class="card-text"><strong>Description:</strong> {{ location.description }}</p>      
     </div>
     <ul class="list-group list-group-flush">
+      {% if location.project %}
       <li class="list-group-item"><strong>Project:</strong> <a href="{% url 'lims:project_detail' location.project.id %}">{{ location.project.name }}</a></li>
+      {% else %}
+      <li class="list-group-item"><strong>Project:</strong> None</li>
+      {% endif %}
       <li class="list-group-item"><strong>Address:</strong> {{ location.address }}</li>
+      <li class="list-group-item"><strong>Classroom:</strong> {{ location.classroom }}</li>
       <li class="list-group-item"><strong>Contact Name:</strong> {{ location.contact_name }}</li>
       <li class="list-group-item"><strong>Contact Email:</strong> {{ location.contact_email }}</li>
       <li class="list-group-item"><Strong>Contact Phone:</Strong> {{ location.contact_phone }}</li>

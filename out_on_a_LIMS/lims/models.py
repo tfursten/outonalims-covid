@@ -5,11 +5,38 @@ from django.urls import reverse
 from datetime import datetime
 from cualid import create_ids
 from django.contrib.auth.models import User
-
 # 
 # Create your models here.
 
 User._meta.get_field('email').blank = False
+
+
+class Researcher(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = PhoneField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Test(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    protocol = models.TextField(null=True, blank=True)
+    detects = models.CharField(max_length=100)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+    def __str__(self):
+        return str(self.name)
+
+
 
 class Project(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -18,7 +45,11 @@ class Project(models.Model):
     end_date = models.DateField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ['-created_on',]
+
     def __str__(self):
         return str(self.name)
 
@@ -31,6 +62,10 @@ class Location(models.Model):
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = PhoneField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.PROTECT)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+    
+    class Meta:
+        ordering = ('name', )
 
     def __str__(self):
         return self.name
@@ -77,12 +112,15 @@ class Subject(models.Model):
     prior_covid = models.CharField(
         max_length=10, choices=COVID_CHOICES, null=True, blank=True,
         help_text="Has subject been infected with COVID-19 prior to study")
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ('-created_on', )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not self.subject_ui: # only if subject_ui is blank
             existing_ids = [subj.subject_ui for subj in Subject.objects.all() if subj.subject_ui]
-            print(existing_ids)
             cualid = create_ids(1, 6, existing_ids=existing_ids)
             self.subject_ui = [cid[0] for cid in create_ids(1, 6, existing_ids=existing_ids)][0]
             self.save()
@@ -94,34 +132,42 @@ class Box(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     
     def __str__(self):
         return str(self.box_name)
     class Meta:
-        # ordering = ["box_id"]
+        ordering = ["-created_on"]
         verbose_name_plural = "boxes"
 
 
-class Researcher(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(blank=True, null=True)
-    phone = PhoneField(blank=True, null=True)
 
-    def __str__(self):
-        return self.name
 
 class Event(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    location = models.ForeignKey(Location, on_delete=models.PROTECT)
-    researcher = models.ForeignKey(Researcher, on_delete=models.PROTECT, blank=True, null=True)
+    location = models.ManyToManyField(Location)
+    researcher = models.ManyToManyField(Researcher, blank=True)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+    
     def __str__(self):
         return str(self.name)
 
     def get_subjects_at_same_location(self):
-        subjects = Subject.objects.filter(location=self.location)
+        locations = self.location.all()
+        subjects = []
+        subjects = Subject.objects.filter(location__in=locations)
+        print(subjects)
+        # for location in locations:
+        #     print(location)
+        #     print(Subject.objects.filter(location=location))
+        #     subjects.append(Subject.objects.filter(location=location))[:]
+        # print(subjects)
         return subjects
     
     @property
@@ -146,15 +192,28 @@ class Sample(models.Model):
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
     box_position = models.IntegerField(null=True, blank=True)
     collection_event = models.ForeignKey(Event, on_delete=models.PROTECT)
     collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='Pending')
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+    
+    class Meta:
+        ordering = ["-created_on"]
     
     def __str__(self):
         return str(self.name)
+    
 
-    def get_samples_for_event(event):
-        samples = Sample.objects.filter(collection_event=event)
+    def get_samples_for_event(event, sort_by1="NAME", sort_by2="GRADE", sort_by3="LOCATION"):
+        sortby = {
+            'GRADE': 'subject__grade',
+            'NAME': 'subject__last_name',
+            'LOCATION': 'subject__location'
+            }
+        samples = Sample.objects.filter(collection_event=event).order_by(
+            sortby[sort_by1], sortby[sort_by2], sortby[sort_by3])
         return samples
 
     def get_subjects_at_event(event):
@@ -175,6 +234,91 @@ class Sample(models.Model):
                 subjects_dict['not_created'].append(subject)
         return subjects_dict
 
+class TestResult(models.Model):
+    RESULT_CHOICES = [
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    ('Pending', 'Pending'),
+    ('Unknown', 'Unknown'),
+    ('Inconclusive', 'Inconclusive')
+    ]
+    name = models.CharField(max_length=100, unique=True)
+    sample = models.ForeignKey(Sample, on_delete=models.PROTECT)
+    test = models.ForeignKey(Test, on_delete=models.PROTECT)
+    result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
+    value = models.CharField(max_length=100, null=True, blank=True)
+    researcher = models.ManyToManyField(Researcher, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+    def __str__(self):
+        return str(self.name)
+
+
+class Pool(models.Model):
+    STATUS_CHOICES = [
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    ('Pending', 'Pending')
+    ]
+    name = models.CharField(max_length=100, unique=True)
+    samples = models.ManyToManyField(Sample, blank=True)
+    pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
+    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    box_position = models.IntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+    def __str__(self):
+        return str(self.name)
+
+    @property
+    def get_all_locations(self):
+        locations = set()
+        for sample in self.samples.all():
+            locations.add(sample.location)
+        for pool in self.pools.all():
+            for sample in pool.samples.all():
+                locations.add(sample.location)
+        return list(locations)
+
+
+
+class Label(models.Model):
+    PAPERSIZE_CHOICES = [
+    ('LETTER', 'Letter'),
+    ]
+    name = models.CharField(max_length=100, unique=True)
+    paper_size = models.CharField(max_length=15, choices=PAPERSIZE_CHOICES, default='Letter')
+    top_margin = models.FloatField()
+    left_margin = models.FloatField()
+    label_width = models.FloatField()
+    label_height = models.FloatField()
+    columns = models.PositiveIntegerField()
+    rows = models.PositiveIntegerField()
+    row_margin = models.FloatField()
+    col_margin = models.FloatField()
+    top_padding = models.FloatField()
+    left_padding = models.FloatField()
+    max_chars = models.PositiveIntegerField(default=25)
+    font_size = models.FloatField(default=7)
+    qr_size = models.FloatField(default=12)
+    line_spacing = models.FloatField(default=2.3)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+    def __str__(self):
+        return str(self.name)
+    
 
 
 

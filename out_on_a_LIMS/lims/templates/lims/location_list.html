@@ -27,7 +27,11 @@
                     <td><a class="table-link" href="{% url 'lims:location_detail' location.id %}">
                         {{ location.name }}
                     </a></td>
-                    <td>{{ location.project.name }}</td>
+                    {% if location.project %}
+                        <td>{{ location.project.name }}</td>
+                    {% else %}
+                        <td>None</td>
+                    {% endif %}
                     <td>{{ location.address }}</td>
                     <td>{{ location.classroom }}</td>
                 </tr>

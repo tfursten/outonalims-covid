@@ -5,37 +5,42 @@
 {% endblock head %}
 
 {% block content %}
-<h1 class="border-bottom">Samples</h1>
+<h1 class="border-bottom">Pools</h1>
     <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_samples' %}" role="button">Add Samples <span data-feather="plus"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:label_list' %}" role="button">Label Formats <span data-feather="columns"></span></a>
-
+        <a class="btn btn-primary btn" href="{% url 'lims:new_pool' %}" role="button">Add Pools <span data-feather="plus"></span></a>
     </div>
     <table id="sample_table" class="display table table-hover"> 
         <thead>
             <tr>
-                <th>Sample ID</th>
-                <th>Subject ID</th>
-                <th>Collection Event</th>
-                <th>Location</th>
-                <th>Collection Status</th>
-                <th>Box ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Storage Box</th>
+                <th>Storage Location</th>
                 <th>Box Position</th>
             </tr>
         </thead>
         <tbody>
-            {% for sample in sample_list %}
+            {% for pool in pool_list %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id%}">
-                        {{sample.name}}
-                    </a></td>
-                    <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
-                    <td>{{ sample.collection_status }}</td>
-                    <td>{{ sample.box.box_name }}</td>
-                    <td>{{ sample.box_position }}</td>
+                    <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id%}">
+                        {{ pool.name }}</a></td>
+                    
+                {% if pool.status == "Pending" %}
+                    <td><span class="badge bg-secondary">Pending</span></td>
+                {% elif pool.status == "Negative" %}
+                    <td><span class="badge bg-success">Negative</span></td>
+                {% else %}
+                    <td><span class="badge bg-danger">Positive</span></td>
+                {% endif %}
+
+                {% if pool.box %}
+                    <td><a class="table-link" href="{% url 'lims:box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
+                    <td>{{ pool.box.storage_location }}</td>
+                {% else %}
+                    <td>None</td>
+                    <td>None</td>
+                {% endif %}
+                <td>{{ pool.box_position }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -58,6 +63,7 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
+        title: 'Pools',
         buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
 
         }}
