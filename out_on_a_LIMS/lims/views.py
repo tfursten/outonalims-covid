@@ -10,16 +10,17 @@ from django.views.generic import (
 from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
-    Sample, Project, Location, Researcher, Event, Subject, Box, Pool)
+    Sample, Project, Location, Researcher, Event,
+    Subject, Box, Pool, Label, Test, TestResult)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
     EventForm, SubjectForm, SampleForm, BoxForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
-    FixIDS)
+    LabelForm, TestForm, TestResultForm, FixIDS)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import (LETTER)
 from reportlab_qrcode import QRCodeImage
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
@@ -337,18 +338,16 @@ def sample_label_options(request, event_id):
 
 
 
-
-def get_x_y_coordinates(columns, rows, x_start, y_start):
-    x = 44.5 + 7.87
-    y = -12.7
-    for column in range(columns):
-        for row in range(rows):
-            x_coord = x_start + (x*column)
-            y_coord = y_start + (y*row)
-            yield (x_coord*mm, y_coord*mm)
-
-    
-
+def get_x_y_coordinates(
+        columns, rows, left_margin, top_margin,
+        label_width, label_height, row_margin, col_margin ):
+    x = label_width + col_margin
+    y = -(label_height + row_margin)
+    for column in range(int(columns)):
+        for row in range(int(rows)):
+            x_coord = left_margin + (x * column)
+            y_coord = top_margin + (y * row)
+            yield (x_coord * mm, y_coord * mm)
 
 def sample_labels_pdf(
     request, event_id, start_position,
@@ -367,37 +366,37 @@ def sample_labels_pdf(
     last_names = [str(sample.subject.last_name) for sample in samples]
     first_names = [str(sample.subject.first_name) for sample in samples]
 
-
+    label = Label.objects.get(pk=label_paper)
     buffer = io.BytesIO()
 
     # Create the PDF object, using the buffer as its "file."
-    barcode_canvas = canvas.Canvas(buffer, pagesize=letter)
-    page_width, page_height = letter 
-    print(page_width * mm, page_height * mm)
-    columns=4
-    rows=20
-    x_start=7
-    y_start=265
-    xy_coords = list(get_x_y_coordinates(columns, rows, x_start, y_start))
-
-
+    paper_size = {'LETTER': LETTER}
+    barcode_canvas = canvas.Canvas(buffer, pagesize=paper_size[label.paper_size])
+    page_width, page_height = paper_size[label.paper_size]
+    columns=label.columns
+    rows=label.rows
+    x_start=label.left_margin
+    y_start=(page_height / mm) - (label.top_margin)
+    xy_coords = list(get_x_y_coordinates(
+        columns, rows, x_start, y_start,
+        label.label_width, label.label_height,
+        label.row_margin, label.col_margin))
     c = int(start_position) - 1
     for (id_, ln, fn, loc, grade) in zip(ids, last_names, first_names, locations, grades):
         for rep in range(int(replicates)):
-            x = xy_coords[c][0] + (1.5 * mm)
-            y = xy_coords[c][1] - (1.3 * mm)
-            qr_size = 13
+            x = xy_coords[c][0] + (label.left_padding * mm)
+            y = xy_coords[c][1] - (label.top_padding * mm)
+            qr_size = label.qr_size
             qr_code = QRCodeImage(id_, size=qr_size * mm)
             qr_code.drawOn(barcode_canvas, x , y - ((qr_size - 4) * mm))
-            # barcode = code128.Code128(id_, barWidth=0.19*mm,
-            #                               barHeight=11*mm)
-            # barcode.drawOn(barcode_canvas, x, y)
-        
-            barcode_canvas.setFont("Helvetica", 7)
+            barcode_canvas.setFont("Helvetica", label.font_size)
             barcode_canvas.drawString(x + (qr_size * mm), y, "{0}".format(id_))
-            barcode_canvas.drawString(x + (qr_size * mm), (y - (2.3 * mm)), "{0},{1}".format(ln[:15], fn[:15]))
-            barcode_canvas.drawString(x + (qr_size * mm), (y - (4.6 * mm)), "{0} Grade: {1}".format(event.name[:25], grade))
-            barcode_canvas.drawString(x + (qr_size * mm), (y - (6.9 * mm)), "{0}".format(loc)[:25])
+            # Add line for last name and first name, cuts off last name before max_chars so that some characters
+            # from first name will be included if full name does not fit.
+            barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(
+                ln[:label.max_chars - 2], fn)[:label.max_chars + 1])
+            barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 2) * mm)), "{0} GR: {1}".format(event.name[:label.max_chars - 5], grade))
+            barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 3) * mm)), "{0}".format(loc)[:label.max_chars])
             if c < ((rows*columns) - 1):
                 c += 1
             else:
@@ -413,11 +412,17 @@ def sample_labels_pdf(
     buffer.seek(0)
     return FileResponse(
         buffer, as_attachment=True,
-        filename='{}_sample_labels.pdf'.format(event.name.replace(" ", "_")))
+        filename='{}_sample_labels.pdf'.format(event.name.replace(" ", "_").replace(".", "")))
 
 
 class SampleDetailView(LoginRequiredMixin, DetailView):
     model = Sample
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        results = TestResult.objects.filter(sample=self.kwargs['pk'])
+        context['results'] = results
+        return context
 
 class SampleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = Sample
@@ -426,7 +431,65 @@ class SampleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     success_message = "Sample was successfully updated"
     def get_success_url(self):
         return reverse('lims:sample_detail', args=(self.object.id,))
-    
+
+# ============== RESULTS ================================
+
+class ResultListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'result_list'
+
+    def get_queryset(self):
+        """
+        Return all results
+        """
+        return TestResult.objects.all()
+
+class ResultFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = TestResult
+    template_name_suffix = '_new'
+    form_class = TestResultForm
+    success_message = "Test result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:result_detail', args=(self.object.id,))
+
+class ResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = TestResult
+    template_name_suffix = '_sample_new'
+    form_class = TestResultForm
+    success_message = "Test result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:result_detail', args=(self.object.id,))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sample = Sample.objects.get(pk=self.kwargs['pk'])
+        context['form'] = TestResultForm(initial={'sample': sample.name})
+        return context
+
+class ResultDetailView(LoginRequiredMixin, DetailView):
+    model = TestResult
+
+
+class ResultUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = TestResult
+    template_name_suffix = '_update'
+    form_class = TestResultForm
+    success_message = "Test result was successfully updated"
+    def get_success_url(self):
+        return reverse('lims:result_detail', args=(self.object.id,))
+
+class ResultDeleteView(LoginRequiredMixin, DeleteView):
+    model = TestResult
+    success_url = reverse_lazy('lims:result_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+
 
 
 # ============== BOXES ================================
@@ -531,9 +594,7 @@ class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
         
     def post(self, request, *args, **kwargs):
         pool = self.get_object()
-        print(request.POST.getlist('ids'))
         pools = [Pool.objects.get(pk=int(p)) for p in request.POST.getlist('ids')]
-        print(pools)
         for p in pools:
             pool.pools.add(p)
         pool.save()
@@ -564,6 +625,102 @@ class PoolDeleteView(LoginRequiredMixin, DeleteView):
             return self.delete(request, *args, **kwargs)
         except ProtectedError:
             return render(request, "lims/protected_error.html")
+
+# ============== LABELS =================================
+
+class LabelListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'label_list'
+
+    def get_queryset(self):
+        """
+        Return all labels
+        """
+        return Label.objects.all()
+
+
+class LabelFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = Label
+    template_name_suffix = '_new'
+    form_class = LabelForm
+    success_message = "Label format was successfully added: %(name)s"
+
+
+    def get_success_url(self):
+        return reverse('lims:label_detail', args=(self.object.id,))
+        
+
+class LabelDetailView(LoginRequiredMixin, DetailView):
+    model = Label
+
+
+class LabelUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Label
+    template_name_suffix = '_update'
+    form_class = LabelForm
+    success_message = "Label format was successfully updated:  %(name)s"
+    
+    def get_success_url(self):
+        return reverse('lims:label_detail', args=(self.object.id,))
+
+class LabelDeleteView(LoginRequiredMixin, DeleteView):
+    model = Label
+    success_url = reverse_lazy('lims:label_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+
+# ============== TESTS =================================
+
+class TestListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'test_list'
+
+    def get_queryset(self):
+        """
+        Return all tests
+        """
+        return Test.objects.all()
+
+
+class TestFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = Test
+    template_name_suffix = '_new'
+    form_class = TestForm
+    success_message = "Test was successfully added: %(name)s"
+
+
+    def get_success_url(self):
+        return reverse('lims:test_detail', args=(self.object.id,))
+        
+
+class TestDetailView(LoginRequiredMixin, DetailView):
+    model = Test
+
+
+class TestUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Test
+    template_name_suffix = '_update'
+    form_class = TestForm
+    success_message = "Test was successfully updated:  %(name)s"
+    
+    def get_success_url(self):
+        return reverse('lims:test_detail', args=(self.object.id,))
+
+class TestDeleteView(LoginRequiredMixin, DeleteView):
+    model = Test
+    success_url = reverse_lazy('lims:test_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+
+
 
 # ============== HELP =================================
 
