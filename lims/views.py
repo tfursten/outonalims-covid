@@ -16,7 +16,7 @@ from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
     EventForm, SubjectForm, SampleForm, BoxForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
-    LabelForm, TestForm, TestResultForm, FixIDS)
+    LabelForm, TestForm, TestResultForm, FixIDS, SampleNoticeForm)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -213,6 +213,31 @@ class SubjectListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         """
+        Return all subjects
+        """
+        return Subject.objects.all()
+
+
+class SubjectDetailListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_detail_list"
+    context_object_name = 'subject_list'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        subjects = Subject.objects.all()
+        all_samples = [subject.get_number_of_samples() for subject in subjects]
+        pending_samples = [subject.get_number_of_samples(collection_status="Pending") for subject in subjects]
+        collected_samples = [subject.get_number_of_samples(collection_status="Collected") for subject in subjects]
+        missed_samples = [subject.get_number_of_samples(collection_status="Absent") for subject in subjects]
+        declined_samples = [subject.get_number_of_samples(collection_status="Refused") for subject in subjects]
+        context['subject_list'] = zip(
+            subjects, all_samples, pending_samples,
+            collected_samples, missed_samples, declined_samples)
+        return context
+
+    
+    def get_queryset(self):
+        """
         Return all locations
         """
         return Subject.objects.all()
@@ -317,6 +342,74 @@ def select_event_for_sample(request):
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
 
+def select_event_for_sample_list(request):
+    form = SelectEventForm()
+    if request.method == "POST":
+        form = SelectEventForm(request.POST)
+        if form.is_valid():
+            event = request.POST.get('event')
+            return redirect('lims:sample_list', event_id=event)
+    return render(request, 'lims/samples_print_labels.html', {'form': form})
+
+def sample_notices(request, event_id=None):
+    if event_id:
+        form = SampleNoticeForm(initial = {'event': event_id})
+    else:
+        form = SampleNoticeForm()
+    if request.method == "POST":
+        form = SelectEventForm(request.POST)
+        if form.is_valid():
+            event = request.POST.get('event')
+            notice_text = request.POST.get('notice_text')
+            return sample_notices_pdf(event, notice_text)
+    return render(request, 'lims/samples_print_notices.html', {'form': form})
+
+def sample_notices_pdf(event_id, notice_text):
+    buffer = io.BytesIO()
+    notice_canvas = canvas.Canvas(buffer, pagesize=LETTER)
+    page_width, page_height = LETTER
+    event = Event.objects.get(pk=event_id)
+    samples = Sample.get_samples_for_event(event, 'GRADE', 'NAME', 'LOCATION')
+    ids = [sample.name for sample in samples]
+    teachers = [str(sample.subject.teacher_name) for sample in samples]
+    grades = [str(sample.subject.grade) for sample in samples]
+    last_names = [str(sample.subject.last_name) for sample in samples]
+    first_names = [str(sample.subject.first_name) for sample in samples]
+    row = 0
+    max_row = 5
+    x_start=10
+    y_start=(page_height / mm) - 10
+    y_space = 55
+    for (id_, ln, fn, teacher, grade) in zip(ids, last_names, first_names, teachers, grades):
+        y = y_start - (row * y_space)
+        textobject = notice_canvas.beginText(x_start * mm, y * mm)
+        text = notice_text.format(FIRST_NAME=fn, LAST_NAME=ln, GRADE=grade, TEACHER=teacher)
+        for line in text.splitlines(False):
+            textobject.textLine(line.rstrip())
+        notice_canvas.drawText(textobject)
+        notice_canvas.line(0, (y + 10) * mm, page_width, (y + 10) * mm)
+        if row < max_row - 1:
+            row += 1
+        else:
+            row = 0
+            notice_canvas.showPage()
+    notice_canvas.showPage()
+    notice_canvas.save()
+    buffer.seek(0)
+    return FileResponse(
+        buffer, as_attachment=True,
+        filename='{}_notices.pdf'.format(event.name.replace(" ", "_").replace(".", "")))
+
+
+
+
+def sample_list(request, event_id):
+    event = Event.objects.get(pk=event_id)
+    samples = Sample.get_samples_for_event(event)
+    context = {'samples': samples, 'event': event}
+    return render(request, 'lims/sample_list_for_event.html', context=context)
+    
+
 def sample_label_options(request, event_id):
     form = SamplePrint()
     if request.method == "POST":
@@ -334,8 +427,6 @@ def sample_label_options(request, event_id):
                 label_paper=label_paper, replicates=reps,
                 sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3)
     return render(request, 'lims/sample_print_options.html', {'form': form})    
-
-
 
 
 def get_x_y_coordinates(
@@ -462,11 +553,15 @@ class ResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('lims:result_detail', args=(self.object.id,))
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        sample = Sample.objects.get(pk=self.kwargs['pk'])
-        context['form'] = TestResultForm(initial={'sample': sample.name})
-        return context
+    def get_form_kwargs(self):
+        kwargs = super(ResultSampleFormView, self).get_form_kwargs()
+        kwargs['sample'] = self.kwargs['pk']
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('lims:result_detail', args=(self.object.id,))
+        
+
 
 class ResultDetailView(LoginRequiredMixin, DetailView):
     model = TestResult
@@ -479,6 +574,7 @@ class ResultUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     success_message = "Test result was successfully updated"
     def get_success_url(self):
         return reverse('lims:result_detail', args=(self.object.id,))
+
 
 class ResultDeleteView(LoginRequiredMixin, DeleteView):
     model = TestResult
@@ -563,7 +659,7 @@ class PoolAddSamples(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['sample_list']=Sample.objects.all()
+        context['sample_list']=Sample.objects.filter(collection_status='Collected')
         return context
         
     def post(self, request, *args, **kwargs):
@@ -606,6 +702,11 @@ class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
 class PoolDetailView(LoginRequiredMixin, DetailView):
     model = Pool
+
+
+class PoolReportDetailView(LoginRequiredMixin, DetailView):
+    model = Pool
+    template_name_suffix = "_report_detail"
 
 
 class PoolUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
