@@ -5,6 +5,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item"><strong>Detects:</strong> {{ test.detects }}</li>
       <li class="list-group-item"><strong>Protocol:</strong> {{ test.protocol }}</li>
+      <li class="list-group-item"><strong>Created:</strong> {{ test.created_on }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_test' test.id %}" role="button">Edit <span data-feather="edit"></span></a>

@@ -7,11 +7,11 @@
     <div class="card-header">
         <strong>Collection Status: </strong>
         {% if sample.collection_status == "Pending" %}
-            <span class="badge bg-secondary">Pending</span>
+            <span class="badge bg-secondary">{{ sample.collection_status }}</span>
         {% elif sample.collection_status == "Collected" %}
-            <span class="badge bg-success">Collected</span>
+            <span class="badge bg-success">{{ sample.collection_status }}</span>
         {% else %}
-            <span class="badge bg-danger">Not Collected</span>
+            <span class="badge bg-warning">{{ sample.collection_status }}</span>
         {% endif %}
     </div>
     <div class="card-header">
@@ -24,6 +24,7 @@
         <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.location %}">{{ sample.location.name }}</a></p>
         <p class="card-text">Event Date: {{ sample.collection_event.date }}</p>
         <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
+        <p class="card-text">Created: {{ sample.created_on }}</p> 
     </div>
     <div class="card-header">
         {% if sample.box.id %}
@@ -40,6 +41,7 @@
     <div class="card-header"><strong>Notes:</strong></div>
     <div class="card-body">
         <p class="card-text">{{ sample.notes }}</p>
+
     </div>
     {{ sample.results.all }}
     {% for result in results %}

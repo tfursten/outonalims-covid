@@ -10,7 +10,6 @@
         <a class="btn btn-primary btn" href="{% url 'lims:new_samples' %}" role="button">Add Samples <span data-feather="plus"></span></a>
         <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event' %}" role="button">Print Sample Labels <span data-feather="printer"></span></a>
         <a class="btn btn-primary btn" href="{% url 'lims:label_list' %}" role="button">Label Formats <span data-feather="columns"></span></a>
-
     </div>
     <table id="sample_table" class="display table table-hover"> 
         <thead>
@@ -33,7 +32,13 @@
                     <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
-                    <td>{{ sample.collection_status }}</td>
+                    {% if sample.collection_status == "Pending" %}
+                    <td><span class="badge bg-secondary">{{ sample.collection_status }}</span></td>
+                    {% elif pool.status == "Collected" %}
+                    <td><span class="badge bg-success">{{ sample.collection_status }}</span></td>
+                    {% else %}
+                    <td><span class="badge bg-warning">{{ sample.collection_status }}</span></td>
+                    {% endif %}
                     <td>{{ sample.box.box_name }}</td>
                     <td>{{ sample.box_position }}</td>
                 </tr>
@@ -58,7 +63,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Sample List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Sample List'
+        },
+        {
+          extend: 'csv',
+          title: 'Sample List'
+        },
+        {
+          extend: 'excel',
+          title: 'Sample List'
+        }]
 
         }}
     );

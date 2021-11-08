@@ -18,6 +18,7 @@
       <li class="list-group-item"><Strong>Maximum Characters:</Strong> {{ label.max_chars }}</li>
       <li class="list-group-item"><Strong>QR Code Size:</Strong> {{ label.qr_size }}</li>
       <li class="list-group-item"><Strong>Line Spacing:</Strong> {{ label.line_spacing }}</li>
+      <li class="list-group-item"><Strong>Created:</Strong> {{ label.created_on }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_label' label.id %}" role="button">Edit <span data-feather="edit"></span></a>

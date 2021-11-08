@@ -48,8 +48,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
-
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Test List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Test List'
+        },
+        {
+          extend: 'csv',
+          title: 'Test List'
+        },
+        {
+          extend: 'excel',
+          title: 'Test List'
+        }]
         }}
     );
 } );

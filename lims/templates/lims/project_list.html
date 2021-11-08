@@ -52,7 +52,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Project List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Project List'
+        },
+        {
+          extend: 'csv',
+          title: 'Project List'
+        },
+        {
+          extend: 'excel',
+          title: 'Project List'
+        }]
 
         }}
     );

@@ -3,10 +3,19 @@
 <div class="card">
     <h1 class="card-header">Subject ID: {{ subject.subject_ui }}</h1>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>
-      <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></li>
       <li class="list-group-item"><strong>First Name:</strong> {{ subject.first_name }}</li>
       <li class="list-group-item"><strong>Last Name:</strong> {{ subject.last_name }}</li>
+      {% if subject.consent_status == 'Consented' %}
+        <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-success">{{ subject.consent_status }}</span></li>
+      {% elif subject.consent_status == 'Not Consented' %}
+      <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-danger">{{ subject.consent_status }}</span></li>
+      {% else %}
+      <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-warning">{{ subject.consent_status }}</span></li>
+      {% endif %}
+      <li class="list-group-item"><strong>Consent Date:</strong> {{ subject.consent_date }}</li>
+      <li class="list-group-item"><strong>Withdrawn Date:</strong> {{ subject.withdrawn_date }}</li>
+      <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>
+      <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></li>
       <li class="list-group-item"><Strong>Age:</Strong> {{ subject.age }}</li>
       <li class="list-group-item"><Strong>Grade:</Strong> {{ subject.grade}}</li>
       <li class="list-group-item"><Strong>Sex:</Strong> {{ subject.sex}}</li>
@@ -22,6 +31,10 @@
       <li class="list-group-item"><Strong>Dose 2:</Strong> {{ subject.dose_2}}</li>
       <li class="list-group-item"><Strong>Dose 3:</Strong> {{ subject.dose_3}}</li>
       <li class="list-group-item"><Strong>Covid Status:</Strong> {{ subject.covid }}</li>
+      <li class="list-group-item"><Strong>Pneumococcal Vaccine Status:</Strong> {{ subject.pneumococcal_vaccine }}</li>
+      <li class="list-group-item"><Strong>Pneumococcal Vaccine Date:</Strong> {{ subject.pneumococcal_date }}</li>
+      <li class="list-group-item"><Strong>Created:</Strong> {{ subject.created_on }}</li>
+
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_subject' subject.id %}" role="button">Edit <span data-feather="edit"></span></a>

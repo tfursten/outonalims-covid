@@ -5,29 +5,25 @@
 {% endblock head %}
 
 {% block content %}
-<h1 class="border-bottom">Storage Boxes</h1>
-    <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_box' %}" role="button">New Box <span data-feather="plus"></span></a>
-    </div>
-    
-
-    <table id="box_table" class="display table table-hover"  align="center"  style="width:100%"> 
+<h1 class="border-bottom">Participants for {{ event.name }}</h1>
+    <table id="participant_table" class="display table table-hover"> 
         <thead>
-            
             <tr>
-                <th>Box ID</th>
-                <th>Location</th>
-                <th>Shelf</th>
+                <th>Event</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Classroom</th>
+                <th>Grade</th>
             </tr>
         </thead>
         <tbody>
-            {% for box in box_list %}
+            {% for sample in samples %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'lims:box_detail' box.id %}">
-                        {{ box.box_name }}
-                    </a></td>
-                    <td>{{ box.storage_location }}</td>
-                    <td>{{ box.storage_shelf }}</td>
+                    <td>{{ event.name }}</td>
+                    <td>{{ sample.subject.first_name }}</td>
+                    <td>{{ sample.subject.last_name }}</td>
+                    <td>{{ sample.subject.location.name }}</td>
+                    <td>{{ sample.subject.grade }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -44,29 +40,26 @@
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
     $(document).ready( function () {
-    $('#box_table').DataTable({
+    $('#participant_table').DataTable({
     rowReorder: true,
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
         buttons: [ 
-        {
-          extend: 'copy',
-          title: 'Box List'
-        },
-        {
-          extend: 'pdf',
-          title: 'Box List'
-        },
-        {
-          extend: 'csv',
-          title: 'Box List'
-        },
-        {
-          extend: 'excel',
-          title: 'Box List'
-        }]
+            'copy',
+            {
+                extend:'csv', 
+                title: '{{ event.name }}_participant_list'
+            },
+            {
+                extend:'excel',
+                title: '{{ event.name }}_participant_list'
+            },
+            {
+                extend: 'pdf',
+                title: '{{ event.name }}_participant_list'
+            }]
 
         }}
     );

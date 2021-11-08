@@ -16,9 +16,10 @@
         <thead>
             
             <tr>
-                <th>Test Result Name</th>
+                <th>Test Result ID</th>
                 <th>Test</th>
                 <th>Sample</th>
+                <th>Replicate</th>
                 <th>Status</th>
                 <th>Measurement</th>
             </tr>
@@ -27,7 +28,7 @@
             {% for result in result_list %}
                 <tr>
                     <td><a class="table-link" href="{% url 'lims:result_detail' result.id %}">
-                        {{ result.name }}
+                        Result {{ result.id }}
                     </a></td>
                     <td><a class="table-link" href="{% url 'lims:test_detail' result.test.id %}">
                         {{ result.test.name }}
@@ -35,6 +36,7 @@
                     <td><a class="table-link" href="{% url 'lims:sample_detail' result.sample.id %}">
                         {{ result.sample.name }}
                     </a></td>
+                    <td>{{ result.replicate }}</td>
                     {% if result.result == 'Positive' %}
                     <td><span class="badge bg-success">{{ result.result }}</span></td>
                     {% elif result.results == 'Negative' %}
@@ -43,6 +45,7 @@
                     <td><span class="badge bg-secondary">{{ result.result }}</span></td>
                     {% endif %}
                     <td>{{ result.value }}</td>
+
                 </tr>
             {% endfor %}
         </tbody>
@@ -62,10 +65,35 @@
     $('#result_table').DataTable({
     rowReorder: true,
     fixedHeader: true,
+    autoWidth: false,
     dom: 'B<"clear">lfrtip',
+    columns: [
+    { "width": "10%" },
+    null,
+    null,
+    null,
+    null,
+    null
+    ],
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Test Result List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Test Result List'
+        },
+        {
+          extend: 'csv',
+          title: 'Test Result List'
+        },
+        {
+          extend: 'excel',
+          title: 'Test Result List'
+        }]
 
         }}
     );

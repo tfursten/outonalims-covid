@@ -16,6 +16,7 @@
       <li class="list-group-item"><strong>Contact Name:</strong> {{ location.contact_name }}</li>
       <li class="list-group-item"><strong>Contact Email:</strong> {{ location.contact_email }}</li>
       <li class="list-group-item"><Strong>Contact Phone:</Strong> {{ location.contact_phone }}</li>
+      <li class="list-group-item"><Strong>Created:</Strong> {{ location.created_on }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_location' location.id %}" role="button">Edit <span data-feather="edit"></span></a>

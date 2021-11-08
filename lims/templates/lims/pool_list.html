@@ -14,6 +14,8 @@
             <tr>
                 <th>Name</th>
                 <th>Status</th>
+                <th>Notification Status</th>
+                <th>Created</th>
                 <th>Storage Box</th>
                 <th>Storage Location</th>
                 <th>Box Position</th>
@@ -24,23 +26,30 @@
                 <tr>
                     <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id%}">
                         {{ pool.name }}</a></td>
-                    
-                {% if pool.status == "Pending" %}
-                    <td><span class="badge bg-secondary">Pending</span></td>
-                {% elif pool.status == "Negative" %}
-                    <td><span class="badge bg-success">Negative</span></td>
-                {% else %}
-                    <td><span class="badge bg-danger">Positive</span></td>
-                {% endif %}
+                    {% if pool.status == "Pending" %}
+                        <td><span class="badge bg-secondary">{{ pool.status }}</span></td>
+                    {% elif pool.status == "Negative" %}
+                        <td><span class="badge bg-success">{{ pool.status }}</span></td>
+                    {% else %}
+                        <td><span class="badge bg-danger">{{ pool.status}}</span></td>
+                    {% endif %}
+                    {% if pool.notification_status == "Pending" %}
+                    <td><span class="badge bg-warning">{{ pool.notification_status }}</span></td>
+                    {% elif pool.notification_status == "Not Notified" %}
+                        <td><span class="badge bg-secondary">{{ pool.notification_status }}</span></td>
+                    {% else %}
+                        <td><span class="badge bg-success">{{ pool.notification_status }}</span></td>
+                    {% endif %}
+                    <td>{{ pool.created_on }}</td>
 
-                {% if pool.box %}
-                    <td><a class="table-link" href="{% url 'lims:box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
-                    <td>{{ pool.box.storage_location }}</td>
-                {% else %}
-                    <td>None</td>
-                    <td>None</td>
-                {% endif %}
-                <td>{{ pool.box_position }}</td>
+                    {% if pool.box %}
+                        <td><a class="table-link" href="{% url 'lims:box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
+                        <td>{{ pool.box.storage_location }}</td>
+                    {% else %}
+                        <td>None</td>
+                        <td>None</td>
+                    {% endif %}
+                    <td>{{ pool.box_position }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -64,7 +73,23 @@
     buttons: {
         name: 'primary',
         title: 'Pools',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Pool List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Pool List'
+        },
+        {
+          extend: 'csv',
+          title: 'Pool List'
+        },
+        {
+          extend: 'excel',
+          title: 'Pool List'
+        }]
 
         }}
     );

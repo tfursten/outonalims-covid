@@ -56,8 +56,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
-
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Location List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Location List'
+        },
+        {
+          extend: 'csv',
+          title: 'Location List'
+        },
+        {
+          extend: 'excel',
+          title: 'Location List'
+        }]
         }}
     );
 } );

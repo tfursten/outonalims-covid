@@ -5,6 +5,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item"><strong>Email:</strong> {{ researcher.email }}</li>
       <li class="list-group-item"><Strong>Phone:</Strong> {{ researcher.phone }}</li>
+      <li class="list-group-item"><Strong>Created:</Strong> {{ researcher.created_on }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_researcher' researcher.id %}" role="button">Edit <span data-feather="edit"></span></a>

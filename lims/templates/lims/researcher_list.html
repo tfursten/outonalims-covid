@@ -50,8 +50,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
-
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Researcher List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Researcher List'
+        },
+        {
+          extend: 'csv',
+          title: 'Researcher List'
+        },
+        {
+          extend: 'excel',
+          title: 'Researcher List'
+        }]
         }}
     );
 } );

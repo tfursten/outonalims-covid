@@ -8,6 +8,9 @@
 <h1 class="border-bottom">Events</h1>
     <div class="mt-3 mb-3">
         <a class="btn btn-primary btn" href="{% url 'lims:new_event' %}" role="button">New Event <span data-feather="plus"></span></a>
+        <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event_list' %}" role="button">Print Participant List <span data-feather="printer"></span></a>
+        <a class="btn btn-primary btn" href="{% url 'lims:sample_notice' %}" role="button">Print Notices <span data-feather="printer"></span></a>
+        <a class="btn btn-primary btn" href="#" role="button">Email Participants <span data-feather="mail"></span></a>
     </div>
     
 
@@ -18,7 +21,6 @@
                 <th>Event Name</th>
                 <th>Event Status</th>
                 <th>Collection Date</th>
-                <th>Collected By</th>
             </tr>
         </thead>
         <tbody>
@@ -28,12 +30,13 @@
                         {{ event.name }}
                     </a></td>
                     {% if event.is_complete %}
-                        <td>Completed</td>
+                        <td><span class="badge bg-success">Completed</span></td>
                     {% else %}
-                        <td>Pending</td>
+                        <td><span class="badge bg-secondary">Pending</span></td>
                     {% endif %}
+
+
                     <td>{{ event.date }}</td>
-                    <td>{{ event.researcher.name }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -56,7 +59,23 @@
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
-        buttons: [ 'copy', 'csv', 'excel', 'pdf' ]
+        buttons: [ 
+        {
+          extend: 'copy',
+          title: 'Event List'
+        },
+        {
+          extend: 'pdf',
+          title: 'Event List'
+        },
+        {
+          extend: 'csv',
+          title: 'Event List'
+        },
+        {
+          extend: 'excel',
+          title: 'Event List'
+        }]
 
         }}
     );

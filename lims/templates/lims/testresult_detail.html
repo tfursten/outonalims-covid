@@ -12,6 +12,7 @@
       <li class="list-group-item"><strong>Researcher: </strong><a href="{% url 'lims:researcher_detail' researcher.id %}">{{ researcher.name }}</a></li>
       {% endfor %}
       <li class="list-group-item"><strong>Notes:</strong> {{ testresult.notes }}</li>
+      <li class="list-group-item"><strong>Created:</strong> {{ testresult.created_on }}</li>
     </ul>
     <div class="card-body">
         <a class="btn btn-primary btn" href="{% url 'lims:edit_result' testresult.id %}" role="button">Edit <span data-feather="edit"></span></a>
