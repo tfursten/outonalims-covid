@@ -1,0 +1,19 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div class="card">
+    <h1 class="card-header">Box: {{ box.box_name }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Location:</strong> {{ box.storage_location }}</li>
+      <li class="list-group-item"><Strong>Shelf:</Strong> {{ box.storage_shelf }}</li>
+      <li class="list-group-item"><Strong>Created:</Strong> {{ box.created_on }}</li>
+    </ul>
+    <div class="card-body">
+        <a class="btn btn-primary btn" href="{% url 'lims:edit_box' box.id %}" role="button">Edit <span data-feather="edit"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:new_box' %}" role="button">Add New Box <span data-feather="plus"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:box_list' %}" role="button">Storage Boxes <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-danger btn" href="{% url 'lims:delete_box' box.id %}" role="button">Delete <span data-feather="trash"></span></a>
+    </div>
+  </div>
+
+{% endblock content %}
