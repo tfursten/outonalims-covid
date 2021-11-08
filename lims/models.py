@@ -4,6 +4,7 @@ from django.template.defaultfilters import slugify
 from django.urls import reverse
 from datetime import datetime
 from cualid import create_ids
+import uuid
 from django.contrib.auth.models import User
 # 
 # Create your models here.
@@ -80,6 +81,7 @@ class Subject(models.Model):
     VACCINE_CHOICES = [
         ('FULL', 'Full'),
         ('PARTIAL', 'Partial'),
+        ('BOOSTED', 'Boosted'),
         ('NO', 'None')
     ]
     COVID_CHOICES = [
@@ -91,9 +93,19 @@ class Subject(models.Model):
         ('NH', 'NH')
     ]
     GRADE_CHOICES += [(str(i), str(i)) for i in range(1, 13)]
+    CONSENT_STATUS = [
+        ('Consented', 'Consented'),
+        ('Not Consented', 'Not Consented'),
+        ('Withdrawn', 'Withdrawn')
+    ]
+
+
     subject_ui = models.CharField(max_length=6, blank=True, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
+    consent_status = models.CharField(max_length=15, choices=CONSENT_STATUS, default='Consented')
+    consent_date = models.DateField(null=True, blank=True)
+    withdrawn_date = models.DateField(null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
     age = models.PositiveIntegerField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
@@ -112,6 +124,8 @@ class Subject(models.Model):
     prior_covid = models.CharField(
         max_length=10, choices=COVID_CHOICES, null=True, blank=True,
         help_text="Has subject been infected with COVID-19 prior to study")
+    pneumococcal_vaccine = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
+    pneumococcal_date = models.DateField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -124,6 +138,12 @@ class Subject(models.Model):
             cualid = create_ids(1, 6, existing_ids=existing_ids)
             self.subject_ui = [cid[0] for cid in create_ids(1, 6, existing_ids=existing_ids)][0]
             self.save()
+    
+    def get_number_of_samples(self, collection_status=None):
+        if collection_status == None:
+            return len(Sample.objects.filter(subject=self.id))
+        else:
+            return len(Sample.objects.filter(subject=self.id, collection_status=collection_status))
 
     def __str__(self):
         return self.subject_ui
@@ -139,8 +159,6 @@ class Box(models.Model):
     class Meta:
         ordering = ["-created_on"]
         verbose_name_plural = "boxes"
-
-
 
 
 class Event(models.Model):
@@ -161,14 +179,16 @@ class Event(models.Model):
     def get_subjects_at_same_location(self):
         locations = self.location.all()
         subjects = []
-        subjects = Subject.objects.filter(location__in=locations)
-        print(subjects)
-        # for location in locations:
-        #     print(location)
-        #     print(Subject.objects.filter(location=location))
-        #     subjects.append(Subject.objects.filter(location=location))[:]
-        # print(subjects)
+        # Grab only consented subjects at same location.
+        subjects = Subject.objects.filter(location__in=locations, consent_status="Consented")
         return subjects
+
+    def get_subject_email_list(self):
+        subjects = self.get_subjects_at_same_location()
+        emails = list(set([subject.email for subject in subjects if subject.email != None]))
+        emails = ";".join(emails)
+        return emails
+
     
     @property
     def is_complete(self):
@@ -186,8 +206,10 @@ class Event(models.Model):
 class Sample(models.Model):
     COLLECTION_CHOICES = [
     ('Collected', 'Collected'),
-    ('Not Collected', 'Not Collected'),
-    ('Pending', 'Pending')
+    ('Absent', 'Absent'),
+    ('Refused', 'Refused'),
+    ('Pending', 'Pending'),
+    ('Withdrew', 'Withdrew')
     ]
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
@@ -242,9 +264,10 @@ class TestResult(models.Model):
     ('Unknown', 'Unknown'),
     ('Inconclusive', 'Inconclusive')
     ]
-    name = models.CharField(max_length=100, unique=True)
+
     sample = models.ForeignKey(Sample, on_delete=models.PROTECT)
     test = models.ForeignKey(Test, on_delete=models.PROTECT)
+    replicate = models.PositiveIntegerField(default=1)
     result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
     value = models.CharField(max_length=100, null=True, blank=True)
     researcher = models.ManyToManyField(Researcher, blank=True)
@@ -264,13 +287,20 @@ class Pool(models.Model):
     ('Negative', 'Negative'),
     ('Pending', 'Pending')
     ]
+    NOTIFICATION_CHOICES = [
+        ('Notified', 'Notified'),
+        ('Not Notified', 'Not Notified'),
+        ('Pending', 'Pending')
+    ]
     name = models.CharField(max_length=100, unique=True)
     samples = models.ManyToManyField(Sample, blank=True)
     pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
+    notification_status = models.CharField(max_length=15, choices=NOTIFICATION_CHOICES, default='Pending')
     box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     box_position = models.IntegerField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
+
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -288,6 +318,16 @@ class Pool(models.Model):
             for sample in pool.samples.all():
                 locations.add(sample.location)
         return list(locations)
+    
+    @property
+    def get_all_samples(self):
+        samples = set()
+        for sample in self.samples.all():
+            samples.add(sample)
+        for pool in self.pools.all():
+            for sample in pool.samples.all():
+                samples.add(sample)
+        return list(samples)
 
 
 
