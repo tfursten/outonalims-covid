@@ -10,7 +10,6 @@ from string import capwords
 from django.utils.encoding import force_text
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-
 from django.forms import widgets
 
 class DateInput(forms.DateInput):
@@ -73,17 +72,22 @@ class SubjectForm(ModelForm):
     class Meta:
         model = Subject
         fields = ['first_name',
-        'last_name', 'location', 'age', 'sex', 'race',
+        'last_name', 'consent_status', 'consent_date',
+        'withdrawn_date',
+        'location', 'age', 'sex', 'race',
         'ethnicity', 'grade', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
         'teacher_name','vaccine_status', 'dose_1',
-        'dose_2', 'dose_3',
-        'prior_covid'
+        'dose_2', 'dose_3', 'prior_covid', 'pneumococcal_vaccine',
+        'pneumococcal_date'
         ]
         widgets = {
+            'consent_date': DateInput(),
+            'withdrawn_date': DateInput(),
             'dose_1': DateInput(),
             'dose_2': DateInput(),
-            'dose_3': DateInput()
+            'dose_3': DateInput(),
+            'pneumococcal_date': DateInput()
         }
     def __init__(self, *args, **kwargs):
         super(SubjectForm, self).__init__(*args, **kwargs)
@@ -110,6 +114,8 @@ class SamplePrint(forms.Form):
     sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Then by", initial="NAME")
     sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Finally by", initial="LOCATION")
 
+
+
 class BoxForm(ModelForm):
     class Meta:
         model = Box
@@ -124,16 +130,40 @@ class SelectEventForm(forms.Form):
         help_text="If an event is not listed it is because the event date has passed and event is completed. If the event date is incorrect, you can edit it on the Event page."
         )
 
+class SampleNoticeForm(ModelForm):
+    initial = """Name: {FIRST_NAME} {LAST_NAME}
+Grade: {GRADE}
+Teacher: {TEACHER}
+_______________________________________________
+Please come to <LOCATION> at <TIME> ... 
+    """
+    today = datetime.date.today()
+    # Only select events that have not already completed
+    event = forms.ModelChoiceField(
+        queryset=Event.objects.filter(date__gte=today),
+        help_text="If an event is not listed it is because the event date has passed and event is completed. If the event date is incorrect, you can edit it on the Event page.",
+        initial=None)
+    notice_text = forms.CharField(widget=forms.Textarea, initial=initial)
+    class Meta:
+        model = Event
+        fields = ['event', 'notice_text']
+    def __init__(self, *args, **kwargs):
+        super(SampleNoticeForm, self).__init__(*args, **kwargs)
+        if 'initial' in kwargs:
+            if 'event' in kwargs['initial']:
+                self.fields['event'].value = kwargs['initial']['event']
+
+
 
 class PoolForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'box', 'box_position', 'notes']
+        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes']
 
 class PoolUpdateForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'box', 'box_position', 'notes', 'samples', 'pools']
+        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes', 'samples', 'pools']
     def __init__(self, *args, **kwargs):
         super(PoolUpdateForm, self).__init__(*args, **kwargs)
         self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])
@@ -174,18 +204,19 @@ class TestForm(ModelForm):
         model = Test
         fields = ['name', 'protocol', 'detects']
 
+
 class TestResultForm(ModelForm):
     class Meta:
         model = TestResult
-        fields = ['name', 'test', 'sample', 'result', 'value', 'notes', 'researcher']
-    sample = forms.CharField(max_length=6)
+        fields = ['sample', 'test', 'replicate', 'result', 'value', 'notes', 'researcher']
+    def __init__(self, *args, **kwargs):
+            if 'sample' in kwargs:
+                sample = kwargs.pop('sample')
+                kwargs.update(initial={
+                    'sample': sample
+                })
+            super(TestResultForm, self).__init__(*args, **kwargs)
+            self.fields['sample'].queryset = Sample.objects.order_by('name')
+        
 
-    def clean_sample(self):
-        sample_name = self.cleaned_data.get('sample')
-        sample = Sample.objects.filter(name=sample_name)
-        if len(sample):
-            sample = sample[0]
-        else:
-            raise forms.ValidationError('Sample does not exist')
-        return sample
 
