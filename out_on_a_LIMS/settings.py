@@ -27,9 +27,9 @@ SECRET_KEY = 'ssvs7_e81m7g)&#!(or@%(_#$9tqk#%gc#ki@7qg+6-*r^#_tu'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['*']
 
-# ALLOWED_HOSTS = ['lims-prod.eba-yxgysc9y.us-west-1.elasticbeanstalk.com']
+ALLOWED_HOSTS = ['lims-dev.us-west-1.elasticbeanstalk.com']
 
 
 # Application definition
