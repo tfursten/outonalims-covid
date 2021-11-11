@@ -29,7 +29,7 @@ DEBUG = False
 
 # ALLOWED_HOSTS = ['*']
 
-ALLOWED_HOSTS = ['lims-dev.us-west-1.elasticbeanstalk.com', 'outonalims.app']
+ALLOWED_HOSTS = ['lims-dev.us-west-1.elasticbeanstalk.com', 'www.outonalims.app']
 
 
 # Application definition
