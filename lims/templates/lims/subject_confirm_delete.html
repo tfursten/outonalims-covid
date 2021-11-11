@@ -7,8 +7,10 @@
             <form method="post">{% csrf_token %}
                 <h3>Are you sure you want to delete subject?</h3>
                 <p class="text-danger">This will permenently delete all data associated with this project.</p>
-                <button class="btn btn-outline-danger" type="submit">Delete <span data-feather="x-octagon"></span></button>
-                <a class="btn btn-success btn" href="{% url 'lims:subject_list' %}" role="button">Cancel <span data-feather="corner-up-left"></span></a>
+                <div class="d-grid gap-2 d-md-block mt-2">
+                    <button class="btn btn-outline-danger" type="submit">Delete <span data-feather="x-octagon"></span></button>
+                    <a class="btn btn-success btn" href="{% url 'lims:subject_detail' subject.id %}" role="button">Cancel <span data-feather="corner-up-left"></span></a>
+                </div>
             </form>
         </div>
 </div>

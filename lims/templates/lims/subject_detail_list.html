@@ -6,10 +6,6 @@
 
 {% block content %}
 <h1 class="border-bottom">Subjects</h1>
-    <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_subject' %}" role="button">New Subject <span data-feather="plus"></span></a>
-    </div>
-    
 
     <table id="subject_table" class="display table table-hover"  align="center"  style="width:100%"> 
         <thead>
@@ -94,7 +90,9 @@
             {% endfor %}
         </tbody>
     </table>
-
+    <div class="d-grid gap-2 d-md-block mt-2">
+        <a class="btn btn-success btn" href="{% url 'lims:subject_list' %}" role="button">Back <span data-feather="corner-up-left"></span></a>
+    </div>
 {% endblock content %}
 
 {% block js %}

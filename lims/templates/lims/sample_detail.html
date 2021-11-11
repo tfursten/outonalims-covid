@@ -11,7 +11,7 @@
         {% elif sample.collection_status == "Collected" %}
             <span class="badge bg-success">{{ sample.collection_status }}</span>
         {% else %}
-            <span class="badge bg-warning">{{ sample.collection_status }}</span>
+            <span class="badge bg-danger">{{ sample.collection_status }}</span>
         {% endif %}
     </div>
     <div class="card-header">
@@ -54,13 +54,13 @@
     </div>
     {% endfor %}
 
-    <div class="card-body">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_result_sample' sample.id %}" role="button">Add Result <span data-feather="edit"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:edit_sample' sample.id %}" role="button">Edit <span data-feather="edit"></span></a>
-        <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
-        <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+</div>
+    <div class="d-grid gap-0 d-md-block mt-2">
+        <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample' sample.id %}" role="button">Edit <span data-feather="edit"></span></a>
+        <a class="btn btn-primary btn mb-2" href="{% url 'lims:new_result_sample' sample.id %}" role="button">Add Result <span data-feather="edit"></span></a>
+        <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
+        <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
     </div>
-  </div>
 
 {% endblock content %}
 
