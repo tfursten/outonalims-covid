@@ -22,7 +22,7 @@
         </ul>
         <form method="POST">
             {% csrf_token %}
-           <div class="form-group pt-3">
+            <div class="d-grid gap-2 d-md-block mt-2">
                <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_list' %}" role="button">Cancel</a>
                <button class="btn btn-success" type="submit">Confirm</button>
            </div>
@@ -34,7 +34,7 @@
 
 {% if not not_created %}
 <p class="text-danger">No samples to add.</p>
-   <div class="form-group pt-3">
+    <div class="d-grid gap-2 d-md-block mt-2">
        <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_list' %}" role="button">Done</a>
    </div>
 </form>

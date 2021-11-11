@@ -52,7 +52,7 @@ class EventForm(ModelForm):
     class Meta:
         model = Event
         fields = ['name', 'location', 'date',
-        'researcher'
+        'researcher', 'description', 'notes'
         ]
         widgets = {
             'date': DateInput(),

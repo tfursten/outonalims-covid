@@ -53,12 +53,8 @@
 
 {% endif %}
 
-<div class="card-body">
+<div class="d-grid gap-2 d-md-block mt-2">
   <a class="btn btn-primary btn mt-2" href="{% url 'lims:edit_pool' pool.id %}" role="button">Edit <span data-feather="edit"></span></a>
-  <a class="btn btn-primary btn mt-2" href="#" role="button">Print Report <span data-feather="printer"></span></a>
-  <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:new_pool' %}" role="button">Add New Pool <span data-feather="plus"></span></a>
-  <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:add_pool_samples' pool.id %}" role="button">Add Samples to Pool <span data-feather="plus"></span></a>
-  <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:add_pool_pools' pool.id %}" role="button">Add Pools to Pool <span data-feather="plus"></span></a>
   <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:pool_list' %}" role="button">Pools <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-danger btn mt-2" href="{% url 'lims:delete_pool' pool.id %}" role="button">Delete <span data-feather="trash"></span></a>

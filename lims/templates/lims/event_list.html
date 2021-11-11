@@ -6,11 +6,11 @@
 
 {% block content %}
 <h1 class="border-bottom">Events</h1>
-    <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_event' %}" role="button">New Event <span data-feather="plus"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:select_sample_event_list' %}" role="button">Print Participant List <span data-feather="printer"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:sample_notice' %}" role="button">Print Notices <span data-feather="printer"></span></a>
-        <a class="btn btn-primary btn" href="#" role="button">Email Participants <span data-feather="mail"></span></a>
+    <div class="d-grid gap-2 d-md-block mt-2 mb-2">
+        <a class="btn btn-primary btn mt-2" href="{% url 'lims:new_event' %}" role="button">New Event <span data-feather="plus"></span></a>
+        <a class="btn btn-primary btn mt-2" href="{% url 'lims:select_sample_event_list' %}" role="button">Print Participant List <span data-feather="printer"></span></a>
+        <a class="btn btn-primary btn mt-2" href="{% url 'lims:sample_notice' %}" role="button">Print Notices <span data-feather="printer"></span></a>
+        <a class="btn btn-primary btn mt-2" href="#" role="button">Email Participants <span data-feather="mail"></span></a>
     </div>
     
 

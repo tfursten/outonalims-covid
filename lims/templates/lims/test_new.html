@@ -8,9 +8,9 @@
             <legend class="border-bottom mb-6">Create New Test</legend>
             {{ form|crispy }}
         </fieldset>
-       <div class="form-group pt-3">
+        <div class="d-grid gap-2 d-md-block mt-2">
+            <button class="btn btn-success" type="submit">Add</button>
            <a class="btn btn-outline-danger mr-5" href="{% url 'lims:test_list' %}" role="button">Cancel</a>
-           <button class="btn btn-success" type="submit">Add</button>
        </div>
     </form>
 </div>
