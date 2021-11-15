@@ -8,7 +8,9 @@
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.80.0">
     <title>Out on a LIMS</title>
-
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'lims/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'lims/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'lims/favicon-16x16.png' %}">
 
     {% block head %}{% endblock head %}
 
@@ -22,12 +24,13 @@
 
   </head>
   <body>
-    
 <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
   <a class="navbar-brand col-md-3 col-lg-2 mr-1 px-3" href="{% url 'lims:index' %}">Out on a LIMS</a>
 
 
-
+  <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
 
 
 
@@ -71,11 +74,18 @@
     </li>
   </ul>
   {% endif %}
+  
+ 
 </nav>
+
+
+
+
 
 <div class="container-fluid">
   <div class="row">
     <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+    
       <div class="sidebar-sticky pt-3">
         <ul class="nav flex-column">
           <li class="nav-item">
