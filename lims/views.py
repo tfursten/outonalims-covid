@@ -2,7 +2,7 @@ import io
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -25,7 +25,7 @@ from reportlab_qrcode import QRCodeImage
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from difflib import get_close_matches
-# Create your views here.
+
 
 def index(request):
     return render(request, 'lims/dashboard.html')
@@ -43,7 +43,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         """
         return Project.objects.all()
 
-class ProjectFormView(LoginRequiredMixin, SuccessMessageMixin,CreateView):
+class ProjectFormView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Project
     template_name_suffix = '_new'
     form_class = ProjectForm
@@ -207,9 +207,20 @@ class EventDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== SUBJECTS ================================
-class SubjectListView(LoginRequiredMixin, ListView):
+class SubjectListView(AccessMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'subject_list'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
+
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         """
@@ -218,9 +229,20 @@ class SubjectListView(LoginRequiredMixin, ListView):
         return Subject.objects.all()
 
 
-class SubjectDetailListView(LoginRequiredMixin, ListView):
+class SubjectDetailListView(AccessMixin, ListView):
     template_name_suffix = "_detail_list"
     context_object_name = 'subject_list'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
+
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -242,37 +264,82 @@ class SubjectDetailListView(LoginRequiredMixin, ListView):
         """
         return Subject.objects.all()
 
-class SubjectFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+class SubjectFormView(SuccessMessageMixin, AccessMixin, CreateView):
     model = Subject
     template_name_suffix = '_new'
     form_class = SubjectForm
     
     success_message = "Subject was successfully added"
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
+
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
 
 
-class SubjectDetailView(LoginRequiredMixin, DetailView):
+class SubjectDetailView(AccessMixin, DetailView):
     model = Subject
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
 
-class SubjectUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SubjectUpdateView(SuccessMessageMixin, AccessMixin, UpdateView):
     model = Subject
     template_name_suffix = '_update'
     form_class = SubjectForm
     success_message = "Subject was successfully updated"
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
 
-class SubjectDeleteView(LoginRequiredMixin, DeleteView):
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
+
+class SubjectDeleteView(AccessMixin, DeleteView):
     model = Subject
     success_url = reverse_lazy('lims:subject_list', args=())
+
     def post(self, request, *args, **kwargs):
         try:
             return self.delete(request, *args, **kwargs)
         except ProtectedError:
             return render(request, "lims/protected_error.html")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name="Director").exists():
+            # Redirect the user to somewhere else - add your URL here
+            return render(request, 'lims/not_authorized_error.html')
+
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
 
 
 
