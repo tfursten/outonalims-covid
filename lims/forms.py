@@ -79,7 +79,7 @@ class SubjectForm(ModelForm):
         'gardian_name', 'gardian_relationship', 
         'teacher_name','vaccine_status', 'dose_1',
         'dose_2', 'dose_3', 'prior_covid', 'pneumococcal_vaccine',
-        'pneumococcal_date'
+        'pneumococcal_date', 'notes'
         ]
         widgets = {
             'consent_date': DateInput(),

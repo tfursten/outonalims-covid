@@ -126,6 +126,7 @@ class Subject(models.Model):
         help_text="Has subject been infected with COVID-19 prior to study")
     pneumococcal_vaccine = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
     pneumococcal_date = models.DateField(null=True, blank=True)
+    notes = models.CharField(max_length=300, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
