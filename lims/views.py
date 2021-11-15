@@ -359,6 +359,8 @@ class SampleListView(LoginRequiredMixin, ListView):
         """
         return Sample.objects.all()
 
+
+@login_required
 def add_samples(request):
     form = SelectEventForm()
     if request.method == 'POST':
