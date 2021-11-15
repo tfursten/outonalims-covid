@@ -366,7 +366,7 @@ def add_samples(request):
             return redirect('lims:verify_new_samples', event_id=event)
     return render(request, 'lims/samples_new.html', {'form':form})
 
-
+@login_required
 def verify_subjects(request, event_id):
     event = Event.objects.get(pk=event_id)
     subjects = Sample.get_subjects_at_event(event)
@@ -390,7 +390,7 @@ def verify_subjects(request, event_id):
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
-
+@login_required
 def event_samples(request, event_id):
     event = Event.objects.get(pk=event_id)
     samples = Sample.get_samples_for_event(event)
@@ -398,7 +398,7 @@ def event_samples(request, event_id):
     return render(request, 'lims/samples_for_event.html', context)
     
 
-
+@login_required
 def select_event_for_sample(request):
     form = SelectEventForm()
     if request.method == "POST":
@@ -408,7 +408,7 @@ def select_event_for_sample(request):
             return redirect('lims:event_samples', event_id=event)
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
-
+@login_required
 def select_event_for_sample_list(request):
     form = SelectEventForm()
     if request.method == "POST":
@@ -418,6 +418,7 @@ def select_event_for_sample_list(request):
             return redirect('lims:sample_list', event_id=event)
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
+@login_required
 def sample_notices(request, event_id=None):
     if event_id:
         form = SampleNoticeForm(initial = {'event': event_id})
@@ -431,6 +432,7 @@ def sample_notices(request, event_id=None):
             return sample_notices_pdf(event, notice_text)
     return render(request, 'lims/samples_print_notices.html', {'form': form})
 
+@login_required
 def sample_notices_pdf(event_id, notice_text):
     buffer = io.BytesIO()
     notice_canvas = canvas.Canvas(buffer, pagesize=LETTER)
@@ -469,14 +471,14 @@ def sample_notices_pdf(event_id, notice_text):
 
 
 
-
+@login_required
 def sample_list(request, event_id):
     event = Event.objects.get(pk=event_id)
     samples = Sample.get_samples_for_event(event)
     context = {'samples': samples, 'event': event}
     return render(request, 'lims/sample_list_for_event.html', context=context)
     
-
+@login_required
 def sample_label_options(request, event_id):
     form = SamplePrint()
     if request.method == "POST":
@@ -506,7 +508,8 @@ def get_x_y_coordinates(
             x_coord = left_margin + (x * column)
             y_coord = top_margin + (y * row)
             yield (x_coord * mm, y_coord * mm)
-
+            
+@login_required
 def sample_labels_pdf(
     request, event_id, start_position,
     label_paper, replicates, sort_by1,
