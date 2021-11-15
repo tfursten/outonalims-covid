@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
+from django.contrib.auth.decorators import login_required
+
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -508,7 +510,7 @@ def get_x_y_coordinates(
             x_coord = left_margin + (x * column)
             y_coord = top_margin + (y * row)
             yield (x_coord * mm, y_coord * mm)
-            
+
 @login_required
 def sample_labels_pdf(
     request, event_id, start_position,
