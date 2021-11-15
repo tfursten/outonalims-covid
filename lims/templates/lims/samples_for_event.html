@@ -27,9 +27,9 @@
     </tbody>
     </table>
 
-
-<a class="btn btn-primary btn" href="{% url 'lims:sample_labels_options' event.id %}" role="button">Print Labels <span data-feather="printer"></span></a>
-<a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
-<a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
-
+<div class="d-grid gap-2 d-md-block mt-2">
+    <a class="btn btn-primary btn" href="{% url 'lims:sample_labels_options' event.id %}" role="button">Print Labels <span data-feather="printer"></span></a>
+    <a class="btn btn-outline-primary btn" href="{% url 'lims:sample_list' %}" role="button">Samples <span data-feather="corner-up-left"></span></a>
+    <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+</div>
 {% endblock %}
