@@ -1,12 +1,165 @@
 {% extends "lims/base.html" %}
 {% block content %}
-<h2>Step 1: Create a Project</h2>
-<h2>Step 2: Add Researchers</h2>
-<h2>Step 3: Add Research Locations</h2>
-<h2>Step 4: Add Subject Information</h2>
-<h2>Step 5: Create a Collection Event</h2>
-<h2>Step 6: Print Sample Lables</h2>
-<h2>Step 7: Mark Collected Samples</h2>
+<h3>Step 1: Create a Project</h3>
+<p>Go to the <a href="{% url 'lims:project_list' %}"><span data-feather="inbox"></span> Projects</a> link and then click the 
+    <button type="button" class="btn btn-primary btn-sm">New Project 
+    <span data-feather="plus"></span></button> button. Enter information about the Project and click <button type="button" class="btn btn-success btn-sm">Add</button>.
+</p>
+<h3>Step 2: Add Researchers</h3>
+<p>To add Researcher info, go to the <a href="{% url 'lims:researcher_list' %}"><span data-feather="user"></span> Researchers</a> link and click the <button type="button" class="btn btn-primary btn-sm">New Researcher 
+    <span data-feather="plus"></span></button> button. Enter information about each Researcher on the Project and then click <button type="button" class="btn btn-success btn-sm">Add</button>.
+</p>
+<h3>Step 3: Add Research Locations</h3>
+<p>Research Locations help define where groups of Subjects are located. To add a new Location go to the 
+    <a href="{% url 'lims:location_list' %}"><span data-feather="map-pin"></span> Locations</a> link and 
+    click the <button type="button" class="btn btn-primary btn-sm">New Location 
+    <span data-feather="plus"></span></button> button.
+    You must provide a unique (and descriptive) name for the Location and link it to an existing Project.
+</p>
+<h3>Step 4: Add Subject Information</h3>
+<p>Subjects can be added by anyone with the appropriate role assigned by the admin.
+    To add a new Subject, go to the <a href="{% url 'lims:subject_list' %}"><span data-feather="users"></span> Subjects</a>
+    link and click the <button type="button" class="btn btn-primary btn-sm">New Subject 
+        <span data-feather="plus"></span></button> button. Each new Subject must be assigned 
+        to an existing Location. The full detailed list of all Subject information can be viewed, downloaded, and printed
+        by clicking on the <button type="button" class="btn btn-primary btn-sm">Subject Detail List 
+            <span data-feather="printer"></span></button> button on the Subjects page. 
+        This can also be downloaded as a 
+        <button type="button" class="btn btn-outline-secondary btn-sm">PDF</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">CSV</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">Excel</button> or copied to the clipboard
+        <button type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
+</p>
+<h3>Step 5: Create a Collection Event</h3>
+<p>A collection Event can be scheduled for visiting one or more research locations. 
+    To create a new Event, go to the <a href="{% url 'lims:event_list' %}"><span data-feather="calendar"></span> Events</a>
+    link and click the <button type="button" class="btn btn-primary btn-sm">New Event 
+        <span data-feather="plus"></span></button> button.
+        Each Event must have a unique (and descriptive) name, one or more Locations selected and a collection date.
+        Researchers that will be present at the event may also be selected. 
+</p>
+<h3>Step 6: Create Samples</h3>
+<p>Once an Event is scheduled, Samples can be generated for each of the Subjects at the collection Locations.
+    To do this, go to the <a href="{% url 'lims:sample_list' %}"><span data-feather="droplet"></span> Samples</a>
+    link and click the <button type="button" class="btn btn-primary btn-sm">Add Samples 
+        <span data-feather="plus"></span></button> button.
+        On the next page, select the Event that you want to generate samples for (only events with dates scheduled in the future will show up)
+        and click <button type="button" class="btn btn-success btn-sm">Add</button>.
+        You will then be provided with a list of Samples that will be created for each of the Subjects at the Event.
+        Click the <button type="button" class="btn btn-success btn-sm">Confirm</button> button to add the Samples. 
+</p>
+<h3>Step 7: Print Sample Lables</h3>
+<p>To print Sample labels, go to the <a href="{% url 'lims:sample_list' %}"><span data-feather="droplet"></span> Samples</a>
+    link and then click the <button type="button" class="btn btn-primary btn-sm">Print Sample Labels 
+        <span data-feather="printer"></span></button> button.
+        On the next page, select the Event that you want to print the labels for and click
+        <button type="button" class="btn btn-success btn-sm">Submit</button>.
+        You will be provided with a list of the existing Samples and Subject information.
+        Click the <button type="button" class="btn btn-success btn-sm">Print Labels <span data-feather="printer"></span></button> button
+        and select the appropriate printing options. 
+        Change the start position to finish off a partially used label sheet.
+        Change the number of replicates if you need more than one label per Sample.
+        Select the label paper from the dropdown or add a new label sheet type by clicking the 
+        <button type="button" class="btn btn-outline-success btn-sm">Add New Label Format</button> button.
+        Finally select how you want the labels sorted.
+        Clicking the <button type="button" class="btn btn-success btn-sm">Print</button> button will download a 
+        pdf that can be printed or saved.
+</p>
+<h3>Step 8: Mark Collected Samples</h3>
+<p>After a collection Event, the Sample labels should be scanned in, and marked with a status
+    (e.g. <span class="badge bg-success">Collected</span>,
+    <span class="badge bg-warning">Refused</span>,
+    <span class="badge bg-warning">Absent</span>, etc.).
+    The best way to do this is by clicking on the QR scanner button <button type="button" class="btn btn-outline-secondary btn-sm"><span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" class="bi bi-upc-scan" viewBox="0 0 16 16">
+        <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+      </svg></span></button> on the top of the page. This will open up a window that will allow you to scan the QR code on the Sample label using your phone camera.
+      Once the QR code is scanned, click the <button type="button" class="btn btn-success btn-sm">Search</button> button
+      and the Sample detail page will be loaded. Click the <button type="button" class="btn btn-success btn-sm">Edit <span data-feather="edit"></span></button>
+      button to change the status of the Sample. Alternatively, the Sample ID can be typed into the search bar at the top of the page or on the Samples page.
+</p>
+<h3>Step 9: Mark the Storage Location of the samples</h3>
+<p>To add a storage box, go to the <a href="{% url 'lims:box_list' %}"><span data-feather="archive"></span> Storage Boxes</a> link
+    and click the <button type="button" class="btn btn-primary btn-sm">New Box 
+        <span data-feather="plus"></span></button> button.
+        Provide a unique (and descriptive) name and location for the storage box and click
+        <button type="button" class="btn btn-success btn-sm">Add</button>.
+        To mark the storage location of a Sample, you can follow the same proceedure to look up the Sample as in Step 8.
+        Click update and select the appropriate Storage Box and the position within the Box and then click 
+        <button type="button" class="btn btn-success btn-sm">Update</button>.
+</p>
+<h3>Step 10: Create a Pool</h3>
+<p>To create a Pool of Samples, go to the <a href="{% url 'lims:pool_list' %}"><span data-feather="git-merge"></span> Pools</a>
+    link and click the <button type="button" class="btn btn-primary btn-sm">Add Pools 
+        <span data-feather="plus"></span></button> button.
+        Provide a unique (and descriptive) name for the Pool and other information and then click
+        <button type="button" class="btn btn-success btn-sm">Add</button>.
+        On the next page you can add Samples to the pool by clicking the
+        <button type="button" class="btn btn-success btn-sm">Add Samples to Pool <span data-feather="plus"></span></button>
+        button or you can add existing Pools to the Pool by clicking the 
+        <button type="button" class="btn btn-success btn-sm">Add Pools to Pool <span data-feather="plus"></span></button>
+        button. On the "Add Samples to Pool" page, Samples can be added by clicking the <button type="button" class="btn btn-outline-secondary btn-sm"><span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" class="bi bi-upc-scan" viewBox="0 0 16 16">
+            <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+          </svg></span></button> button and scanning the QR code on the sample label or by typing in the Sample ID in the search bar. 
+          Once the Sample shows up in the table you can click to select it (you can select multiple Samples from the table in this way).
+          Click <button type="button" class="btn btn-success btn-sm">Add</button> to add the Samples to the Pool.
+          Note: Only Samples that have a <span class="badge bg-success">Collected</span> status will show up on this page. 
+</p>
+<h3>Step 11: Update a Pool Status</h3>
+<p>Once the Pool has been tested, go to the <a href="{% url 'lims:pool_list' %}"><span data-feather="git-merge"></span> Pools</a>
+    link and search for the Pool using the search bar above the table.
+    Click on the Pool name in the table to go to the detail page and then click
+    <button type="button" class="btn btn-success btn-sm">Edit <span data-feather="edit"></span></button>.
+    On the edit page you can change the status to 
+    <span class="badge bg-danger">Positive</span> or <span class="badge bg-success">Negative</span>
+    and then click <button type="button" class="btn btn-success btn-sm">Update</button>.
+    For positive Pools, you can produce a report to provide to the institution by clicking the 
+    <button type="button" class="btn btn-success btn-sm">Print Report <span data-feather="printer"></span></button> button.
+    The next page will show a list of the Subjects that were in the pool and this can be downloaded as a
+    <button type="button" class="btn btn-outline-secondary btn-sm">PDF</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">CSV</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">Excel</button> or copied to the clipboard
+        <button type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
+    Once the institution is notified, update the Pool notification status to mark as completed.
+</p>
+<h3>Step 12: Add Sample Results</h3>
+<p>Tests can be added by going to the <a href="{% url 'lims:pool_list' %}"><span data-feather="clipboard"></span> Tests</a>
+    link and clicking on the <button type="button" class="btn btn-primary btn-sm">New Test 
+        <span data-feather="plus"></span></button> button. Provide a unique (and descriptive) name for the Test,
+        what it detects, and any information about the protocol and then click
+        <button type="button" class="btn btn-success btn-sm">Add</button>.
+        Results for each Sample can be added by searching for the Sample and clicking
+        <button type="button" class="btn btn-success btn-sm">Add Result <span data-feather="edit"></span></button>.
+        Here you will select the Test that was performed and the result details. Click <button type="button" class="btn btn-success btn-sm">Add</button>
+        to save. A list of all sample results can be viewed by going to the <a href="{% url 'lims:result_list' %}"><span data-feather="thermometer"></span> Test Results</a>
+        link.
+</p>
+
+
+<h3>Email Participants</h3>
+<p>To email the participants for a scheduled Event, go the the <a href="{% url 'lims:event_list' %}"><span data-feather="calendar"></span> Events</a>
+    link and click on the <button type="button" class="btn btn-success btn-sm">Email Participants <span data-feather="mail"></span></button> button.
+    This will open a new email in your email client with the email addresses for each Event participant (if available) filled in.
+</p>
+<h3>Print Notice Slips for Participants</h3>
+<p>To print notice slips for participants in a scheduled event, go to the <a href="{% url 'lims:event_list' %}"><span data-feather="calendar"></span> Events</a>
+     link and click on the <button type="button" class="btn btn-success btn-sm">Print Notices <span data-feather="printer"></span></button> button.
+     You will be asked to select the Event and then you will fill in the text for the notice slip.
+     The data in curly braces (e.g. {FIRST_NAME}, {LAST_NAME}) will automatically be filled in with the information for each participant.
+     When finished click <button type="button" class="btn btn-success btn-sm">Submit</button>.
+     A PDF will be downloaded with 5 slips per page.
+</p>
+<h3>Print Participant List</h3>
+<p>A participant list for each Event can be downloaded and printed.
+    Go to the <a href="{% url 'lims:event_list' %}"><span data-feather="calendar"></span> Events</a>
+    link and click on the<button type="button" class="btn btn-success btn-sm">Print Participant List <span data-feather="printer"></span></button>
+    button. You will be ased to select the Event and then click the <button type="button" class="btn btn-success btn-sm">Submit</button> button.
+    You will be provided with a table of participants for the Event (First Name, Last Name, Classroom, and Grade).
+    This can be downloaded as a
+    <button type="button" class="btn btn-outline-secondary btn-sm">PDF</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">CSV</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm">Excel</button> or copied to the clipboard
+        <button type="button" class="btn btn-outline-secondary btn-sm">Copy</button>.
+</p>
 
 
 {% endblock content %}
