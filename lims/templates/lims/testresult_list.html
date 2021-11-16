@@ -63,8 +63,9 @@
 <script>
     $(document).ready( function () {
     $('#result_table').DataTable({
-    rowReorder: true,
+    rowReorder: false,
     fixedHeader: true,
+    order: [],
     autoWidth: false,
     dom: 'B<"clear">lfrtip',
     columns: [
