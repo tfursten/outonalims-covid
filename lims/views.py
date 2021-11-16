@@ -29,6 +29,38 @@ from reportlab.pdfgen import canvas
 from difflib import get_close_matches
 
 
+
+class SamplePermissionsMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission(request)
+        if self.request.user.groups.filter(name="Staff-DataEntry").exists():
+            # Redirect the user to not auth page
+            return render(request, 'lims/not_authorized_error.html')
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
+
+
+
+class SubjectPermissionsMixin(AccessMixin):
+    """
+    Lab staff does not have permissions to view subject information
+    This mixin is placed on all subject info views and redirects
+    lab staff to non authorized page.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # This will redirect to the login view
+            return self.handle_no_permission(request)
+        if self.request.user.groups.filter(name="Staff-Lab").exists():
+            # Redirect the user to not auth page
+            return render(request, 'lims/not_authorized_error.html')
+        # Checks pass, let http method handlers process the request
+        return super().dispatch(request, *args, **kwargs)
+
+
+
 def index(request):
     return render(request, 'lims/dashboard.html')
 
@@ -38,12 +70,8 @@ def index(request):
 class ProjectListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'project_list'
+    model = Project
 
-    def get_queryset(self):
-        """
-        Return all projects
-        """
-        return Project.objects.all()
 
 class ProjectFormView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Project
@@ -83,12 +111,8 @@ class ProjectDeleteView(LoginRequiredMixin, DeleteView):
 class LocationListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'location_list'
+    model = Location
 
-    def get_queryset(self):
-        """
-        Return all locations
-        """
-        return Location.objects.all()
 
 class LocationFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Location
@@ -128,12 +152,8 @@ class LocationDeleteView(LoginRequiredMixin, DeleteView):
 class ResearcherListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'researcher_list'
+    model = Researcher
 
-    def get_queryset(self):
-        """
-        Return all locations
-        """
-        return Researcher.objects.all()
 
 class ResearcherFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Researcher
@@ -170,12 +190,8 @@ class ResearcherDeleteView(LoginRequiredMixin, DeleteView):
 class EventListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'event_list'
+    model = Event
 
-    def get_queryset(self):
-        """
-        Return all locations
-        """
-        return Event.objects.all()
 
 class EventFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Event
@@ -209,42 +225,16 @@ class EventDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== SUBJECTS ================================
-class SubjectListView(AccessMixin, ListView):
+class SubjectListView(SubjectPermissionsMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'subject_list'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
-
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        """
-        Return all subjects
-        """
-        return Subject.objects.all()
+    model = Subject
 
 
-class SubjectDetailListView(AccessMixin, ListView):
+class SubjectDetailListView(SubjectPermissionsMixin, ListView):
     template_name_suffix = "_detail_list"
     context_object_name = 'subject_list'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
-
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -266,44 +256,22 @@ class SubjectDetailListView(AccessMixin, ListView):
         """
         return Subject.objects.all()
 
-class SubjectFormView(SuccessMessageMixin, AccessMixin, CreateView):
+class SubjectFormView(SuccessMessageMixin, SubjectPermissionsMixin, CreateView):
     model = Subject
     template_name_suffix = '_new'
     form_class = SubjectForm
     
     success_message = "Subject was successfully added"
-    
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
-
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
 
 
-class SubjectDetailView(AccessMixin, DetailView):
+class SubjectDetailView(SubjectPermissionsMixin, DetailView):
     model = Subject
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
 
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
-
-
-class SubjectUpdateView(SuccessMessageMixin, AccessMixin, UpdateView):
+class SubjectUpdateView(SuccessMessageMixin, SubjectPermissionsMixin, UpdateView):
     model = Subject
     template_name_suffix = '_update'
     form_class = SubjectForm
@@ -311,18 +279,8 @@ class SubjectUpdateView(SuccessMessageMixin, AccessMixin, UpdateView):
     def get_success_url(self):
         return reverse('lims:subject_detail', args=(self.object.id,))
     
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
 
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
-
-class SubjectDeleteView(AccessMixin, DeleteView):
+class SubjectDeleteView(SubjectPermissionsMixin, DeleteView):
     model = Subject
     success_url = reverse_lazy('lims:subject_list', args=())
 
@@ -349,15 +307,11 @@ class SubjectDeleteView(AccessMixin, DeleteView):
 
 # ============== SAMPLES ================================
 
-class SampleListView(LoginRequiredMixin, ListView):
+class SampleListView(SamplePermissionsMixin, ListView):
     template_name = "lims/sample_list.html"
     context_object_name = 'sample_list'
+    model = Sample
 
-    def get_queryset(self):
-        """
-        Return all samples
-        """
-        return Sample.objects.all()
 
 
 @login_required
@@ -580,7 +534,7 @@ def sample_labels_pdf(
         filename='{}_sample_labels.pdf'.format(event.name.replace(" ", "_").replace(".", "")))
 
 
-class SampleDetailView(LoginRequiredMixin, DetailView):
+class SampleDetailView(SamplePermissionsMixin, DetailView):
     model = Sample
     
     def get_context_data(self, **kwargs):
@@ -589,7 +543,7 @@ class SampleDetailView(LoginRequiredMixin, DetailView):
         context['results'] = results
         return context
 
-class SampleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+class SampleUpdateView(SamplePermissionsMixin, LoginRequiredMixin, UpdateView):
     model = Sample
     template_name_suffix = '_update'
     form_class = SampleForm
@@ -599,7 +553,7 @@ class SampleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
 # ============== RESULTS ================================
 
-class ResultListView(LoginRequiredMixin, ListView):
+class ResultListView(SamplePermissionsMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
 
@@ -609,7 +563,7 @@ class ResultListView(LoginRequiredMixin, ListView):
         """
         return TestResult.objects.all()
 
-class ResultFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+class ResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
     model = TestResult
     template_name_suffix = '_new'
     form_class = TestResultForm
@@ -618,7 +572,7 @@ class ResultFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('lims:result_detail', args=(self.object.id,))
 
-class ResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+class ResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
     model = TestResult
     template_name_suffix = '_sample_new'
     form_class = TestResultForm
@@ -637,11 +591,11 @@ class ResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         
 
 
-class ResultDetailView(LoginRequiredMixin, DetailView):
+class ResultDetailView(SamplePermissionsMixin, DetailView):
     model = TestResult
 
 
-class ResultUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+class ResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
     model = TestResult
     template_name_suffix = '_update'
     form_class = TestResultForm
@@ -650,7 +604,7 @@ class ResultUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
         return reverse('lims:result_detail', args=(self.object.id,))
 
 
-class ResultDeleteView(LoginRequiredMixin, DeleteView):
+class ResultDeleteView(SamplePermissionsMixin, DeleteView):
     model = TestResult
     success_url = reverse_lazy('lims:result_list', args=())
     def post(self, request, *args, **kwargs):
@@ -778,7 +732,7 @@ class PoolDetailView(LoginRequiredMixin, DetailView):
     model = Pool
 
 
-class PoolReportDetailView(LoginRequiredMixin, DetailView):
+class PoolReportDetailView(SubjectPermissionsMixin, DetailView):
     model = Pool
     template_name_suffix = "_report_detail"
 
