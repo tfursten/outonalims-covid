@@ -1,7 +1,7 @@
 {% extends "lims/base.html" %}
 {% block content %}
 <div class="card"">
-    <h1 class="card-header">User: {{ user.username }}</h1>
+    <h1 class="card-header">User: {{ user.first_name }} {{ user.last_name }}</h1>
     <ul class="list-group list-group-flush">
       <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
       <li class="list-group-item"><strong>Role:</strong> {{ user.groups.first }}</li>
