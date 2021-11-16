@@ -433,11 +433,11 @@ def sample_notices(request, event_id=None):
         if form.is_valid():
             event = request.POST.get('event')
             notice_text = request.POST.get('notice_text')
-            return sample_notices_pdf(event, notice_text)
+            return sample_notices_pdf(request, event, notice_text)
     return render(request, 'lims/samples_print_notices.html', {'form': form})
 
 @login_required
-def sample_notices_pdf(event_id, notice_text):
+def sample_notices_pdf(request, event_id, notice_text):
     buffer = io.BytesIO()
     notice_canvas = canvas.Canvas(buffer, pagesize=LETTER)
     page_width, page_height = LETTER
