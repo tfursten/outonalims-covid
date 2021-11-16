@@ -19,7 +19,7 @@ class Researcher(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ("name", )
 
     def __str__(self):
         return self.name
@@ -32,7 +32,7 @@ class Test(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on", )
 
     def __str__(self):
         return str(self.name)
@@ -49,7 +49,7 @@ class Project(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ['-created_on',]
+        ordering = ("-created_on",)
 
     def __str__(self):
         return str(self.name)
@@ -130,7 +130,7 @@ class Subject(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ('-created_on', )
+        ordering = ("last_name", "first_name" )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -158,7 +158,7 @@ class Box(models.Model):
     def __str__(self):
         return str(self.box_name)
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on", )
         verbose_name_plural = "boxes"
 
 
@@ -172,7 +172,7 @@ class Event(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-date", )
     
     def __str__(self):
         return str(self.name)
@@ -223,7 +223,7 @@ class Sample(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on", "collection_event", "location")
     
     def __str__(self):
         return str(self.name)
@@ -276,7 +276,7 @@ class TestResult(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on",)
 
     def __str__(self):
         return str(self.name)
@@ -305,7 +305,7 @@ class Pool(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on", "status")
 
     def __str__(self):
         return str(self.name)
@@ -355,7 +355,7 @@ class Label(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ("-created_on",)
 
     def __str__(self):
         return str(self.name)

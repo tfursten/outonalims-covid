@@ -41,7 +41,8 @@
 <script>
     $(document).ready( function () {
     $('#participant_table').DataTable({
-    rowReorder: true,
+    rowReorder: false,
+    order: [[4, 'asc'], [3, 'asc'], [2, 'asc'], [1, 'asc']],
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',
     buttons: {

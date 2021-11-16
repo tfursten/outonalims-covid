@@ -53,9 +53,10 @@
 <script>
     $(document).ready( function () {
     $('#event_table').DataTable({
-    rowReorder: true,
+    rowReorder: false,
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',
+    order: [],
     buttons: {
         name: 'primary',
         buttons: [ 

@@ -43,8 +43,9 @@
 <script>
     $(document).ready( function () {
     $('#test_table').DataTable({
-    rowReorder: true,
+    rowReorder: false,
     fixedHeader: true,
+    order: [],
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
