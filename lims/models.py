@@ -234,15 +234,17 @@ class Sample(models.Model):
         return str(self.name)
 
     
-    def get_samples_for_event(event, sort_by1="GRADE", sort_by2="LOCATION", sort_by3="NAME"):
+    def get_samples_for_event(event, sort_by1="GRADE", sort_by2="LOCATION", sort_by3="NAME", sort_by4="TYPE"):
         sortby = {
-            'GRADE': 'subject__grade',
-            'NAME': 'subject__last_name',
-            'LOCATION': 'subject__location',
-            'TYPE': 'sample_type'
+            'GRADE': ['subject__grade'],
+            'NAME': ['subject__last_name', 'subject__first_name'],
+            'LOCATION': ['subject__location'],
+            'TYPE': ['sample_type']
             }
+        sortby_list = sortby[sort_by1] + sortby[sort_by2] + sortby[sort_by3] + sortby[sort_by4]
+        print(*sortby_list)
         samples = Sample.objects.filter(collection_event=event).order_by(
-            sortby[sort_by1], sortby[sort_by2], sortby[sort_by3])
+            *sortby_list)
         return samples
 
     def get_subjects_at_event(event, sort_by1="grade", sort_by2="location", sort_by3="last_name"):
