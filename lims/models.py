@@ -131,13 +131,16 @@ class Subject(models.Model):
 
     class Meta:
         ordering = ("last_name", "first_name" )
+        constraints = [
+        models.UniqueConstraint(fields=["first_name", "last_name"], name='unique name')
+        ]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not self.subject_ui: # only if subject_ui is blank
             existing_ids = [subj.subject_ui for subj in Subject.objects.all() if subj.subject_ui]
             cualid = create_ids(1, 6, existing_ids=existing_ids)
-            self.subject_ui = [cid[0] for cid in create_ids(1, 6, existing_ids=existing_ids)][0]
+            self.subject_ui = [cid[0] for cid in cualid][0]
             self.save()
     
     def get_number_of_samples(self, collection_status=None):

@@ -290,17 +290,6 @@ class SubjectDeleteView(SubjectPermissionsMixin, DeleteView):
         except ProtectedError:
             return render(request, "lims/protected_error.html")
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # This will redirect to the login view
-            return self.handle_no_permission()
-        if not self.request.user.groups.filter(name="Director").exists():
-            # Redirect the user to somewhere else - add your URL here
-            return render(request, 'lims/not_authorized_error.html')
-
-        # Checks pass, let http method handlers process the request
-        return super().dispatch(request, *args, **kwargs)
-
 
 
 
