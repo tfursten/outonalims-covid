@@ -18,6 +18,9 @@
         <strong>Subject: </strong><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a>
     </div>
     <div class="card-header">
+        <strong>Sample Type: </strong>{{ sample.sample_type }}
+    </div>
+    <div class="card-header">
         <strong>Collection Event: </strong><a href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a>
     </div>
     <div class="card-body">

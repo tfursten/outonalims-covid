@@ -13,6 +13,7 @@
         <th scope="col">Subject ID</th>
         <th scope="col">First Name</th>
         <th scope="col">Last Name</th>
+        <th scope="col">Sample Type</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +23,7 @@
         <td><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
         <td>{{ sample.subject.first_name }}</td>
         <td>{{ sample.subject.last_name }}</td>
+        <td>{{ sample.sample_type }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -212,8 +212,13 @@ class Sample(models.Model):
     ('Pending', 'Pending'),
     ('Withdrew', 'Withdrew')
     ]
+    SITE = [
+        ('Nasal', 'Nasal'),
+        ('Oral', 'Oral')
+    ]
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
+    sample_type = models.CharField(max_length=15, choices=SITE, default='Nasal')
     box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
     box_position = models.IntegerField(null=True, blank=True)
@@ -223,13 +228,13 @@ class Sample(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     
     class Meta:
-        ordering = ("-created_on", "collection_event", "location")
+        ordering = ("-created_on", "collection_event", "location", "sample_type")
     
     def __str__(self):
         return str(self.name)
-    
 
-    def get_samples_for_event(event, sort_by1="NAME", sort_by2="GRADE", sort_by3="LOCATION"):
+    
+    def get_samples_for_event(event, sort_by1="GRADE", sort_by2="LOCATION", sort_by3="NAME"):
         sortby = {
             'GRADE': 'subject__grade',
             'NAME': 'subject__last_name',
@@ -239,19 +244,37 @@ class Sample(models.Model):
             sortby[sort_by1], sortby[sort_by2], sortby[sort_by3])
         return samples
 
-    def get_subjects_at_event(event):
+    def get_subjects_at_event(event, sort_by1="grade", sort_by2="location", sort_by3="last_name"):
+        """
+        Return unique subjects added for an event
+        """
+        subject_pks = set(
+                [sample.subject.id for sample
+                in Sample.objects.filter(collection_event=event)])
+        subjects = Subject.objects.filter(pk__in=subject_pks).order_by(sort_by1, sort_by2, sort_by3)
+        print(subjects)
+        return subjects
+      
+
+        
+
+    def get_subjects_created_at_event(event, sample_type):
         """
         Returns a dictionary of subjects assigned to the same
         location as event. If a subject already has an associated
-        sample for this event it will be listed under the 'created'
-        key, otherwise it will be listed under the 'not_created' key.
+        sample for this event and sample type it will be listed under
+        the 'created' key, otherwise it will be listed under the
+        'not_created' key.
         """
         subjects = event.get_subjects_at_same_location()
         subjects_dict = {'created': [], 'not_created': []}
         for subject in subjects:
             # Check if a sample has already been made for this event with this subject
-            sample = Sample.objects.filter(collection_event=event).filter(subject=subject)
-            if len(sample):
+            sample = Sample.objects.filter(
+                collection_event=event).filter(
+                    subject=subject).filter(
+                        sample_type=sample_type)
+            if sample.exists():
                 subjects_dict['created'].append(subject)
             else:
                 subjects_dict['not_created'].append(subject)
