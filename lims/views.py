@@ -451,11 +451,13 @@ def sample_label_options(request, event_id):
             sort_by1 = request.POST.get('sort_by1')
             sort_by2 = request.POST.get('sort_by2')
             sort_by3 = request.POST.get('sort_by3')
+            sort_by4 = request.POST.get('sort_by4')
 
             return redirect('lims:sample_label_pdf',
                 event_id=event_id, start_position=start_position,
                 label_paper=label_paper, replicates=reps,
-                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3)
+                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
+                sort_by4=sort_by4)
     return render(request, 'lims/sample_print_options.html', {'form': form})    
 
 
@@ -474,14 +476,14 @@ def get_x_y_coordinates(
 def sample_labels_pdf(
     request, event_id, start_position,
     label_paper, replicates, sort_by1,
-    sort_by2, sort_by3):
+    sort_by2, sort_by3, sort_by4):
     """
     Use Cual-id code to generate labels with barcodes
     """
     # Create a file-like buffer to receive PDF data.
 
     event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event, sort_by1, sort_by2, sort_by3)
+    samples = Sample.get_samples_for_event(event, sort_by1, sort_by2, sort_by3, sort_by4)
     ids = [sample.name for sample in samples]
     locations = [str(sample.subject.location) for sample in samples]
     grades = [str(sample.subject.grade) for sample in samples]
