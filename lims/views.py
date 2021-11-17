@@ -321,19 +321,22 @@ def add_samples(request):
         form = SelectEventForm(request.POST)
         if form.is_valid():
             event = request.POST.get('event')
-            return redirect('lims:verify_new_samples', event_id=event)
+            sample_type = request.POST.get('sample_type')
+            return redirect(
+                'lims:verify_new_samples',
+                event_id=event, sample_type=sample_type)
     return render(request, 'lims/samples_new.html', {'form':form})
 
 @login_required
-def verify_subjects(request, event_id):
+def verify_subjects(request, event_id, sample_type):
     event = Event.objects.get(pk=event_id)
-    subjects = Sample.get_subjects_at_event(event)
+    subjects = Sample.get_subjects_created_at_event(event, sample_type)
     if request.method == "GET":
         return render(
             request, 'lims/verify_new_samples.html',
             {'created': subjects['created'],
             'not_created': subjects['not_created'],
-            'event_name': event.name})
+            'event_name': event.name, 'sample_type': sample_type})
     elif request.method == "POST":
         n = len(subjects['not_created'])
         size = 6
@@ -344,7 +347,8 @@ def verify_subjects(request, event_id):
             # create new samples for subjects that have
             # not been added.
             sample = Sample(name = cual_id, subject=subject, 
-                collection_event=event, location=subject.location)
+                collection_event=event, location=subject.location,
+                sample_type=sample_type)
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
@@ -358,9 +362,9 @@ def event_samples(request, event_id):
 
 @login_required
 def select_event_for_sample(request):
-    form = SelectEventForm()
+    form = SelectEventForm(hide_type=True)
     if request.method == "POST":
-        form = SelectEventForm(request.POST)
+        form = SelectEventForm(request.POST, hide_type=True)
         if form.is_valid():
             event = request.POST.get('event')
             return redirect('lims:event_samples', event_id=event)
@@ -368,12 +372,12 @@ def select_event_for_sample(request):
 
 @login_required
 def select_event_for_sample_list(request):
-    form = SelectEventForm()
+    form = SelectEventForm(hide_type=True)
     if request.method == "POST":
-        form = SelectEventForm(request.POST)
+        form = SelectEventForm(request.POST, hide_type=True)
         if form.is_valid():
             event = request.POST.get('event')
-            return redirect('lims:sample_list', event_id=event)
+            return redirect('lims:subject_list', event_id=event)
     return render(request, 'lims/samples_print_labels.html', {'form': form})
 
 @login_required
@@ -383,7 +387,7 @@ def sample_notices(request, event_id=None):
     else:
         form = SampleNoticeForm()
     if request.method == "POST":
-        form = SelectEventForm(request.POST)
+        form = SelectEventForm(request.POST, hide_type=True)
         if form.is_valid():
             event = request.POST.get('event')
             notice_text = request.POST.get('notice_text')
@@ -396,18 +400,17 @@ def sample_notices_pdf(request, event_id, notice_text):
     notice_canvas = canvas.Canvas(buffer, pagesize=LETTER)
     page_width, page_height = LETTER
     event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event, 'GRADE', 'NAME', 'LOCATION')
-    ids = [sample.name for sample in samples]
-    teachers = [str(sample.subject.teacher_name) for sample in samples]
-    grades = [str(sample.subject.grade) for sample in samples]
-    last_names = [str(sample.subject.last_name) for sample in samples]
-    first_names = [str(sample.subject.first_name) for sample in samples]
+    subjects = Sample.get_subjects_at_event(event)
+    teachers = [str(subject.teacher_name) for subject in subjects]
+    grades = [str(subject.grade) for subject in subjects]
+    last_names = [str(subject.last_name) for subject in subjects]
+    first_names = [str(subject.first_name) for subject in subjects]
     row = 0
     max_row = 5
     x_start=10
     y_start=(page_height / mm) - 10
     y_space = 55
-    for (id_, ln, fn, teacher, grade) in zip(ids, last_names, first_names, teachers, grades):
+    for (ln, fn, teacher, grade) in zip(last_names, first_names, teachers, grades):
         y = y_start - (row * y_space)
         textobject = notice_canvas.beginText(x_start * mm, y * mm)
         text = notice_text.format(FIRST_NAME=fn, LAST_NAME=ln, GRADE=grade, TEACHER=teacher)
@@ -430,11 +433,11 @@ def sample_notices_pdf(request, event_id, notice_text):
 
 
 @login_required
-def sample_list(request, event_id):
+def subject_list(request, event_id):
     event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event)
-    context = {'samples': samples, 'event': event}
-    return render(request, 'lims/sample_list_for_event.html', context=context)
+    subjects = Sample.get_subjects_at_event(event)
+    context = {'subjects': subjects, 'event': event}
+    return render(request, 'lims/subject_list_for_event.html', context=context)
     
 @login_required
 def sample_label_options(request, event_id):
@@ -484,6 +487,7 @@ def sample_labels_pdf(
     grades = [str(sample.subject.grade) for sample in samples]
     last_names = [str(sample.subject.last_name) for sample in samples]
     first_names = [str(sample.subject.first_name) for sample in samples]
+    sample_types = [str(sample.sample_type) for sample in samples]
 
     label = Label.objects.get(pk=label_paper)
     buffer = io.BytesIO()
@@ -501,7 +505,7 @@ def sample_labels_pdf(
         label.label_width, label.label_height,
         label.row_margin, label.col_margin))
     c = int(start_position) - 1
-    for (id_, ln, fn, loc, grade) in zip(ids, last_names, first_names, locations, grades):
+    for (id_, ln, fn, loc, grade, stype) in zip(ids, last_names, first_names, locations, grades, sample_types):
         for rep in range(int(replicates)):
             x = xy_coords[c][0] + (label.left_padding * mm)
             y = xy_coords[c][1] - (label.top_padding * mm)
@@ -509,7 +513,7 @@ def sample_labels_pdf(
             qr_code = QRCodeImage(id_, size=qr_size * mm)
             qr_code.drawOn(barcode_canvas, x , y - ((qr_size - 4) * mm))
             barcode_canvas.setFont("Helvetica", label.font_size)
-            barcode_canvas.drawString(x + (qr_size * mm), y, "{0}".format(id_))
+            barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(id_, stype))
             # Add line for last name and first name, cuts off last name before max_chars so that some characters
             # from first name will be included if full name does not fit.
             barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(

@@ -19,6 +19,7 @@
                 <th>Collection Event</th>
                 <th>Location</th>
                 <th>Collection Status</th>
+                <th>Sample Type</th>
                 <th>Box ID</th>
                 <th>Box Position</th>
             </tr>
@@ -39,6 +40,7 @@
                     {% else %}
                     <td><span class="badge bg-warning">{{ sample.collection_status }}</span></td>
                     {% endif %}
+                    <td>{{ sample.sample_type }}</td>
                     <td>{{ sample.box.box_name }}</td>
                     <td>{{ sample.box_position }}</td>
                 </tr>

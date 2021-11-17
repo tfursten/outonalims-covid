@@ -12,6 +12,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 
+
 class DateInput(forms.DateInput):
     input_type = 'date'
 
@@ -122,13 +123,23 @@ class BoxForm(ModelForm):
         fields = ['box_name', 'storage_location', 'storage_shelf']
 
 
-class SelectEventForm(forms.Form):
+class SelectEventForm(ModelForm):
+    class Meta:
+        model = Sample
+        fields = ['event', 'sample_type']
     today = datetime.date.today()
     # Only select events that have not already completed
     event = forms.ModelChoiceField(
         queryset=Event.objects.filter(date__gte=today),
         help_text="If an event is not listed it is because the event date has passed and event is completed. If the event date is incorrect, you can edit it on the Event page."
         )
+
+    def __init__(self, *args, **kwargs):
+        hide_condition = kwargs.pop('hide_type', None)
+        super(SelectEventForm, self).__init__(*args, **kwargs)
+        if hide_condition:
+            del self.fields['sample_type']
+ 
 
 class SampleNoticeForm(ModelForm):
     initial = """Name: {FIRST_NAME} {LAST_NAME}

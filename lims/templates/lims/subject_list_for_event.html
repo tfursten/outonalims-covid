@@ -17,13 +17,13 @@
             </tr>
         </thead>
         <tbody>
-            {% for sample in samples %}
+            {% for subject in subjects %}
                 <tr>
                     <td>{{ event.name }}</td>
-                    <td>{{ sample.subject.first_name }}</td>
-                    <td>{{ sample.subject.last_name }}</td>
-                    <td>{{ sample.subject.location.name }}</td>
-                    <td>{{ sample.subject.grade }}</td>
+                    <td>{{ subject.first_name }}</td>
+                    <td>{{ subject.last_name }}</td>
+                    <td>{{ subject.location.name }}</td>
+                    <td>{{ subject.grade }}</td>
                 </tr>
             {% endfor %}
         </tbody>
