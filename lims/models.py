@@ -228,7 +228,7 @@ class Sample(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
     
     class Meta:
-        ordering = ("-created_on", "collection_event", "location", "sample_type")
+        ordering = ("subject", "collection_event", "location", "sample_type")
     
     def __str__(self):
         return str(self.name)
@@ -238,7 +238,8 @@ class Sample(models.Model):
         sortby = {
             'GRADE': 'subject__grade',
             'NAME': 'subject__last_name',
-            'LOCATION': 'subject__location'
+            'LOCATION': 'subject__location',
+            'TYPE': 'sample_type'
             }
         samples = Sample.objects.filter(collection_event=event).order_by(
             sortby[sort_by1], sortby[sort_by2], sortby[sort_by3])
@@ -252,7 +253,6 @@ class Sample(models.Model):
                 [sample.subject.id for sample
                 in Sample.objects.filter(collection_event=event)])
         subjects = Subject.objects.filter(pk__in=subject_pks).order_by(sort_by1, sort_by2, sort_by3)
-        print(subjects)
         return subjects
       
 
