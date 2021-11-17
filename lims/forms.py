@@ -111,9 +111,9 @@ class SamplePrint(forms.Form):
     replicates = forms.IntegerField(min_value=1, initial=1,
         help_text="Enter the number of labels to print per sample.")
     label_paper = forms.ModelChoiceField(queryset=Label.objects.all(), initial="CL-13T1")
-    sort_by1 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Sort by", initial='GRADE')
-    sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Then by", initial="NAME")
-    sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade')], label="Finally by", initial="LOCATION")
+    sort_by1 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Sort by", initial='GRADE')
+    sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Then by", initial="NAME")
+    sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Finally by", initial="LOCATION")
 
 
 
