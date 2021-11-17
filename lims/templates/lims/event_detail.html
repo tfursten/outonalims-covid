@@ -27,7 +27,7 @@
   <div class="d-grid gap-0 d-md-block mt-2">
         <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_event' event.id %}" role="button">Edit <span data-feather="edit"></span></a>
         {% if event.is_complete == False %}
-          <a class="btn btn-primary btn mb-2" href="{% url 'lims:sample_list' event.id %}" role="button">Print Participant List <span data-feather="printer"></span></a>
+          <a class="btn btn-primary btn mb-2" href="{% url 'lims:subject_list' event.id %}" role="button">Print Participant List <span data-feather="printer"></span></a>
           <a class="btn btn-primary btn mb-2" href="{% url 'lims:sample_notice_text' event.id %}" role="button">Print Notices <span data-feather="printer"></span></a>
           {% endif %}
         <a class="btn btn-primary btn mb-2" href="mailto:{{ event.get_subject_email_list }}" target="_blank" rel="noopener noreferrer" role="button">Email Participants <span data-feather="mail"></span></a>
