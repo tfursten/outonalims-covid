@@ -35,7 +35,7 @@
                     <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
                     {% if sample.collection_status == "Pending" %}
                     <td><span class="badge bg-secondary">{{ sample.collection_status }}</span></td>
-                    {% elif pool.status == "Collected" %}
+                    {% elif sample.collection_status == "Collected" %}
                     <td><span class="badge bg-success">{{ sample.collection_status }}</span></td>
                     {% else %}
                     <td><span class="badge bg-warning">{{ sample.collection_status }}</span></td>
