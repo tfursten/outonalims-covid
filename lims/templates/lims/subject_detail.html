@@ -10,7 +10,7 @@
       {% elif subject.consent_status == 'Not Consented' %}
       <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-danger">{{ subject.consent_status }}</span></li>
       {% else %}
-      <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-warning">{{ subject.consent_status }}</span></li>
+      <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-danger">{{ subject.consent_status }}</span></li>
       {% endif %}
       <li class="list-group-item"><strong>Consent Date:</strong> {{ subject.consent_date }}</li>
       <li class="list-group-item"><strong>Withdrawn Date:</strong> {{ subject.withdrawn_date }}</li>
