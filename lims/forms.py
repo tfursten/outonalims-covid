@@ -69,6 +69,10 @@ class EventForm(ModelForm):
         return "%s" % obj.name
 
 
+
+
+
+
 class SubjectForm(ModelForm):
     class Meta:
         model = Subject
@@ -78,17 +82,23 @@ class SubjectForm(ModelForm):
         'location', 'age', 'sex', 'race',
         'ethnicity', 'grade', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
-        'teacher_name','vaccine_status', 'dose_1',
-        'dose_2', 'dose_3', 'prior_covid', 'pneumococcal_vaccine',
+        'teacher_name', 'dose_1', 'dose_1_date',
+        'dose_2', 'dose_2_date', 'booster', 'booster_date',
+        'pneumococcal_vaccine',
         'pneumococcal_date', 'notes'
         ]
+
+        labels = {
+            "ethnicity": "Hispanic or Latino/a"
+        }
         widgets = {
             'consent_date': DateInput(),
             'withdrawn_date': DateInput(),
-            'dose_1': DateInput(),
-            'dose_2': DateInput(),
-            'dose_3': DateInput(),
-            'pneumococcal_date': DateInput()
+            'dose_1_date': DateInput(),
+            'dose_2_date': DateInput(),
+            'booster_date': DateInput(),
+            'pneumococcal_date': DateInput(),
+            'race': forms.CheckboxSelectMultiple(),
         }
     def __init__(self, *args, **kwargs):
         super(SubjectForm, self).__init__(*args, **kwargs)

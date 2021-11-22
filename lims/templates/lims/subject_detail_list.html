@@ -24,15 +24,17 @@
                 <th>Age</th>
                 <th>Sex</th>
                 <th>Race</th>
-                <th>Ethnicity</th>
+                <th>Hispanic or Latino/a</th>
                 <th>Phone</th>
                 <th>Email</th>
                 <th>Gardian Name</th>
                 <th>Gardian Relationship</th>
-                <th>Vaccine Status</th>
                 <th>Dose 1</th>
+                <th>Dose 1 Date</th>
                 <th>Dose 2</th>
-                <th>Dose 3</th>
+                <th>Dose 2 Date</th>
+                <th>Booster</th>
+                <th>Booster Date</th>
                 <th>Pneumococcal Vaccine</th>
                 <th>Pneumococcal Date</th>
                 <th>Notes</th>
@@ -66,16 +68,18 @@
                     <td>{{ subject.teacher_name }}</td>
                     <td>{{ subject.age }}</td>
                     <td>{{ subject.sex }}</td>
-                    <td>{{ subject.race }}</td>
+                    <td>{{ subject.race.all | join:", " }}</td>
                     <td>{{ subject.ethnicity }}</td>
                     <td>{{ subject.phone }}</td>
                     <td>{{ subject.email }}</td>
                     <td>{{ subject.gardian_name }}</td>
                     <td>{{ subject.gardian_relationship }}</td>
-                    <td>{{ subject.vaccine_status }}</td>
                     <td>{{ subject.dose_1 }}</td>
+                    <td>{{ subject.dose_1_date }}</td>
                     <td>{{ subject.dose_2 }}</td>
-                    <td>{{ subject.dose_3 }}</td>
+                    <td>{{ subject.dose_2_date }}</td>
+                    <td>{{ subject.booster }}</td>
+                    <td>{{ subject.booster_date }}</td>
                     <td>{{ subject.pneumococcal_vaccine }}</td>
                     <td>{{ subject.pneumococcal_date }}</td>
                     <td>{{ subject.notes }}</td>

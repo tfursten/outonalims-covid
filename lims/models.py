@@ -72,22 +72,20 @@ class Location(models.Model):
         return self.name
 
 
+class Race(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Subject(models.Model):
 
     SEX_CHOICES = [
     ('MALE', 'Male'),
     ('FEMALE', 'Female'),
     ]
-    VACCINE_CHOICES = [
-        ('FULL', 'Full'),
-        ('PARTIAL', 'Partial'),
-        ('BOOSTED', 'Boosted'),
-        ('NO', 'None')
-    ]
-    COVID_CHOICES = [
-        ('Yes', 'Yes'),
-        ('No', 'No')
-    ]
+ 
     GRADE_CHOICES = [
         ('K', 'K'),
         ('NH', 'NH')
@@ -99,7 +97,6 @@ class Subject(models.Model):
         ('Withdrawn', 'Withdrawn')
     ]
 
-
     subject_ui = models.CharField(max_length=6, blank=True, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
@@ -109,22 +106,21 @@ class Subject(models.Model):
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
     age = models.PositiveIntegerField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
-    race = models.CharField(max_length=100, null=True, blank=True)
-    ethnicity = models.CharField(max_length=100, null=True, blank=True)
+    race = models.ManyToManyField(Race, blank=True)
+    ethnicity = models.BooleanField(null=True, blank=True)
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, blank=True, null=True)
     phone = PhoneField(blank=True, null=True)
     email = models.EmailField(null=True, blank=True)
     gardian_name = models.CharField(max_length=100, null=True, blank=True)
     gardian_relationship = models.CharField(max_length=100, null=True, blank=True)
     teacher_name = models.CharField(max_length=100, null=True, blank=True)
-    vaccine_status = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
-    dose_1 = models.DateField(null=True, blank=True)
-    dose_2 = models.DateField(null=True, blank=True)
-    dose_3 = models.DateField(null=True, blank=True)
-    prior_covid = models.CharField(
-        max_length=10, choices=COVID_CHOICES, null=True, blank=True,
-        help_text="Has subject been infected with COVID-19 prior to study")
-    pneumococcal_vaccine = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
+    dose_1 = models.BooleanField(null=True, blank=True)
+    dose_2 = models.BooleanField(null=True, blank=True)
+    booster = models.BooleanField(null=True, blank=True)
+    dose_1_date = models.DateField(null=True, blank=True)
+    dose_2_date = models.DateField(null=True, blank=True)
+    booster_date = models.DateField(null=True, blank=True)
+    pneumococcal_vaccine = models.BooleanField(null=True, blank=True)
     pneumococcal_date = models.DateField(null=True, blank=True)
     notes = models.CharField(max_length=300, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
