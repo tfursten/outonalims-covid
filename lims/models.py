@@ -7,8 +7,8 @@ from cualid import create_ids
 import uuid
 from django.contrib.auth.models import User
 # 
-# Create your models here.
 
+# require email for users
 User._meta.get_field('email').blank = False
 
 
@@ -148,17 +148,72 @@ class Subject(models.Model):
     def __str__(self):
         return self.subject_ui
 
-class Box(models.Model):
+
+class SampleBox(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
+    size = models.PositiveIntegerField(default=81)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
+    positions = models.ManyToManyField('SampleBoxPosition', related_name="sample_box")
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
-    
-    def __str__(self):
-        return str(self.box_name)
+
     class Meta:
         ordering = ("-created_on", )
-        verbose_name_plural = "boxes"
+        verbose_name_plural = "sample_boxes"
+
+    def __str__(self):
+        return str(self.box_name)
+
+    def number_of_samples_in_box(self):
+        count = 0
+        for position in self.positions.all():
+            if not position.sample == None:
+                count += 1
+        return count
+
+class PoolBox(models.Model):
+    box_name = models.CharField(max_length=100, unique=True)
+    size = models.PositiveIntegerField(default=81)
+    storage_location = models.CharField(max_length=100, blank=True, null=True)
+    storage_shelf = models.CharField(max_length=100, blank=True, null=True)
+    positions = models.ManyToManyField('PoolBoxPosition', related_name="pool_box")
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on", )
+        verbose_name_plural = "pool_boxes"
+
+    def __str__(self):
+        return str(self.box_name)
+
+    def number_of_pools_in_box(self):
+        count = 0
+        for position in self.positions.all():
+            if not position.pool == None:
+                count += 1
+        return count
+    
+
+
+class SampleBoxPosition(models.Model):
+    position = models.PositiveIntegerField()
+    sample = models.OneToOneField('Sample', blank=True, null=True, on_delete=models.PROTECT)
+    # if no sample, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
+        # contrant that prevents duplicate positions
+        # constraints = [
+        # models.UniqueConstraint(fields=["box", "position"], name='unique position')
+        # ]
+    
+class PoolBoxPosition(models.Model):
+    position = models.PositiveIntegerField()
+    pool = models.OneToOneField('Pool', blank=True, null=True, on_delete=models.PROTECT)
+    # if no Pool, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
 
 
 class Event(models.Model):
@@ -218,9 +273,9 @@ class Sample(models.Model):
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     sample_type = models.CharField(max_length=15, choices=SITE, default='Nasal')
-    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
-    box_position = models.IntegerField(null=True, blank=True)
+    # box_position = models.IntegerField(null=True, blank=True)
     collection_event = models.ForeignKey(Event, on_delete=models.PROTECT)
     collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='Pending')
     notes = models.TextField(blank=True, null=True)
@@ -241,7 +296,6 @@ class Sample(models.Model):
             'TYPE': ['sample_type']
             }
         sortby_list = sortby[sort_by1] + sortby[sort_by2] + sortby[sort_by3] + sortby[sort_by4]
-        print(*sortby_list)
         samples = Sample.objects.filter(collection_event=event).order_by(
             *sortby_list)
         return samples
@@ -256,8 +310,6 @@ class Sample(models.Model):
         subjects = Subject.objects.filter(pk__in=subject_pks).order_by(sort_by1, sort_by2, sort_by3)
         return subjects
       
-
-        
 
     def get_subjects_created_at_event(event, sample_type):
         """
@@ -280,6 +332,25 @@ class Sample(models.Model):
             else:
                 subjects_dict['not_created'].append(subject)
         return subjects_dict
+   
+    @property
+    def box_position(self):
+        if SampleBoxPosition.objects.filter(sample=self.id).exists():
+            return SampleBoxPosition.objects.filter(sample=self.id)[0]
+        else:
+            return None
+
+    @property
+    def box(self):
+        position = self.box_position
+        if position:
+            box = position.sample_box.all()[0]
+            return box
+        else:
+            return None
+    
+
+
 
 class TestResult(models.Model):
     RESULT_CHOICES = [
@@ -320,10 +391,11 @@ class Pool(models.Model):
     name = models.CharField(max_length=100, unique=True)
     samples = models.ManyToManyField(Sample, blank=True)
     pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
+    result = models.ManyToManyField('TestResult', blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
     notification_status = models.CharField(max_length=15, choices=NOTIFICATION_CHOICES, default='Pending')
-    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
-    box_position = models.IntegerField(null=True, blank=True)
+    # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    # box_position = models.IntegerField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
 
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
@@ -353,6 +425,22 @@ class Pool(models.Model):
             for sample in pool.samples.all():
                 samples.add(sample)
         return list(samples)
+
+    @property
+    def box_position(self):
+        if PoolBoxPosition.objects.filter(pool=self.id).exists():
+            return PoolBoxPosition.objects.filter(pool=self.id)[0]
+        else:
+            return None
+
+    @property
+    def box(self):
+        position = self.box_position
+        if position:
+            box = position.pool_box.all()[0]
+            return box
+        else:
+            return None
 
 
 

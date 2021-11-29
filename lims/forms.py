@@ -4,7 +4,9 @@ from django import forms
 from django.forms import ModelForm, CheckboxInput, SelectMultiple
 from .models import (
     Sample, Project, Location, Researcher,
-    Event, Subject, Box, Pool, Label, TestResult,
+    Event, Subject, SampleBox, PoolBox,
+    SampleBoxPosition, PoolBoxPosition,
+     Pool, Label, TestResult,
     Test)
 from string import capwords
 from django.utils.encoding import force_text
@@ -112,7 +114,7 @@ class SubjectForm(ModelForm):
 class SampleForm(ModelForm):
     class Meta:
         model = Sample
-        fields = ['collection_status', 'box', 'box_position', 'notes']
+        fields = ['collection_status', 'notes']
 
 
 class SamplePrint(forms.Form):
@@ -129,10 +131,28 @@ class SamplePrint(forms.Form):
 
 
 
-class BoxForm(ModelForm):
+class SampleBoxForm(ModelForm):
     class Meta:
-        model = Box
-        fields = ['box_name', 'storage_location', 'storage_shelf']
+        model = SampleBox
+        fields = ['box_name', 'size', 'storage_location', 'storage_shelf']
+   
+
+
+class PoolBoxForm(ModelForm):
+    class Meta:
+        model = PoolBox
+        fields = ['box_name', 'size', 'storage_location', 'storage_shelf']
+
+
+class BoxPositionSampleForm(ModelForm):
+    class Meta:
+        model = SampleBoxPosition
+        fields = ['sample']
+
+class BoxPositionPoolForm(ModelForm):
+    class Meta:
+        model = PoolBoxPosition
+        fields = ['pool']
 
 
 class SelectEventForm(ModelForm):
@@ -181,12 +201,12 @@ Please come to <LOCATION> at <TIME> ...
 class PoolForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes']
+        fields = ['name', 'status', 'notification_status', 'notes']
 
 class PoolUpdateForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes', 'samples', 'pools']
+        fields = ['name', 'status', 'notification_status', 'notes', 'samples', 'pools']
     def __init__(self, *args, **kwargs):
         super(PoolUpdateForm, self).__init__(*args, **kwargs)
         self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])

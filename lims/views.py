@@ -13,10 +13,12 @@ from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
     Sample, Project, Location, Researcher, Event,
-    Subject, Box, Pool, Label, Test, TestResult)
+    Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
+    Pool, Label, Test, TestResult)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
-    EventForm, SubjectForm, SampleForm, BoxForm,
+    EventForm, SubjectForm, SampleForm, SampleBoxForm, PoolBoxForm,
+    BoxPositionSampleForm, BoxPositionPoolForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
     LabelForm, TestForm, TestResultForm, FixIDS, SampleNoticeForm)
 from cualid import create_ids
@@ -611,8 +613,8 @@ class ResultDeleteView(SamplePermissionsMixin, DeleteView):
 
 
 
-# ============== BOXES ================================
-class BoxListView(LoginRequiredMixin, ListView):
+# ============== SAMPLE BOXES ================================
+class SampleBoxListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'box_list'
 
@@ -620,39 +622,162 @@ class BoxListView(LoginRequiredMixin, ListView):
         """
         Return all boxes
         """
-        return Box.objects.all()
+        return SampleBox.objects.all()
 
-class BoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
-    model = Box
+class SampleBoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = SampleBox
     template_name_suffix = '_new'
-    form_class = BoxForm
+    form_class = SampleBoxForm
     success_message = "Storage box was successfully added: %(box_name)s"
 
     def get_success_url(self):
-        return reverse('lims:box_detail', args=(self.object.id,))
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
 
 
-class BoxDetailView(LoginRequiredMixin, DetailView):
-    model = Box
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+
+        size = form.cleaned_data['size']
+        for pos in range(size):
+            box_position = SampleBoxPosition(position=pos+1)
+            box_position.save()
+            self.object.positions.add(box_position)
+        self.object.save()
+        form.save_m2m() 
+        return HttpResponseRedirect(self.get_success_url()) 
 
 
-class BoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
-    model = Box
+class SampleBoxDetailView(LoginRequiredMixin, DetailView):
+    model = SampleBox
+
+
+class SampleBoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBox
     template_name_suffix = '_update'
-    form_class = BoxForm
+    # form_class = SampleBoxForm
+    fields = ['box_name', 'storage_location', 'storage_shelf']
     success_message = "Box was successfully updated:  %(box_name)s"
     def get_success_url(self):
-        return reverse('lims:box_detail', args=(self.object.id,))
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
 
-class BoxDeleteView(LoginRequiredMixin, DeleteView):
-    model = Box
-    success_url = reverse_lazy('lims:box_list', args=())
+class SampleBoxDeleteView(LoginRequiredMixin, DeleteView):
+    model = SampleBox
+    success_url = reverse_lazy('lims:sample_box_list', args=())
     def post(self, request, *args, **kwargs):
         try:
             return self.delete(request, *args, **kwargs)
         except ProtectedError:
             return render(request, "lims/protected_error.html")
 
+
+# ============== POOL BOXES ================================
+class PoolBoxListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'box_list'
+
+    def get_queryset(self):
+        """
+        Return all boxes
+        """
+        return PoolBox.objects.all()
+
+class PoolBoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = PoolBox
+    template_name_suffix = '_new'
+    form_class = PoolBoxForm
+    success_message = "Storage box was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.object.id,))
+
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+
+        size = form.cleaned_data['size']
+        for pos in range(size):
+            box_position = PoolBoxPosition(position=pos+1)
+            box_position.save()
+            self.object.positions.add(box_position)
+        self.object.save()
+        form.save_m2m() 
+        return HttpResponseRedirect(self.get_success_url()) 
+
+
+class PoolBoxDetailView(LoginRequiredMixin, DetailView):
+    model = PoolBox
+
+
+class PoolBoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBox
+    template_name_suffix = '_update'
+    # form_class = PoolBoxForm
+    fields = ['box_name', 'storage_location', 'storage_shelf']
+    success_message = "Box was successfully updated:  %(box_name)s"
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.object.id,))
+
+class PoolBoxDeleteView(LoginRequiredMixin, DeleteView):
+    model = PoolBox
+    success_url = reverse_lazy('lims:pool_box_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+# ============== BOX POSITIONS ================================
+class SampleBoxPosDetailView(LoginRequiredMixin, DetailView):
+    model = SampleBoxPosition
+
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPosDetailView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+
+class SampleBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBoxPosition
+    template_name_suffix = '_update'
+    form_class = BoxPositionSampleForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPositionUpdateView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+    
+    def get_success_url(self):
+        return reverse('lims:sample_box_detail', args=(self.get_context_data()['samplebox'].id,))
+
+
+class PoolBoxPosDetailView(LoginRequiredMixin, DetailView):
+    model = PoolBoxPosition
+
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPosDetailView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+
+
+class PoolBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBoxPosition
+    template_name_suffix = '_update'
+    form_class = BoxPositionPoolForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPositionUpdateView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+    
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.get_context_data()['poolbox'].id,))
 
 # ============== POOLS ================================
 class PoolListView(LoginRequiredMixin, ListView):

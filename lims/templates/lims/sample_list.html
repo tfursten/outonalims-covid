@@ -41,8 +41,13 @@
                     <td><span class="badge bg-warning">{{ sample.collection_status }}</span></td>
                     {% endif %}
                     <td>{{ sample.sample_type }}</td>
-                    <td>{{ sample.box.box_name }}</td>
-                    <td>{{ sample.box_position }}</td>
+                    {% if sample.box %}
+                    <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a></td>
+                    <td><a class="table-link" href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></td>
+                    {% else %}
+                    <td>None</td>
+                    <td>None</td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </tbody>

@@ -28,6 +28,17 @@
           <span class="badge bg-success">{{ pool.notification_status }}</span>
       {% endif %}
       </p>
+      
+      {% if pool.box %}
+      <p><strong>Pool Box: </strong><a href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></p>
+      {% else %}
+      <p><strong>Pool Box: </strong>None</p>
+      {% endif %}
+      {% if pool.box %}
+      <p><strong>Box Position: </strong><a href="{% url 'lims:pool_box_position_detail' pool.box.id pool.box_position.id%}">{{ pool.box_position.position }}</a></p>
+      {% else %}
+      <p><strong>Box Position: </strong>None</p>
+      {% endif %}
       <p class="card-text"><strong>Notes:</strong> {{ pool.notes }}</p>
       <p class="card-text"><strong>Created:</strong> {{ pool.created_on }}</p>
 
@@ -63,15 +74,21 @@
                   {{ sample.name }}
               </a></td>
               {% if sample.box %}
-              <td><a class="table-link" href="{% url 'lims:box_detail' sample.box.id %}">
-                {{ sample.box.name }}
+              <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">
+                {{ sample.box.box_name }}
               </a></td>
-              {% else %}
-              <td>None</td>
-              {% endif %}
-              <td>{{ sample.box_position }}</td>
+              <td><a class="table-link" href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">
+                {{ sample.box_position.position }}
+              </a></td>
               <td>{{ sample.box.storage_location }}</td>
               <td>{{ sample.box.storage_shelf }}</td>
+              {% else %}
+              <td>None</td>
+              <td>None</td>
+              <td>None</td>
+              <td>None</td>
+              {% endif %}
+              
               
           </tr>
       {% endfor %}
@@ -100,7 +117,7 @@
                   {{ p.name }}
               </a></td>
               {% if p.box %}
-              <td><a class="table-link" href="{% url 'lims:box_detail' p.box.id %}">
+              <td><a class="table-link" href="{% url 'lims:sample_box_detail' p.box.id %}">
                 {{ p.box.name }}
               </a></td>
               {% else %}

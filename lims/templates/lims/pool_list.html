@@ -43,13 +43,15 @@
                     <td>{{ pool.created_on }}</td>
 
                     {% if pool.box %}
-                        <td><a class="table-link" href="{% url 'lims:box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
+                        <td><a class="table-link" href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
                         <td>{{ pool.box.storage_location }}</td>
+                        <td><a class="table-link" href="{% url 'lims:pool_box_position_detail' pool.box.id pool.box_position.id %}">{{ pool.box_position.position }}</a></td>
                     {% else %}
                         <td>None</td>
                         <td>None</td>
+                        <td>None</td>
                     {% endif %}
-                    <td>{{ pool.box_position }}</td>
+                    
                 </tr>
             {% endfor %}
         </tbody>

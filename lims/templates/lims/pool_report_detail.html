@@ -27,25 +27,15 @@
 <table id="sample_table" class="display table table-hover"> 
   <thead>
       <tr>
-          <th>Pool</th>
-          <th>Status</th>
-          <th>Sample ID</th>
           <th>First Name</th>
           <th>Last Name</th>
-          <th>Location</th>
-          <th>Grade</th>
       </tr>
   </thead>
   <tbody>
       {% for sample in pool.get_all_samples %}
           <tr>
-              <td>{{ pool.name }}</td>
-              <td>{{ pool.status }}</td>
-              <td>{{ sample.name }}</td>
               <td>{{ sample.subject.first_name }}</td>
               <td>{{ sample.subject.last_name }}</td>
-              <td>{{ sample.subject.location }}</td>
-              <td>{{ sample.subject.grade }}</td>
           </tr>
       {% endfor %}
   </tbody>
@@ -84,7 +74,7 @@
     $(document).ready( function () {
     $('#sample_table').DataTable({
     rowReorder: false,
-    order: [[6, 'asc'], [5, 'asc'], [4, 'asc'], [3, 'asc']],
+    order: [[1, 'asc'], [0, 'asc']],
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',
     buttons: {

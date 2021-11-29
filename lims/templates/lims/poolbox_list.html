@@ -5,9 +5,9 @@
 {% endblock head %}
 
 {% block content %}
-<h1 class="border-bottom">Storage Boxes</h1>
+<h1 class="border-bottom">Pool Storage Boxes</h1>
     <div class="mt-3 mb-3">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_box' %}" role="button">New Box <span data-feather="plus"></span></a>
+        <a class="btn btn-primary btn" href="{% url 'lims:new_pool_box' %}" role="button">New Pool Box <span data-feather="plus"></span></a>
     </div>
     
 
@@ -16,6 +16,8 @@
             
             <tr>
                 <th>Box ID</th>
+                <th>No. Samples in Box</th>
+                <th>Size</th>
                 <th>Location</th>
                 <th>Shelf</th>
             </tr>
@@ -23,9 +25,11 @@
         <tbody>
             {% for box in box_list %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'lims:box_detail' box.id %}">
+                    <td><a class="table-link" href="{% url 'lims:pool_box_detail' box.id %}">
                         {{ box.box_name }}
                     </a></td>
+                    <td>{{ box.number_of_samples_in_box }}</td>
+                    <td>{{ box.size }}</td>
                     <td>{{ box.storage_location }}</td>
                     <td>{{ box.storage_shelf }}</td>
                 </tr>
