@@ -16,7 +16,8 @@
             
             <tr>
                 <th>Box ID</th>
-                <th>No. Samples in Box</th>
+                <th>Available Space</th>
+                <th>No. Pools in Box</th>
                 <th>Size</th>
                 <th>Location</th>
                 <th>Shelf</th>
@@ -28,7 +29,12 @@
                     <td><a class="table-link" href="{% url 'lims:pool_box_detail' box.id %}">
                         {{ box.box_name }}
                     </a></td>
-                    <td>{{ box.number_of_samples_in_box }}</td>
+                    {% if box.is_full %}
+                    <td><span class="badge bg-danger">Full</span></td>
+                    {% else %}
+                    <td><span class="badge bg-success">{{ box.remaining }}</span></td>
+                    {% endif %}
+                    <td>{{ box.number_of_pools_in_box }}</td>
                     <td>{{ box.size }}</td>
                     <td>{{ box.storage_location }}</td>
                     <td>{{ box.storage_shelf }}</td>

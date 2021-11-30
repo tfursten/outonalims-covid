@@ -16,7 +16,12 @@
 <form method="post">{% csrf_token %}
     {{ form | crispy }}
     <div class="d-grid gap-2 d-md-block mt-2">
-        <button class="btn btn-success" type="submit">Update</button>
+        {% if samplebox.remaining > 1 %}
+        <button class="btn btn-success" type="submit">Update and Continue <span data-feather="arrow-right"></span></button>
+        {% else %}
+        <button class="btn btn-success" type="submit" name="newbox">Update and Create New Box <span data-feather="plus"></span></button>
+        <button class="btn btn-success" type="submit">Update <span data-feather="corner-up-left"></span></button>
+        {% endif %}
         <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_box_detail' samplebox.id %}" role="button">Cancel</a>
     </div>
 </form>

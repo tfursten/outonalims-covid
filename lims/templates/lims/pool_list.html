@@ -13,9 +13,7 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Status</th>
                 <th>Notification Status</th>
-                <th>Created</th>
                 <th>Storage Box</th>
                 <th>Storage Location</th>
                 <th>Box Position</th>
@@ -26,13 +24,6 @@
                 <tr>
                     <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id%}">
                         {{ pool.name }}</a></td>
-                    {% if pool.status == "Pending" %}
-                        <td><span class="badge bg-secondary">{{ pool.status }}</span></td>
-                    {% elif pool.status == "Negative" %}
-                        <td><span class="badge bg-success">{{ pool.status }}</span></td>
-                    {% else %}
-                        <td><span class="badge bg-danger">{{ pool.status}}</span></td>
-                    {% endif %}
                     {% if pool.notification_status == "Pending" %}
                     <td><span class="badge bg-warning">{{ pool.notification_status }}</span></td>
                     {% elif pool.notification_status == "Not Notified" %}
@@ -40,7 +31,6 @@
                     {% else %}
                         <td><span class="badge bg-success">{{ pool.notification_status }}</span></td>
                     {% endif %}
-                    <td>{{ pool.created_on }}</td>
 
                     {% if pool.box %}
                         <td><a class="table-link" href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
@@ -71,6 +61,7 @@
     $('#sample_table').DataTable({
     rowReorder: false,
     fixedHeader: true,
+    stateSave: true,
     order: [],
     dom: 'B<"clear">lfrtip',
     buttons: {

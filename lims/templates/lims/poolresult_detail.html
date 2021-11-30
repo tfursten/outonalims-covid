@@ -1,0 +1,38 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div class="card">
+    <h1 class="card-header">Pool Result: {{ poolresult.id }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Test: </strong><a href="{% url 'lims:test_detail' poolresult.test.id %}">{{ poolresult.test.name }}</a></li>
+      <li class="list-group-item"><strong>Detects:</strong> {{ poolresult.test.detects }}</li>
+      <li class="list-group-item"><strong>Pool: </strong><a href="{% url 'lims:pool_detail' poolresult.pool.id %}">{{ poolresult.pool.name }}</a></li>
+      <li class="list-group-item"><strong>Replicate: </strong>{{ poolresult.replicate }}</li>
+      <li class="list-group-item"><strong>Status:</strong> 
+
+      {% if poolresult.result == "Positive" %}
+      <span class="badge bg-danger">{{ poolresult.result }}</span>
+      {% elif oolresult.result == "Negative" %}
+      <span class="badge bg-success">{{ poolresult.result }}</span>
+      {% elif oolresult.result == "Pending" %}
+      <span class="badge bg-secondary">{{ poolresult.result }}</span>
+      {% else %}
+      <span class="badge bg-primary">{{ poolresult.result }}</span>
+      {% endif %}
+      </li>
+      <li class="list-group-item"><strong>Measurement:</strong> {{ poolresult.value }}</li>
+      {% for researcher in poolresult.researcher.all %}
+      <li class="list-group-item"><strong>Researcher: </strong><a href="{% url 'lims:researcher_detail' researcher.id %}">{{ researcher.name }}</a></li>
+      {% endfor %}
+      <li class="list-group-item"><strong>Notes:</strong> {{ poolresult.notes }}</li>
+      <li class="list-group-item"><strong>Created:</strong> {{ poolresult.created_on }}</li>
+    </ul>
+</div>
+<div class="d-grid gap-0 d-md-block mt-2">
+    <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_pool_result' poolresult.id %}" role="button">Edit <span data-feather="edit"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_pool_result' %}" role="button">Add New Pool Result <span data-feather="plus"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:pool_result_list' %}" role="button">Pool Results <span data-feather="corner-up-left"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+    <a class="btn btn-outline-danger btn mb-2" href="{% url 'lims:delete_pool_result' poolresult.id %}" role="button">Delete <span data-feather="trash"></span></a>
+</div>
+
+{% endblock content %}

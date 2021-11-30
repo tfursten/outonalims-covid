@@ -16,6 +16,7 @@
             
             <tr>
                 <th>Box ID</th>
+                <th>Available Space</th>
                 <th>No. Samples in Box</th>
                 <th>Size</th>
                 <th>Location</th>
@@ -28,6 +29,11 @@
                     <td><a class="table-link" href="{% url 'lims:sample_box_detail' box.id %}">
                         {{ box.box_name }}
                     </a></td>
+                    {% if box.is_full %}
+                    <td><span class="badge bg-danger">Full</span></td>
+                    {% else %}
+                    <td><span class="badge bg-success">{{ box.remaining }}</span></td>
+                    {% endif %}
                     <td>{{ box.number_of_samples_in_box }}</td>
                     <td>{{ box.size }}</td>
                     <td>{{ box.storage_location }}</td>
@@ -51,6 +57,7 @@
     $('#sample_box_table').DataTable({
     rowReorder: false,
     fixedHeader: true,
+    stateSave: true,
     order: [],
     dom: 'B<"clear">lfrtip',
     buttons: {

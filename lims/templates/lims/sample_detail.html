@@ -32,28 +32,35 @@
     <div class="card-header">
         {% if sample.box %}
             <strong>Sample Box: </strong><a href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a>
-            <div class="card-body">
-                <p class="card-text">Box Position: <a href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></p>
-                <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
-                <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
-            </div>
         {% else %}
-            <strong>Sample Box: </strong> None
+            <strong>Sample Box: </strong>None
         {% endif %}
     </div>
+    {% if sample.box %}
+    <div class="card-body">
+        <p class="card-text">Box Position: <a href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></p>
+        <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
+        <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
+    </div>
+    {% else %}
+    <div class="card-body">
+        <p class="card-text">Box Position: None</p>
+        <p class="card-text">Box Location: None</p>
+        <p class="card-text">Box Shelf: None</p>
+    </div>
+    {% endif %}
     <div class="card-header"><strong>Notes:</strong></div>
     <div class="card-body">
         <p class="card-text">{{ sample.notes }}</p>
-
     </div>
-    {{ sample.results.all }}
     {% for result in results %}
-    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:result_detail' result.id %}">Result {{ result.id }}</a> </div>
+    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:sample_result_detail' result.id %}">Result {{ result.id }}</a> </div>
     <div class="card-body">
         <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
         <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
         <p class="card-text"><strong>Status: </strong>{{ result.result }}</p>
         <p class="card-text"><strong>Value: </strong>{{ result.value }}</p>
+        <p class="card-text"><strong>Replicate: </strong>{{ result.replicate }}</p>
     </div>
     {% endfor %}
 

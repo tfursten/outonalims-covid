@@ -18,6 +18,11 @@
 
 <div class="d-grid gap-0 d-md-block mt-2">
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_pool_box' poolbox.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  {% if poolbox.get_next_empty_position %}
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_pool_box_position_continuous' poolbox.id poolbox.get_next_empty_position %}" role="button">Add Pools to Box <span data-feather="plus"></span></a>
+  {% else %}
+  <a class="btn btn-primary btn mb-2 disabled" href="#" role="button">Add Pools to Box <span data-feather="plus"></span></a>
+  {% endif %}
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_pool_box' %}" role="button">Add New Box <span data-feather="plus"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:pool_box_list' %}" role="button">Pool Storage Boxes <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
@@ -64,6 +69,7 @@
     $('#box_position_table').DataTable({
     rowReorder: false,
     fixedHeader: true,
+    stateSave: true,
     order: [],
     dom: 'B<"clear">lfrtip',
     buttons: {

@@ -18,6 +18,11 @@
 
 <div class="d-grid gap-0 d-md-block mt-2">
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box' samplebox.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  {% if samplebox.get_next_empty_position %}
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box_position_continuous' samplebox.id samplebox.get_next_empty_position %}" role="button">Add Samples to Box <span data-feather="plus"></span></a>
+  {% else %}
+  <a class="btn btn-primary btn mb-2 disabled" href="#" role="button">Add Samples to Box <span data-feather="plus"></span></a>
+  {% endif %}
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_sample_box' %}" role="button">Add New Box <span data-feather="plus"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sample_box_list' %}" role="button">Sample Storage Boxes <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
@@ -69,6 +74,7 @@
 <script>
     $(document).ready( function () {
     $('#box_position_table').DataTable({
+    stateSave: true,
     rowReorder: false,
     fixedHeader: true,
     order: [],

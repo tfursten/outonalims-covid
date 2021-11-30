@@ -8,16 +8,7 @@
 <div class="card">
     <h1 class="card-header">Pool: {{ pool.name }}</h1>
     <div class="card-body">
-      <p>
-      <strong>Status: </strong>
-      {% if pool.status == "Pending" %}
-            <span class="badge bg-secondary">Pending</span>
-      {% elif pool.status == "Negative" %}
-          <span class="badge bg-success">{{ pool.status }}</span>
-      {% else %}
-          <span class="badge bg-danger">{{ pool.status }}</span>
-      {% endif %}
-      </p>
+
       <p>
       <strong>Notification Status: </strong>
       {% if pool.notification_status == "Pending" %}
@@ -43,6 +34,26 @@
       <p class="card-text"><strong>Created:</strong> {{ pool.created_on }}</p>
 
     </div>
+    {% for result in results %}
+    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:pool_result_detail' result.id %}">Result {{ result.id }}</a> </div>
+    <div class="card-body">
+        <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
+        <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
+        <p class="card-text"><strong>Status: </strong>
+          {% if result.result == "Positive" %}
+                <span class="badge bg-danger">{{ result.result }}</span>
+          {% elif result.result == "Negative" %}
+              <span class="badge bg-success">{{ result.result }}</span>
+          {% elif result.result == "Pending" %}
+              <span class="badge bg-secondary">{{ result.result }}</span>
+          {% else %}
+              <span class="badge bg-primary">{{ result.result }}</span>
+          {% endif %}
+          </p>
+        <p class="card-text"><strong>Value: </strong>{{ result.value }}</p>
+        <p class="card-text"><strong>Replicate: </strong>{{ result.replicate }}</p>
+    </div>
+    {% endfor %}
     <h3 class="card-header">Locations</h3>
     <ul class="list-group list-group-flush">
       {% for location in pool.get_all_locations %}
@@ -136,6 +147,7 @@
 
 <div class="d-grid gap-0 d-md-block mt-2">
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_pool' pool.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:new_result_pool' pool.id %}" role="button">Add Result <span data-feather="edit"></span></a>
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:pool_report' pool.id %}" role="button">Print Report <span data-feather="printer"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_pool' %}" role="button">Add New Pool <span data-feather="plus"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:add_pool_samples' pool.id %}" role="button">Add Samples to Pool <span data-feather="plus"></span></a>
