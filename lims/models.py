@@ -28,7 +28,7 @@ class Researcher(models.Model):
 class Test(models.Model):
     name = models.CharField(max_length=100, unique=True)
     protocol = models.TextField(null=True, blank=True)
-    detects = models.CharField(max_length=100)
+    detects = models.CharField(max_length=100, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -171,6 +171,23 @@ class SampleBox(models.Model):
                 count += 1
         return count
 
+    def is_full(self):
+        if self.number_of_samples_in_box() >= self.size:
+            return True
+        else:
+            return False
+    
+    def remaining(self):
+        return self.size - self.number_of_samples_in_box()
+
+    def get_next_empty_position(self):
+        for position in self.positions.all().order_by('position'):
+            if position.sample == None:
+                return position.id
+        return None
+            
+
+
 class PoolBox(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
     size = models.PositiveIntegerField(default=81)
@@ -192,6 +209,21 @@ class PoolBox(models.Model):
             if not position.pool == None:
                 count += 1
         return count
+
+    def is_full(self):
+        if self.number_of_pools_in_box() >= self.size:
+            return True
+        else:
+            return False
+    
+    def remaining(self):
+        return self.size - self.number_of_pools_in_box()
+
+    def get_next_empty_position(self):
+        for position in self.positions.all().order_by('position'):
+            if position.pool == None:
+                return position.id
+        return None
     
 
 
@@ -349,34 +381,6 @@ class Sample(models.Model):
         else:
             return None
     
-
-
-
-class TestResult(models.Model):
-    RESULT_CHOICES = [
-    ('Positive', 'Positive'),
-    ('Negative', 'Negative'),
-    ('Pending', 'Pending'),
-    ('Unknown', 'Unknown'),
-    ('Inconclusive', 'Inconclusive')
-    ]
-
-    sample = models.ForeignKey(Sample, on_delete=models.PROTECT)
-    test = models.ForeignKey(Test, on_delete=models.PROTECT)
-    replicate = models.PositiveIntegerField(default=1)
-    result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
-    value = models.CharField(max_length=100, null=True, blank=True)
-    researcher = models.ManyToManyField(Researcher, blank=True)
-    notes = models.TextField(blank=True, null=True)
-    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
-
-    class Meta:
-        ordering = ("-created_on",)
-
-    def __str__(self):
-        return str(self.name)
-
-
 class Pool(models.Model):
     STATUS_CHOICES = [
     ('Positive', 'Positive'),
@@ -391,8 +395,8 @@ class Pool(models.Model):
     name = models.CharField(max_length=100, unique=True)
     samples = models.ManyToManyField(Sample, blank=True)
     pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
-    result = models.ManyToManyField('TestResult', blank=True)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
+    # result = models.ManyToManyField('TestResult', blank=True)
+    # status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
     notification_status = models.CharField(max_length=15, choices=NOTIFICATION_CHOICES, default='Pending')
     # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     # box_position = models.IntegerField(null=True, blank=True)
@@ -401,7 +405,7 @@ class Pool(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ("-created_on", "status")
+        ordering = ("-created_on",)
 
     def __str__(self):
         return str(self.name)
@@ -442,6 +446,63 @@ class Pool(models.Model):
         else:
             return None
 
+
+class SampleResult(models.Model):
+    RESULT_CHOICES = [
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    ('Pending', 'Pending'),
+    ('Unknown', 'Unknown'),
+    ('Inconclusive', 'Inconclusive')
+    ]
+
+    sample = models.ForeignKey(Sample, on_delete=models.PROTECT)
+    test = models.ForeignKey(Test, on_delete=models.PROTECT)
+    replicate = models.PositiveIntegerField(default=1)
+    result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
+    value = models.CharField(max_length=100, null=True, blank=True)
+    researcher = models.ManyToManyField(Researcher, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on",)
+        # contrant that prevents duplicate sample results
+        constraints = [
+        models.UniqueConstraint(fields=["sample", "test", "replicate"], name='unique_sample_result')
+        ]
+
+    def __str__(self):
+        return str(self.name)
+
+
+class PoolResult(models.Model):
+    RESULT_CHOICES = [
+    ('Positive', 'Positive'),
+    ('Negative', 'Negative'),
+    ('Pending', 'Pending'),
+    ('Unknown', 'Unknown'),
+    ('Inconclusive', 'Inconclusive')
+    ]
+
+    pool = models.ForeignKey(Pool, on_delete=models.PROTECT)
+    test = models.ForeignKey(Test, on_delete=models.PROTECT)
+    replicate = models.PositiveIntegerField(default=1)
+    result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
+    value = models.CharField(max_length=100, null=True, blank=True)
+    researcher = models.ManyToManyField(Researcher, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on",)
+        # contrant that prevents duplicate pool results
+        constraints = [
+        models.UniqueConstraint(fields=["pool", "test", "replicate"], name='unique_pool_result')
+        ]
+
+    def __str__(self):
+        return str(self.name)
 
 
 class Label(models.Model):

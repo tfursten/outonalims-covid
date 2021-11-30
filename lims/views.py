@@ -1,6 +1,6 @@
 import io
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.contrib.auth.decorators import login_required
@@ -14,13 +14,13 @@ from django.db.models import ProtectedError
 from .models import (
     Sample, Project, Location, Researcher, Event,
     Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
-    Pool, Label, Test, TestResult)
+    Pool, Label, Test, SampleResult, PoolResult)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
     EventForm, SubjectForm, SampleForm, SampleBoxForm, PoolBoxForm,
     BoxPositionSampleForm, BoxPositionPoolForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
-    LabelForm, TestForm, TestResultForm, FixIDS, SampleNoticeForm)
+    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -536,7 +536,7 @@ class SampleDetailView(SamplePermissionsMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        results = TestResult.objects.filter(sample=self.kwargs['pk'])
+        results = SampleResult.objects.filter(sample=self.kwargs['pk'])
         context['results'] = results
         return context
 
@@ -548,9 +548,9 @@ class SampleUpdateView(SamplePermissionsMixin, LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse('lims:sample_detail', args=(self.object.id,))
 
-# ============== RESULTS ================================
+# ============== SAMPLE RESULTS ================================
 
-class ResultListView(SamplePermissionsMixin, ListView):
+class SampleResultListView(SamplePermissionsMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
 
@@ -558,52 +558,52 @@ class ResultListView(SamplePermissionsMixin, ListView):
         """
         Return all results
         """
-        return TestResult.objects.all()
+        return SampleResult.objects.all()
 
-class ResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
-    model = TestResult
+class SampleResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = SampleResult
     template_name_suffix = '_new'
-    form_class = TestResultForm
-    success_message = "Test result was successfully added"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully added"
 
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
-class ResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
-    model = TestResult
+class SampleResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = SampleResult
     template_name_suffix = '_sample_new'
-    form_class = TestResultForm
-    success_message = "Test result was successfully added"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully added"
 
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
     def get_form_kwargs(self):
-        kwargs = super(ResultSampleFormView, self).get_form_kwargs()
+        kwargs = super(SampleResultSampleFormView, self).get_form_kwargs()
         kwargs['sample'] = self.kwargs['pk']
         return kwargs
     
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
         
 
 
-class ResultDetailView(SamplePermissionsMixin, DetailView):
-    model = TestResult
+class SampleResultDetailView(SamplePermissionsMixin, DetailView):
+    model = SampleResult
 
 
-class ResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
-    model = TestResult
+class SampleResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
+    model = SampleResult
     template_name_suffix = '_update'
-    form_class = TestResultForm
-    success_message = "Test result was successfully updated"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully updated"
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
 
-class ResultDeleteView(SamplePermissionsMixin, DeleteView):
-    model = TestResult
-    success_url = reverse_lazy('lims:result_list', args=())
+class SampleResultDeleteView(SamplePermissionsMixin, DeleteView):
+    model = SampleResult
+    success_url = reverse_lazy('lims:sample_result_list', args=())
     def post(self, request, *args, **kwargs):
         try:
             return self.delete(request, *args, **kwargs)
@@ -611,7 +611,66 @@ class ResultDeleteView(SamplePermissionsMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 
+# ============== POOL RESULTS ================================
 
+class PoolResultListView(SamplePermissionsMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'result_list'
+
+    def get_queryset(self):
+        """
+        Return all results
+        """
+        return PoolResult.objects.all()
+
+class PoolResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = PoolResult
+    template_name_suffix = '_new'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+class PoolResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = PoolResult
+    template_name_suffix = '_pool_new'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+    def get_form_kwargs(self):
+        kwargs = super(PoolResultSampleFormView, self).get_form_kwargs()
+        kwargs['pool'] = self.kwargs['pk']
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+        
+
+class PoolResultDetailView(SamplePermissionsMixin, DetailView):
+    model = PoolResult
+
+
+class PoolResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
+    model = PoolResult
+    template_name_suffix = '_update'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully updated"
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+
+class PoolResultDeleteView(SamplePermissionsMixin, DeleteView):
+    model = PoolResult
+    success_url = reverse_lazy('lims:pool_result_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
 
 # ============== SAMPLE BOXES ================================
 class SampleBoxListView(LoginRequiredMixin, ListView):
@@ -754,6 +813,33 @@ class SampleBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, Updat
         return reverse('lims:sample_box_detail', args=(self.get_context_data()['samplebox'].id,))
 
 
+class SampleBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBoxPosition
+    template_name_suffix = '_update_continuous'
+    form_class = BoxPositionSampleForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPositionContinuousUpdateView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+    
+    def get_success_url(self):
+        next_position = self.get_context_data()['samplebox'].get_next_empty_position()
+        if next_position:
+            return reverse(
+                'lims:edit_sample_box_position_continuous',
+                args=(self.get_context_data()['samplebox'].id,
+                self.get_context_data()['samplebox'].get_next_empty_position()))
+        else:
+            if 'newbox' in self.request.POST:
+                # add new sample box when full
+                return reverse('lims:new_sample_box')
+            else:
+                return reverse('lims:sample_box_list')
+
+
 class PoolBoxPosDetailView(LoginRequiredMixin, DetailView):
     model = PoolBoxPosition
 
@@ -778,6 +864,36 @@ class PoolBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateV
     
     def get_success_url(self):
         return reverse('lims:pool_box_detail', args=(self.get_context_data()['poolbox'].id,))
+
+class PoolBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBoxPosition
+    template_name_suffix = '_update_continuous'
+    form_class = BoxPositionPoolForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPositionContinuousUpdateView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+    
+    def get_success_url(self):
+        next_position = self.get_context_data()['poolbox'].get_next_empty_position()
+        if next_position:
+            return reverse(
+                'lims:edit_pool_box_position_continuous',
+                args=(self.get_context_data()['poolbox'].id,
+                self.get_context_data()['poolbox'].get_next_empty_position()))
+        
+        else:
+            if 'newbox' in self.request.POST:
+                # add new sample box when full
+                return reverse('lims:new_pool_box')
+            else:
+                return reverse('lims:pool_box_list')
+
+
+
 
 # ============== POOLS ================================
 class PoolListView(LoginRequiredMixin, ListView):
@@ -850,6 +966,11 @@ class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
 class PoolDetailView(LoginRequiredMixin, DetailView):
     model = Pool
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        results = PoolResult.objects.filter(pool=self.kwargs['pk'])
+        context['results'] = results
+        return context
 
 
 class PoolReportDetailView(SubjectPermissionsMixin, DetailView):
@@ -1022,3 +1143,11 @@ def search_view(request):
         return redirect('lims:sample_detail', pk=int(sample[0].id))
     else:
         return render(request, 'lims/sample_not_found.html', {'sample': code})
+
+
+def sample_table_update_view(request):
+    print("UPDATE")
+    print(request.is_ajax())
+    print(request.POST)
+    return JsonResponse({'test': 'None'})
+    

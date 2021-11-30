@@ -185,3 +185,9 @@ mark {
   background-color: #ccc;
   color: inherit;
 }
+
+/* remove space above single cell editor for datatables */
+
+label.DTE_Label {
+  display: none;
+}

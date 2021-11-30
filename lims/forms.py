@@ -6,13 +6,14 @@ from .models import (
     Sample, Project, Location, Researcher,
     Event, Subject, SampleBox, PoolBox,
     SampleBoxPosition, PoolBoxPosition,
-     Pool, Label, TestResult,
+     Pool, Label, SampleResult, PoolResult,
     Test)
 from string import capwords
 from django.utils.encoding import force_text
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.forms import widgets
+
 
 
 class DateInput(forms.DateInput):
@@ -148,11 +149,19 @@ class BoxPositionSampleForm(ModelForm):
     class Meta:
         model = SampleBoxPosition
         fields = ['sample']
+    def __init__(self, *args, **kwargs):
+        super(BoxPositionSampleForm, self).__init__(*args, **kwargs)
+        self.fields['sample'].queryset = Sample.objects.filter(collection_status="Collected").order_by("name")
+        
+
 
 class BoxPositionPoolForm(ModelForm):
     class Meta:
         model = PoolBoxPosition
         fields = ['pool']
+    def __init__(self, *args, **kwargs):
+        super(BoxPositionPoolForm, self).__init__(*args, **kwargs)
+        self.fields['pool'].queryset = Pool.objects.all().order_by("-created_on", "name")
 
 
 class SelectEventForm(ModelForm):
@@ -201,12 +210,12 @@ Please come to <LOCATION> at <TIME> ...
 class PoolForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'notes']
+        fields = ['name', 'notification_status', 'notes']
 
 class PoolUpdateForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'notes', 'samples', 'pools']
+        fields = ['name', 'notification_status', 'notes', 'samples', 'pools']
     def __init__(self, *args, **kwargs):
         super(PoolUpdateForm, self).__init__(*args, **kwargs)
         self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])
@@ -248,9 +257,9 @@ class TestForm(ModelForm):
         fields = ['name', 'protocol', 'detects']
 
 
-class TestResultForm(ModelForm):
+class SampleResultForm(ModelForm):
     class Meta:
-        model = TestResult
+        model = SampleResult
         fields = ['sample', 'test', 'replicate', 'result', 'value', 'notes', 'researcher']
     def __init__(self, *args, **kwargs):
             if 'sample' in kwargs:
@@ -258,8 +267,19 @@ class TestResultForm(ModelForm):
                 kwargs.update(initial={
                     'sample': sample
                 })
-            super(TestResultForm, self).__init__(*args, **kwargs)
+            super(SampleResultForm, self).__init__(*args, **kwargs)
             self.fields['sample'].queryset = Sample.objects.order_by('name')
         
 
-
+class PoolResultForm(ModelForm):
+    class Meta:
+        model = PoolResult
+        fields = ['pool', 'test', 'replicate', 'result', 'value', 'notes', 'researcher']
+    def __init__(self, *args, **kwargs):
+            if 'pool' in kwargs:
+                pool = kwargs.pop('pool')
+                kwargs.update(initial={
+                    'pool': pool
+                })
+            super(PoolResultForm, self).__init__(*args, **kwargs)
+            self.fields['pool'].queryset = Pool.objects.order_by('name')
