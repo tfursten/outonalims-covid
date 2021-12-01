@@ -31,20 +31,12 @@
         </thead>
         <tbody>
             {% for sample in sample_list %}
-                <tr id="sample{{ sample.id }}">
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id%}">
-                        {{sample.name}}
-                    </a></td>
+                <tr id="{{ sample.id }}">
+                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">{{ sample.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
-                    {% if sample.collection_status == "Pending" %}
-                    <td><span class="badge bg-secondary">{{ sample.collection_status }}</span></td>
-                    {% elif sample.collection_status == "Collected" %}
-                    <td><span class="badge bg-success">{{ sample.collection_status }}</span></td>
-                    {% else %}
-                    <td><span class="badge bg-warning">{{ sample.collection_status }}</span></td>
-                    {% endif %}
+                    <td>{{ sample.collection_status }}</td>
                     <td>{{ sample.sample_type }}</td>
                     {% if sample.box %}
                     <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a></td>
@@ -68,7 +60,7 @@
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
-<!-- <script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script> -->
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
 
 <script>
@@ -80,35 +72,86 @@
 
  $(document).ready(function() {
      editor = new $.fn.dataTable.Editor( {
-         ajax: {
-            "url": "{% url 'lims:sample_table_update' %}",
-            "type": "POST",
-            "data": {
-                // CSRF: '{% csrf_token %}',
-                text: "blah",
-            },
-         },
+        //  ajax: {
+        //     url: "{% url 'lims:sample_table_update' %}",
+        //     type: "POST",
+        //     dataType: "json",
+        //     success: () => {
+        //         console.log("BLAH")
+        //         $('#sample_table').DataTable().ajax.reload()
+        //         }
+        //  },
          ajax: "{% url 'lims:sample_table_update' %}",
          table: "#sample_table",
+      
          fields: [ 
+            
             {
+                label: "Subject ID",
+                name: "subject_id",
+                type: "readonly",
+            },
+            {
+                label: "Sample ID",
+                name: "sample_id",
+                type: "readonly",
+            },
+            {
+                label: "Collection Event",
+                name: "collection_event",
+                type: "readonly",
+            },
+            {
+                label: "Location",
+                name: "location",
+                type: "readonly",
+            },
+            {
+                label: "Collection Status",
                 name: "collection_status",
                 type:  "select",
                 options: [
                     { label: "Collected", value: "Collected" },
-                    { label: "Not Collected", value: "Not Collected" },
+                    { label: "Pending", value: "Pending" },
                     { label: "Refused", value: "Refused" },
                     { label: "Absent", value: "Absent" },
-                    { label: "Withdrew",  value: "Withdrew" }]
+                    { label: "Withdrew",  value: "Withdrew" },
+                ]
+            },
+            {
+                label: "Sample Type",
+                name: "sample_type",
+                type: "readonly"
+            },
+            {
+                label: "Box ID",
+                name: "box_id",
+                type: "readonly",
+            },
+            {
+                label: "Box Position",
+                name: "box_position",
+                type: "readonly",
             },
          ]
      } );
     
     // Activate an inline edit on click of a table cell
-    $('#sample_table').on( 'click', 'tbody td:not(:first-child)', function (e) {
-        editor.inline( this );
+    $('#sample_table').on( 'click', 'tbody td:nth-child(5)', function (e) {
+        editor.inline( this, {submit: 'all', onBlur: 'submit'} );
     } );
     
+    // $('#sample_table').on( 'click', 'tbody td:not(:first-child)', function (e) {
+    //     editor.bubble( this );
+    // } );
+
+    var collection_status = {
+        Collected: "success",
+        Pending: "secondary",
+        Absent: "warning",
+        Refused: "warning",
+        Withdrew: "danger",
+    }
     
     $('#sample_table').DataTable({
     rowReorder: false,
@@ -117,15 +160,25 @@
     order: [],
     dom: 'Bfrtip',
     columns: [
-            { "data": "sample_id" },
-            { "data": "subject_id" },
-            { "data": "collection_event" },
-            { "data": "location" },
-            { "data": "collection_status" },
-            { "data": "sample_type" },
-            { "data": "box_id"},
-            { "data": "box_position" },
+            { 
+              data: "sample_id",
+            },
+            { data: "subject_id" },
+            { data: "collection_event" },
+            { data: "location" },
+            { 
+                "data": "collection_status",
+                render: function ( status ) {
+                            return status ?
+                                `<span class="badge bg-${collection_status[status]}">${status}</span>` : null     
+                        }
+            },
+            { data: "sample_type" },
+            { data: "box_id"},
+            { data: "box_position"},
+   
         ],
+    select: true,
     buttons: {
         name: 'primary',
         buttons: [ 
@@ -145,10 +198,7 @@
           extend: 'excel',
           title: 'Sample List'
         },
-        { extend: "create", editor: editor },
-        { extend: "edit",   editor: editor },
-        { extend: "remove", editor: editor }]
-
+        { extend: "edit",   editor: editor }]
         }}
     );
 } );
