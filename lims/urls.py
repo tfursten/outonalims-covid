@@ -95,5 +95,13 @@ urlpatterns = [
     path('pool-result/detail/<str:pk>/edit/', views.PoolResultUpdateView.as_view(), name="edit_pool_result"),
     path('pool-result/detail/<str:pk>/remove/', views.PoolResultDeleteView.as_view(), name="delete_pool_result"),
     path('help/', views.help, name="help"),
-    path('samples/table-edit/', views.sample_table_update_view, name="sample_table_update")
+    path('samples/table-edit/', views.sample_table_update_view, name="sample_table_update"),
+    path('subjects/table-edit/', views.subject_table_update_view, name="subject_table_update"),
+    path('pools/table-edit/', views.pool_table_update_view, name="pool_table_update"),
+    path('poolboxes/table-edit/', views.poolbox_table_update_view, name="poolbox_table_update"),
+    path('sampleboxes/table-edit/', views.samplebox_table_update_view, name="samplebox_table_update"),
+    path('sampleresults/table-edit/', views.sampleresults_table_update_view, name="sampleresults_table_update"),
+    path('poolresults/table-edit/', views.poolresults_table_update_view, name="poolresults_table_update")
+
+
 ]

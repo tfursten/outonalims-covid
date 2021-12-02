@@ -545,6 +545,7 @@ class SampleUpdateView(SamplePermissionsMixin, LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update'
     form_class = SampleForm
     success_message = "Sample was successfully updated"
+
     def get_success_url(self):
         return reverse('lims:sample_detail', args=(self.object.id,))
 
@@ -1145,9 +1146,397 @@ def search_view(request):
         return render(request, 'lims/sample_not_found.html', {'sample': code})
 
 
+
+@login_required
+def sample_label_options(request, event_id):
+    form = SamplePrint()
+    if request.method == "POST":
+        form = SamplePrint(request.POST)
+        if form.is_valid():
+            start_position = request.POST.get('start_position')
+            label_paper = request.POST.get('label_paper')
+            reps = request.POST.get('replicates')
+            sort_by1 = request.POST.get('sort_by1')
+            sort_by2 = request.POST.get('sort_by2')
+            sort_by3 = request.POST.get('sort_by3')
+            sort_by4 = request.POST.get('sort_by4')
+
+            return redirect('lims:sample_label_pdf',
+                event_id=event_id, start_position=start_position,
+                label_paper=label_paper, replicates=reps,
+                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
+                sort_by4=sort_by4)
+    return render(request, 'lims/sample_print_options.html', {'form': form})    
+
+@login_required
 def sample_table_update_view(request):
-    print("UPDATE")
-    print(request.is_ajax())
+    if request.method == "POST":
+        json_response = {"data": []}
+        samples = []
+        statuses = []
+        for k, v in request.POST.items():
+            if "collection_status" in k:
+                collection_status = v
+                sample_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                try:
+                    sample = Sample.objects.get(pk=sample_id)
+                except Sample.DoesNotExist:
+                    return render(request, "lims/sample_not_found.html")
+                ori_post = request.POST.copy()
+                ori_post['collection_status'] = collection_status
+                ori_post['instance'] = sample
+                form = SampleForm(ori_post)
+                if form.is_valid():
+                    samples.append(sample)
+                    statuses.append(collection_status)
+                    json_response['data'].append({
+                            "DT_RowId": str(sample_id),
+                            "sample_id": ori_post['data[{}][sample_id]'.format(sample_id)],
+                            "subject_id": ori_post['data[{}][subject_id]'.format(sample_id)],
+                            "collection_event": ori_post['data[{}][collection_event]'.format(sample_id)],
+                            "location": ori_post['data[{}][location]'.format(sample_id)],
+                            "collection_status": collection_status,
+                            "sample_type": str(sample.sample_type),
+                            "box_id": ori_post['data[{}][box_id]'.format(sample_id)],
+                            "box_position": ori_post['data[{}][box_position]'.format(sample_id)],
+                        })
+                else:
+                    return JsonResponse({"error": str(form.errors)})
+        for sample, status in zip(samples, statuses):
+            sample.collection_status = status
+            sample.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def pool_table_update_view(request):
+    if request.method == "POST":
+        print(request.POST)
+        json_response = {"data": []}
+        pools = []
+        statuses = []
+        for k, v in request.POST.items():
+            if "notification_status" in k:
+                notification_status = v
+                pool_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                try:
+                    pool = Pool.objects.get(pk=pool_id)
+                    print(pool)
+                except Pool.DoesNotExist as e:
+                    print(e)
+                    return JsonResponse({"error": str(e)})
+                ori_post = request.POST.copy()
+                ori_post['notification_status'] = notification_status
+                ori_post['name'] = pool.name
+                form = PoolForm(ori_post, instance=pool)
+                print(form.errors)
+                if form.is_valid():
+                    print("VALID")
+                    pools.append(pool)
+                    statuses.append(notification_status)
+                    json_response['data'].append({
+                            "DT_RowId": str(pool_id),
+                            "name": ori_post['data[{}][name]'.format(pool_id)],
+                            "notification_status": notification_status,
+                            "storage_box": ori_post['data[{}][storage_box]'.format(pool_id)],
+                            "storage_location": ori_post['data[{}][storage_location]'.format(pool_id)],
+                            "box_position": ori_post['data[{}][box_position]'.format(pool_id)],
+                        })
+                else:
+                    return JsonResponse({"error": str(form.errors)})
+        for pool, status in zip(pools, statuses):
+            pool.notificaiton_status = status
+            pool.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def poolbox_table_update_view(request):
+    if request.method == "POST":
+        print(request.POST)
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "location" in k:
+                    update_values[row_id]['location'] = v
+                elif "shelf" in k:
+                    update_values[row_id]['shelf'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                pool_box = PoolBox.objects.get(pk=object_id)
+                update_values[object_id]['object'] = pool_box
+            except PoolBox.DoesNotExist as e:
+                print(e)
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['box_name'] = vals['object'].box_name
+            ori_post['size'] = vals['object'].size
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = PoolBoxForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            if form.is_valid():
+                print("VALID")
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "box_id": ori_post['data[{}][box_id]'.format(obj_id)],
+                        "available_space": ori_post['data[{}][available_space]'.format(obj_id)],
+                        "n_pools": ori_post['data[{}][n_pools]'.format(obj_id)],
+                        "size": ori_post['data[{}][size]'.format(obj_id)],
+                        "location": vals['location'],
+                        "shelf": vals['shelf']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            poolbox = vals['object']
+            poolbox.storage_location = vals['location']
+            poolbox.storage_shelf = vals['shelf']
+            poolbox.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def samplebox_table_update_view(request):
+    if request.method == "POST":
+        print(request.POST)
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "location" in k:
+                    update_values[row_id]['location'] = v
+                elif "shelf" in k:
+                    update_values[row_id]['shelf'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                sample_box = SampleBox.objects.get(pk=object_id)
+                update_values[object_id]['object'] = sample_box
+            except SampleBox.DoesNotExist as e:
+                print(e)
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['box_name'] = vals['object'].box_name
+            ori_post['size'] = vals['object'].size
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = SampleBoxForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            if form.is_valid():
+                print("VALID")
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "box_id": ori_post['data[{}][box_id]'.format(obj_id)],
+                        "available_space": ori_post['data[{}][available_space]'.format(obj_id)],
+                        "n_samples": ori_post['data[{}][n_samples]'.format(obj_id)],
+                        "size": ori_post['data[{}][size]'.format(obj_id)],
+                        "location": vals['location'],
+                        "shelf": vals['shelf']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            samplebox = vals['object']
+            samplebox.storage_location = vals['location']
+            samplebox.storage_shelf = vals['shelf']
+            samplebox.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def sampleresults_table_update_view(request):
+    if request.method == "POST":
+        print(request.POST)
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "status" in k:
+                    update_values[row_id]['result'] = v
+                elif "measurement" in k:
+                    update_values[row_id]['value'] = v
+                elif "notes" in k:
+                    update_values[row_id]['notes'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                sample_result = SampleResult.objects.get(pk=object_id)
+                update_values[object_id]['object'] = sample_result
+            except SampleResult.DoesNotExist as e:
+                print(e)
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['sample'] = vals['object'].sample
+            ori_post['test'] = vals['object'].test
+            ori_post['replicate'] = vals['object'].replicate
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = SampleResultForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            if form.is_valid():
+                print("VALID")
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
+                        "test": ori_post['data[{}][test]'.format(obj_id)],
+                        "sample": ori_post['data[{}][sample]'.format(obj_id)],
+                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
+                        "status": vals['result'],
+                        "measurement": vals['value'],
+                        "notes": vals['notes']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            sampleresult = vals['object']
+            sampleresult.result = vals['result']
+            sampleresult.value = vals['value']
+            sampleresult.notes = vals['notes']
+
+            sampleresult.save()
+            
+        return JsonResponse(json_response)
+
+@login_required
+def poolresults_table_update_view(request):
+    if request.method == "POST":
+        print(request.POST)
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "status" in k:
+                    update_values[row_id]['result'] = v
+                elif "measurement" in k:
+                    update_values[row_id]['value'] = v
+                elif "notes" in k:
+                    update_values[row_id]['notes'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                pool_result = PoolResult.objects.get(pk=object_id)
+                update_values[object_id]['object'] = pool_result
+            except PoolResult.DoesNotExist as e:
+                print(e)
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['pool'] = vals['object'].pool
+            ori_post['test'] = vals['object'].test
+            ori_post['replicate'] = vals['object'].replicate
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = PoolResultForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            if form.is_valid():
+                print("VALID")
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
+                        "test": ori_post['data[{}][test]'.format(obj_id)],
+                        "pool": ori_post['data[{}][pool]'.format(obj_id)],
+                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
+                        "status": vals['result'],
+                        "measurement": vals['value'],
+                        "notes": vals['notes']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            poolresult = vals['object']
+            poolresult.result = vals['result']
+            poolresult.value = vals['value']
+            poolresult.notes = vals['notes']
+
+            poolresult.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def subject_table_update_view(request):
     print(request.POST)
-    return JsonResponse({'test': 'None'})
+    return JsonResponse({"data": [{}]})
+    # if request.method == "POST":
+    #     for k, v in request.POST.items():
+    #         if "consent_status" in k:
+    #             consent_status = v
+    #             sample_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+    #             try:
+    #                 sample = Sample.objects.get(pk=sample_id)
+    #             except Sample.DoesNotExist:
+    #                 return render(request, "lims/sample_not_found.html")
+    #             ori_post = request.POST.copy()
+    #             ori_post['collection_status'] = collection_status
+    #             ori_post['notes'] = ""
+    #             ori_post['instance'] = sample
+    #             form = SampleForm(ori_post)
+    #             if form.is_valid():
+    #                 sample.collection_status = collection_status
+    #                 sample.save()
+    #                 return JsonResponse({"data": [
+    #                     {
+    #                         "DT_RowId": str(sample_id),
+    #                         "sample_id": ori_post['data[{}][sample_id]'.format(sample_id)],
+    #                         "subject_id": ori_post['data[{}][subject_id]'.format(sample_id)],
+    #                         "collection_event": ori_post['data[{}][collection_event]'.format(sample_id)],
+    #                         "location": ori_post['data[{}][location]'.format(sample_id)],
+    #                         "collection_status": collection_status,
+    #                         "sample_type": str(sample.sample_type),
+    #                         "box_id": ori_post['data[{}][box_id]'.format(sample_id)],
+    #                         "box_position": ori_post['data[{}][box_position]'.format(sample_id)],
+    #                     }]})
+    #             else:
+    #                 return JsonResponse({"error": str(form.errors)})
+    # return JsonResponse({"data": [{}]})
+
+
+
+        
     

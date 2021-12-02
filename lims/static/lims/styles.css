@@ -188,6 +188,15 @@ mark {
 
 /* remove space above single cell editor for datatables */
 
-label.DTE_Label {
+.DTE_Inline_Field .col-form-label{
+  display: none;
+}
+
+select.form-select{
+  line-height: 1rem;
+  width: 100%;
+}
+
+.DTE_Field_Type_readonly {
   display: none;
 }

@@ -1,15 +1,19 @@
 {% extends "lims/base.html" %}
+{% load static %}
 {% block head %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.dataTables.min.css' %}"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.bootstrap5.min.css' %}"/>
 {% endblock head %}
 
 {% block content %}
+{% csrf_token %}
 <h1 class="border-bottom">Pools</h1>
 <div class="d-grid gap-2 d-md-block mt-2 mb-2">
         <a class="btn btn-primary btn" href="{% url 'lims:new_pool' %}" role="button">Add Pools <span data-feather="plus"></span></a>
     </div>
-    <table id="sample_table" class="display table table-hover"> 
+    <table id="pool_table" class="display table table-hover"> 
         <thead>
             <tr>
                 <th>Name</th>
@@ -21,17 +25,10 @@
         </thead>
         <tbody>
             {% for pool in pool_list %}
-                <tr>
+                <tr id="{{ pool.id }}">
                     <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id%}">
                         {{ pool.name }}</a></td>
-                    {% if pool.notification_status == "Pending" %}
-                    <td><span class="badge bg-warning">{{ pool.notification_status }}</span></td>
-                    {% elif pool.notification_status == "Not Notified" %}
-                        <td><span class="badge bg-secondary">{{ pool.notification_status }}</span></td>
-                    {% else %}
-                        <td><span class="badge bg-success">{{ pool.notification_status }}</span></td>
-                    {% endif %}
-
+                    <td>{{ pool.notification_status }}</td>
                     {% if pool.box %}
                         <td><a class="table-link" href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
                         <td>{{ pool.box.storage_location }}</td>
@@ -56,37 +53,111 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
 <script>
-    $(document).ready( function () {
-    $('#sample_table').DataTable({
-    rowReorder: false,
-    fixedHeader: true,
-    stateSave: true,
-    order: [],
-    dom: 'B<"clear">lfrtip',
-    buttons: {
-        name: 'primary',
-        title: 'Pools',
-        buttons: [ 
-        {
-          extend: 'copy',
-          title: 'Pool List'
-        },
-        {
-          extend: 'pdf',
-          title: 'Pool List'
-        },
-        {
-          extend: 'csv',
-          title: 'Pool List'
-        },
-        {
-          extend: 'excel',
-          title: 'Pool List'
-        }]
+    $.ajaxSetup({
+    data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+    let editor; // use a global for the submit and return data rendering in the examples
 
-        }}
-    );
-} );
-</script>
+    $(document).ready(function() {
+        editor = new $.fn.dataTable.Editor( {
+            ajax: "{% url 'lims:pool_table_update' %}",
+            table: "#pool_table",
+        
+            fields: [ 
+                
+                {
+                    label: "Name",
+                    name: "name",
+                    type: "readonly",
+                },
+                {
+                    label: "Notification Status",
+                    name: "notification_status",
+                    type:  "select",
+                    options: [
+                        { label: "Notified", value: "Notified" },
+                        { label: "Pending", value: "Pending" },
+                        { label: "Not Notified", value: "Not Notified" },
+                    ]
+                },
+                {
+                    label: "Storage Box",
+                    name: "storage_box",
+                    type: "readonly",
+                },
+                {
+                    label: "Storage Location",
+                    name: "storage_location",
+                    type: "readonly",
+                },
+                {
+                    label: "Box Position",
+                    name: "box_position",
+                    type: "readonly"
+                }
+            ]
+        } );
+        
+        // Activate an inline edit on click of a table cell
+        $('#pool_table').on( 'click', 'tbody td:nth-child(2)', function (e) {
+            editor.inline( this, {submit: 'all', onBlur: 'submit'} );
+        } );
+
+        var notification_status = {
+            "Notified": "success",
+            "Not Notified": "primary",
+            "Pending": "secondary",
+        }
+        
+        $('#pool_table').DataTable({
+        rowReorder: false,
+        fixedHeader: true,
+        stateSave: true,
+        order: [],
+        dom: 'Bfrtip',
+        columns: [
+            { data: "name" },
+            { 
+                "data": "notification_status",
+                render: function ( status ) {
+                            return status ?
+                                `<span class="badge bg-${notification_status[status]}">${status}</span>` : null     
+                        }
+            },
+            { data: "storage_box" },
+            { data: "storage_location" },
+            { data: "box_position" },
+   
+        ],
+    select: true,
+        buttons: {
+            name: 'primary',
+            title: 'Pools',
+            buttons: [ 
+            {
+            extend: 'copy',
+            title: 'Pool List'
+            },
+            {
+            extend: 'pdf',
+            title: 'Pool List'
+            },
+            {
+            extend: 'csv',
+            title: 'Pool List'
+            },
+            {
+            extend: 'excel',
+            title: 'Pool List'
+            },
+            { extend: "edit",   editor: editor }]
+
+            }}
+        );
+    } );
+    </script>
 {% endblock js %}

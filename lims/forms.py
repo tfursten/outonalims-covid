@@ -92,7 +92,10 @@ class SubjectForm(ModelForm):
         ]
 
         labels = {
-            "ethnicity": "Hispanic or Latino/a"
+            "ethnicity": "Hispanic or Latino/a",
+            "dose_1": "COVID-19 Vaccine Dose 1",
+            "dose_2": "COVID-19 Vaccine Dose 2",
+            "booster": "COVID-19 Vaccine Booster"
         }
         widgets = {
             'consent_date': DateInput(),
@@ -283,3 +286,4 @@ class PoolResultForm(ModelForm):
                 })
             super(PoolResultForm, self).__init__(*args, **kwargs)
             self.fields['pool'].queryset = Pool.objects.order_by('name')
+

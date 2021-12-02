@@ -382,11 +382,6 @@ class Sample(models.Model):
             return None
     
 class Pool(models.Model):
-    STATUS_CHOICES = [
-    ('Positive', 'Positive'),
-    ('Negative', 'Negative'),
-    ('Pending', 'Pending')
-    ]
     NOTIFICATION_CHOICES = [
         ('Notified', 'Notified'),
         ('Not Notified', 'Not Notified'),
