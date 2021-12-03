@@ -39,8 +39,8 @@
                     <td>{{ subject.first_name }}</td>
                     <td>{{ subject.last_name }}</td>
                     <td>{{ subject.consent_status }}</td>
-                    <td>{{ subject.location.project.name }}</td>
-                    <td>{{ subject.location.name }}</td>
+                    <td><a class="table-link" href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></td>
+                    <td><a class="table-link" href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></td>
                     <td>{{ subject.grade }}</td>
                 </tr>
             {% endfor %}
@@ -57,89 +57,16 @@
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
 
 <script>
-
-$.ajaxSetup({
-    data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
- });
- let editor; // use a global for the submit and return data rendering in the examples
-
  $(document).ready(function() {
-     editor = new $.fn.dataTable.Editor( {
-        //  ajax: {
-        //     url: "{% url 'lims:sample_table_update' %}",
-        //     type: "POST",
-        //     dataType: "json",
-        //     success: () => {
-        //         console.log("BLAH")
-        //         $('#sample_table').DataTable().ajax.reload()
-        //         }
-        //  },
-         ajax: "{% url 'lims:subject_table_update' %}",
-         table: "#subject_table",
-      
-         fields: [ 
-            
-            {
-                label: "Subject ID",
-                name: "subject_id",
-                multiEditable: false,
-                type: "readonly"
-            },
-            {
-                label: "First Name",
-                name: "first_name",
-                type: "readonly",
-            },
-            {
-                label: "Last Name",
-                name: "last_name",
-                type: "readonly",
-                
-            },
-            {
-                label: "Consent Status",
-                name: "consent_status",
-                type:  "select",
-                options: [
-                    { label: "Consented", value: "Consented" },
-                    { label: "Not Consented", value: "Not Consented" },
-                    { label: "Withdrawn", value: "Withdrawn" },
-                ]
-            },
-            {
-                label: "Project",
-                name: "project",
-                type: "readonly",
-            },
-            {
-                label: "Location",
-                name: "location",
-                type: "readonly",
-            },
-            {
-                label: "Grade",
-                name: "grade",
-                type: "readonly",
-            },
-         ]
-     } );
-    
-
     var consent_status = {
         Consented: "success",
         "Not Consented": "warning",
         Withdrawn: "danger",
     }
-
-    // Activate an inline edit on click of a table cell
-    $('#subject_table').on( 'click', 'tbody td:nth-child(4)', function (e) {
-        editor.inline( this, {submit: 'all', onBlur: 'submit'} );
-    } );
-    
     $('#subject_table').DataTable({
     rowReorder: false,
     stateSave: true,
@@ -181,10 +108,7 @@ $.ajaxSetup({
         {
           extend: 'excel',
           title: 'Subject List'
-        },
-        { extend: "create", editor: editor },
-        { extend: "edit",   editor: editor },
-        { extend: "remove", editor: editor }]
+        },]
 
         }}
     );

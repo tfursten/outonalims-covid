@@ -1,10 +1,11 @@
 import io
+import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.contrib.auth.decorators import login_required
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -1170,7 +1171,7 @@ def sample_label_options(request, event_id):
 
 @login_required
 def sample_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         json_response = {"data": []}
         samples = []
         statuses = []
@@ -1211,7 +1212,7 @@ def sample_table_update_view(request):
 
 @login_required
 def pool_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         print(request.POST)
         json_response = {"data": []}
         pools = []
@@ -1254,7 +1255,7 @@ def pool_table_update_view(request):
 
 @login_required
 def poolbox_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         print(request.POST)
         update_values = {}
         # pull values from request
@@ -1313,7 +1314,7 @@ def poolbox_table_update_view(request):
 
 @login_required
 def samplebox_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         print(request.POST)
         update_values = {}
         # pull values from request
@@ -1372,7 +1373,7 @@ def samplebox_table_update_view(request):
 
 @login_required
 def sampleresults_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         print(request.POST)
         update_values = {}
         # pull values from request
@@ -1436,7 +1437,7 @@ def sampleresults_table_update_view(request):
 
 @login_required
 def poolresults_table_update_view(request):
-    if request.method == "POST":
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
         print(request.POST)
         update_values = {}
         # pull values from request
@@ -1495,6 +1496,144 @@ def poolresults_table_update_view(request):
             poolresult.notes = vals['notes']
 
             poolresult.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def events_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        print(request.POST)
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "collection_date" in k:
+                    update_values[row_id]['date'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                event = Event.objects.get(pk=object_id)
+                update_values[object_id]['object'] = event
+            except Event.DoesNotExist as e:
+                print(e)
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['name'] = vals['object'].name
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = EventForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            
+            if not form.is_valid():
+                return JsonResponse({"error": str(form.errors)})
+                
+            #     print("VALID")
+            #     json_response['data'].append({
+            #             "DT_RowId": str(obj_id),
+            #             "event_name": ori_post['data[{}][event_name]'.format(obj_id)],
+            #             "event_status": ori_post['data[{}][event_status]'.format(obj_id)],
+            #             "collection_date": 
+            #         })
+            # else:
+                
+        # Update database
+        json_response = {"data": []}
+
+        for obj_id, vals in update_values.items():
+            event = vals['object']
+            print(datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date())
+            event.date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date()
+            event.save()
+            status = "Completed" if event.is_complete else "Pending"
+            json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "event_name": ori_post['data[{}][event_name]'.format(obj_id)],
+                        "event_status": status,
+                        "collection_date": event.date
+                    })
+
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def pooladdsamples_table_update_view(request):
+    # verify that the post is a remove action
+
+    if (request.method == "POST") and (request.POST.get('action') == 'remove'):
+        delete_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in delete_values:
+                    delete_values[row_id] = {}
+                if "pool_name" in k:
+                    delete_values[row_id]['pool_name'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id, values in delete_values.items():
+            try:
+                sample = Sample.objects.get(pk=object_id)
+                delete_values[object_id]['sample_obj'] = sample
+                pool = Pool.objects.get(name=values["pool_name"])
+                delete_values[object_id]['pool_obj'] = pool
+
+            except ObjectDoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        json_response = {"data": []}
+        # Update database
+        for obj_id, vals in delete_values.items():
+            sample = vals['sample_obj']
+            pool = vals['pool_obj']
+            pool.samples.remove(sample)
+            pool.save()
+            
+        return JsonResponse(json_response)
+
+@login_required
+def pooladdpools_table_update_view(request):
+        # verify that the post is a remove action
+    if (request.method == "POST") and (request.POST.get('action') == 'remove'):
+        delete_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in delete_values:
+                    delete_values[row_id] = {}
+                if "pool_name" in k:
+                    delete_values[row_id]['pool_name'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id, values in delete_values.items():
+            try:
+                pool_child = Pool.objects.get(pk=object_id)
+                delete_values[object_id]['pool_child_obj'] = pool_child
+                pool = Pool.objects.get(name=values["pool_name"])
+                delete_values[object_id]['pool_obj'] = pool
+
+            except ObjectDoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        json_response = {"data": []}
+        # Update database
+        for obj_id, vals in delete_values.items():
+            pool_child = vals['pool_child_obj']
+            pool = vals['pool_obj']
+            pool.pools.remove(pool_child)
+            pool.save()
             
         return JsonResponse(json_response)
 

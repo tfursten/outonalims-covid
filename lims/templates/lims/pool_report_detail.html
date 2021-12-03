@@ -19,10 +19,10 @@
       </tr>
   </thead>
   <tbody>
-      {% for sample in pool.get_all_samples %}
+      {% for subject in pool.get_all_subjects %}
           <tr>
-              <td>{{ sample.subject.first_name }}</td>
-              <td>{{ sample.subject.last_name }}</td>
+              <td>{{ subject.first_name }}</td>
+              <td>{{ subject.last_name }}</td>
           </tr>
       {% endfor %}
   </tbody>
@@ -54,7 +54,7 @@
     rowReorder: false,
     order: [[1, 'asc'], [0, 'asc']],
     fixedHeader: true,
-    dom: 'B<"clear">lfrtip',
+    dom: 'Bfrtip',
     buttons: {
         name: 'primary',
         buttons: [ 

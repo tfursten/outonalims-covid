@@ -19,17 +19,15 @@
                         <th>Storage Box</th>
                         <th>Storage Location</th>
                         <th>Storage Box Position</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for pool in pool_list %}
                         <tr id="{{ pool.id }}">
                             <td>{{ pool.name }}</td>
-                            <td>{{ pool.box.name }}</td>
+                            <td>{{ pool.box.box_name }}</td>
                             <td>{{ pool.box.storage_location }}</td>
-                            <td>{{ pool.box_position }}</td>
-                            <td>{{ pool.status }}</td>
+                            <td>{{ pool.box_position.position }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -56,7 +54,7 @@
     let table = $('#pools').DataTable({
         rowReorder: false,
         fixedHeader: true,
-        dom: 'B<"clear">lfrtip',
+        dom: 'Bfrtip',
         buttons: {
             name: 'primary',
             buttons: [ 'copy', 'csv', 'excel', 'pdf' ],

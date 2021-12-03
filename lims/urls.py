@@ -101,7 +101,12 @@ urlpatterns = [
     path('poolboxes/table-edit/', views.poolbox_table_update_view, name="poolbox_table_update"),
     path('sampleboxes/table-edit/', views.samplebox_table_update_view, name="samplebox_table_update"),
     path('sampleresults/table-edit/', views.sampleresults_table_update_view, name="sampleresults_table_update"),
-    path('poolresults/table-edit/', views.poolresults_table_update_view, name="poolresults_table_update")
+    path('poolresults/table-edit/', views.poolresults_table_update_view, name="poolresults_table_update"),
+    path('pooladdsamples/table-edit/', views.pooladdsamples_table_update_view, name="pooladdsamples_table_update"),
+    path('pooladdpools/table-edit/', views.pooladdpools_table_update_view, name="pooladdpools_table_update"),
+    path('events/table-edit/', views.events_table_update_view, name="events_table_update")
+
+
 
 
 ]

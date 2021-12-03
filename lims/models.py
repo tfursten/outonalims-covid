@@ -250,7 +250,7 @@ class PoolBoxPosition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    location = models.ManyToManyField(Location)
+    location = models.ManyToManyField(Location, blank=True)
     researcher = models.ManyToManyField(Researcher, blank=True)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
@@ -405,7 +405,7 @@ class Pool(models.Model):
     def __str__(self):
         return str(self.name)
 
-    @property
+
     def get_all_locations(self):
         locations = set()
         for sample in self.samples.all():
@@ -415,7 +415,6 @@ class Pool(models.Model):
                 locations.add(sample.location)
         return list(locations)
     
-    @property
     def get_all_samples(self):
         samples = set()
         for sample in self.samples.all():
@@ -423,7 +422,16 @@ class Pool(models.Model):
         for pool in self.pools.all():
             for sample in pool.samples.all():
                 samples.add(sample)
+        print(list(samples))
         return list(samples)
+    
+    def get_all_subjects(self):
+        
+        samples = self.get_all_samples()
+        subjects = set()
+        for sample in samples:
+            subjects.add(sample.subject)
+        return list(subjects)
 
     @property
     def box_position(self):
