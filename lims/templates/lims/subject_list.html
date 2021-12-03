@@ -1,10 +1,15 @@
 {% extends "lims/base.html" %}
+{% load static %}
 {% block head %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.dataTables.min.css' %}"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.bootstrap5.min.css' %}"/>
 {% endblock head %}
 
 {% block content %}
+{% csrf_token %}
+
 <h1 class="border-bottom">Subjects</h1>
     <div class="d-grid gap-2 d-md-block mt-2 mb-2">
         <a class="btn btn-primary btn" href="{% url 'lims:new_subject' %}" role="button">New Subject <span data-feather="plus"></span></a>
@@ -27,19 +32,15 @@
         </thead>
         <tbody>
             {% for subject in subject_list %}
-                <tr>
+                <tr id="{{ subject.id }}">
                     <td><a class="table-link" href="{% url 'lims:subject_detail' subject.id %}">
                         {{ subject.subject_ui }}
                     </a></td>
                     <td>{{ subject.first_name }}</td>
                     <td>{{ subject.last_name }}</td>
-                    {% if subject.consent_status == "Consented" %}
-                        <td><span class="badge bg-success">{{ subject.consent_status }}</span></td>
-                    {% else %}
-                        <td><span class="badge bg-danger">{{ subject.consent_status }}</span></td>
-                    {% endif %}
-                    <td>{{ subject.location.project.name }}</td>
-                    <td>{{ subject.location.name }}</td>
+                    <td>{{ subject.consent_status }}</td>
+                    <td><a class="table-link" href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></td>
+                    <td><a class="table-link" href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></td>
                     <td>{{ subject.grade }}</td>
                 </tr>
             {% endfor %}
@@ -55,13 +56,40 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
+
 <script>
-    $(document).ready( function () {
+ $(document).ready(function() {
+    var consent_status = {
+        Consented: "success",
+        "Not Consented": "warning",
+        Withdrawn: "danger",
+    }
     $('#subject_table').DataTable({
     rowReorder: false,
+    stateSave: true,
     fixedHeader: true,
     order: [],
-    dom: 'B<"clear">lfrtip',
+    dom: 'Bfrtip',
+    columns: [
+            { data: "subject_id" },
+            { data: "first_name" },
+            { data: "last_name" },
+            { 
+                "data": "consent_status",
+                render: function ( status ) {
+                            return status ?
+                                `<span class="badge bg-${consent_status[status]}">${status}</span>` : null     
+                        }
+            },
+            { data: "project" },
+            { data: "location" },
+            { data: "grade"},
+   
+        ],
+    select: true,
     buttons: {
         name: 'primary',
         buttons: [ 
@@ -80,7 +108,7 @@
         {
           extend: 'excel',
           title: 'Subject List'
-        }]
+        },]
 
         }}
     );

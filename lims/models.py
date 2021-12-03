@@ -7,8 +7,8 @@ from cualid import create_ids
 import uuid
 from django.contrib.auth.models import User
 # 
-# Create your models here.
 
+# require email for users
 User._meta.get_field('email').blank = False
 
 
@@ -28,7 +28,7 @@ class Researcher(models.Model):
 class Test(models.Model):
     name = models.CharField(max_length=100, unique=True)
     protocol = models.TextField(null=True, blank=True)
-    detects = models.CharField(max_length=100)
+    detects = models.CharField(max_length=100, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -72,22 +72,20 @@ class Location(models.Model):
         return self.name
 
 
+class Race(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Subject(models.Model):
 
     SEX_CHOICES = [
     ('MALE', 'Male'),
     ('FEMALE', 'Female'),
     ]
-    VACCINE_CHOICES = [
-        ('FULL', 'Full'),
-        ('PARTIAL', 'Partial'),
-        ('BOOSTED', 'Boosted'),
-        ('NO', 'None')
-    ]
-    COVID_CHOICES = [
-        ('Yes', 'Yes'),
-        ('No', 'No')
-    ]
+ 
     GRADE_CHOICES = [
         ('K', 'K'),
         ('NH', 'NH')
@@ -99,7 +97,6 @@ class Subject(models.Model):
         ('Withdrawn', 'Withdrawn')
     ]
 
-
     subject_ui = models.CharField(max_length=6, blank=True, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
@@ -109,22 +106,21 @@ class Subject(models.Model):
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
     age = models.PositiveIntegerField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
-    race = models.CharField(max_length=100, null=True, blank=True)
-    ethnicity = models.CharField(max_length=100, null=True, blank=True)
+    race = models.ManyToManyField(Race, blank=True)
+    ethnicity = models.BooleanField(null=True, blank=True)
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, blank=True, null=True)
     phone = PhoneField(blank=True, null=True)
     email = models.EmailField(null=True, blank=True)
     gardian_name = models.CharField(max_length=100, null=True, blank=True)
     gardian_relationship = models.CharField(max_length=100, null=True, blank=True)
     teacher_name = models.CharField(max_length=100, null=True, blank=True)
-    vaccine_status = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
-    dose_1 = models.DateField(null=True, blank=True)
-    dose_2 = models.DateField(null=True, blank=True)
-    dose_3 = models.DateField(null=True, blank=True)
-    prior_covid = models.CharField(
-        max_length=10, choices=COVID_CHOICES, null=True, blank=True,
-        help_text="Has subject been infected with COVID-19 prior to study")
-    pneumococcal_vaccine = models.CharField(max_length=10, choices=VACCINE_CHOICES, blank=True, null=True)
+    dose_1 = models.BooleanField(null=True, blank=True)
+    dose_2 = models.BooleanField(null=True, blank=True)
+    booster = models.BooleanField(null=True, blank=True)
+    dose_1_date = models.DateField(null=True, blank=True)
+    dose_2_date = models.DateField(null=True, blank=True)
+    booster_date = models.DateField(null=True, blank=True)
+    pneumococcal_vaccine = models.BooleanField(null=True, blank=True)
     pneumococcal_date = models.DateField(null=True, blank=True)
     notes = models.CharField(max_length=300, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
@@ -152,22 +148,109 @@ class Subject(models.Model):
     def __str__(self):
         return self.subject_ui
 
-class Box(models.Model):
+
+class SampleBox(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
+    size = models.PositiveIntegerField(default=81)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
+    positions = models.ManyToManyField('SampleBoxPosition', related_name="sample_box")
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
-    
-    def __str__(self):
-        return str(self.box_name)
+
     class Meta:
         ordering = ("-created_on", )
-        verbose_name_plural = "boxes"
+        verbose_name_plural = "sample_boxes"
+
+    def __str__(self):
+        return str(self.box_name)
+
+    def number_of_samples_in_box(self):
+        count = 0
+        for position in self.positions.all():
+            if not position.sample == None:
+                count += 1
+        return count
+
+    def is_full(self):
+        if self.number_of_samples_in_box() >= self.size:
+            return True
+        else:
+            return False
+    
+    def remaining(self):
+        return self.size - self.number_of_samples_in_box()
+
+    def get_next_empty_position(self):
+        for position in self.positions.all().order_by('position'):
+            if position.sample == None:
+                return position.id
+        return None
+            
+
+
+class PoolBox(models.Model):
+    box_name = models.CharField(max_length=100, unique=True)
+    size = models.PositiveIntegerField(default=81)
+    storage_location = models.CharField(max_length=100, blank=True, null=True)
+    storage_shelf = models.CharField(max_length=100, blank=True, null=True)
+    positions = models.ManyToManyField('PoolBoxPosition', related_name="pool_box")
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on", )
+        verbose_name_plural = "pool_boxes"
+
+    def __str__(self):
+        return str(self.box_name)
+
+    def number_of_pools_in_box(self):
+        count = 0
+        for position in self.positions.all():
+            if not position.pool == None:
+                count += 1
+        return count
+
+    def is_full(self):
+        if self.number_of_pools_in_box() >= self.size:
+            return True
+        else:
+            return False
+    
+    def remaining(self):
+        return self.size - self.number_of_pools_in_box()
+
+    def get_next_empty_position(self):
+        for position in self.positions.all().order_by('position'):
+            if position.pool == None:
+                return position.id
+        return None
+    
+
+
+class SampleBoxPosition(models.Model):
+    position = models.PositiveIntegerField()
+    sample = models.OneToOneField('Sample', blank=True, null=True, on_delete=models.PROTECT)
+    # if no sample, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
+        # contrant that prevents duplicate positions
+        # constraints = [
+        # models.UniqueConstraint(fields=["box", "position"], name='unique position')
+        # ]
+    
+class PoolBoxPosition(models.Model):
+    position = models.PositiveIntegerField()
+    pool = models.OneToOneField('Pool', blank=True, null=True, on_delete=models.PROTECT)
+    # if no Pool, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
 
 
 class Event(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    location = models.ManyToManyField(Location)
+    location = models.ManyToManyField(Location, blank=True)
     researcher = models.ManyToManyField(Researcher, blank=True)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
@@ -222,9 +305,9 @@ class Sample(models.Model):
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     sample_type = models.CharField(max_length=15, choices=SITE, default='Nasal')
-    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
-    box_position = models.IntegerField(null=True, blank=True)
+    # box_position = models.IntegerField(null=True, blank=True)
     collection_event = models.ForeignKey(Event, on_delete=models.PROTECT)
     collection_status = models.CharField(max_length=15, choices=COLLECTION_CHOICES, default='Pending')
     notes = models.TextField(blank=True, null=True)
@@ -245,7 +328,6 @@ class Sample(models.Model):
             'TYPE': ['sample_type']
             }
         sortby_list = sortby[sort_by1] + sortby[sort_by2] + sortby[sort_by3] + sortby[sort_by4]
-        print(*sortby_list)
         samples = Sample.objects.filter(collection_event=event).order_by(
             *sortby_list)
         return samples
@@ -260,8 +342,6 @@ class Sample(models.Model):
         subjects = Subject.objects.filter(pk__in=subject_pks).order_by(sort_by1, sort_by2, sort_by3)
         return subjects
       
-
-        
 
     def get_subjects_created_at_event(event, sample_type):
         """
@@ -284,8 +364,93 @@ class Sample(models.Model):
             else:
                 subjects_dict['not_created'].append(subject)
         return subjects_dict
+   
+    @property
+    def box_position(self):
+        if SampleBoxPosition.objects.filter(sample=self.id).exists():
+            return SampleBoxPosition.objects.filter(sample=self.id)[0]
+        else:
+            return None
 
-class TestResult(models.Model):
+    @property
+    def box(self):
+        position = self.box_position
+        if position:
+            box = position.sample_box.all()[0]
+            return box
+        else:
+            return None
+    
+class Pool(models.Model):
+    NOTIFICATION_CHOICES = [
+        ('Notified', 'Notified'),
+        ('Not Notified', 'Not Notified'),
+        ('Pending', 'Pending')
+    ]
+    name = models.CharField(max_length=100, unique=True)
+    samples = models.ManyToManyField(Sample, blank=True)
+    pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
+    # result = models.ManyToManyField('TestResult', blank=True)
+    # status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
+    notification_status = models.CharField(max_length=15, choices=NOTIFICATION_CHOICES, default='Pending')
+    # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
+    # box_position = models.IntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on",)
+
+    def __str__(self):
+        return str(self.name)
+
+
+    def get_all_locations(self):
+        locations = set()
+        for sample in self.samples.all():
+            locations.add(sample.location)
+        for pool in self.pools.all():
+            for sample in pool.samples.all():
+                locations.add(sample.location)
+        return list(locations)
+    
+    def get_all_samples(self):
+        samples = set()
+        for sample in self.samples.all():
+            samples.add(sample)
+        for pool in self.pools.all():
+            for sample in pool.samples.all():
+                samples.add(sample)
+        print(list(samples))
+        return list(samples)
+    
+    def get_all_subjects(self):
+        
+        samples = self.get_all_samples()
+        subjects = set()
+        for sample in samples:
+            subjects.add(sample.subject)
+        return list(subjects)
+
+    @property
+    def box_position(self):
+        if PoolBoxPosition.objects.filter(pool=self.id).exists():
+            return PoolBoxPosition.objects.filter(pool=self.id)[0]
+        else:
+            return None
+
+    @property
+    def box(self):
+        position = self.box_position
+        if position:
+            box = position.pool_box.all()[0]
+            return box
+        else:
+            return None
+
+
+class SampleResult(models.Model):
     RESULT_CHOICES = [
     ('Positive', 'Positive'),
     ('Negative', 'Negative'),
@@ -305,59 +470,42 @@ class TestResult(models.Model):
 
     class Meta:
         ordering = ("-created_on",)
+        # contrant that prevents duplicate sample results
+        constraints = [
+        models.UniqueConstraint(fields=["sample", "test", "replicate"], name='unique_sample_result')
+        ]
 
     def __str__(self):
         return str(self.name)
 
 
-class Pool(models.Model):
-    STATUS_CHOICES = [
+class PoolResult(models.Model):
+    RESULT_CHOICES = [
     ('Positive', 'Positive'),
     ('Negative', 'Negative'),
-    ('Pending', 'Pending')
+    ('Pending', 'Pending'),
+    ('Unknown', 'Unknown'),
+    ('Inconclusive', 'Inconclusive')
     ]
-    NOTIFICATION_CHOICES = [
-        ('Notified', 'Notified'),
-        ('Not Notified', 'Not Notified'),
-        ('Pending', 'Pending')
-    ]
-    name = models.CharField(max_length=100, unique=True)
-    samples = models.ManyToManyField(Sample, blank=True)
-    pools = models.ManyToManyField('Pool', symmetrical=False, blank=True)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Pending')
-    notification_status = models.CharField(max_length=15, choices=NOTIFICATION_CHOICES, default='Pending')
-    box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
-    box_position = models.IntegerField(null=True, blank=True)
-    notes = models.TextField(blank=True, null=True)
 
+    pool = models.ForeignKey(Pool, on_delete=models.PROTECT)
+    test = models.ForeignKey(Test, on_delete=models.PROTECT)
+    replicate = models.PositiveIntegerField(default=1)
+    result = models.CharField(max_length=15, choices=RESULT_CHOICES, default='Pending')
+    value = models.CharField(max_length=100, null=True, blank=True)
+    researcher = models.ManyToManyField(Researcher, blank=True)
+    notes = models.TextField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
-        ordering = ("-created_on", "status")
+        ordering = ("-created_on",)
+        # contrant that prevents duplicate pool results
+        constraints = [
+        models.UniqueConstraint(fields=["pool", "test", "replicate"], name='unique_pool_result')
+        ]
 
     def __str__(self):
         return str(self.name)
-
-    @property
-    def get_all_locations(self):
-        locations = set()
-        for sample in self.samples.all():
-            locations.add(sample.location)
-        for pool in self.pools.all():
-            for sample in pool.samples.all():
-                locations.add(sample.location)
-        return list(locations)
-    
-    @property
-    def get_all_samples(self):
-        samples = set()
-        for sample in self.samples.all():
-            samples.add(sample)
-        for pool in self.pools.all():
-            for sample in pool.samples.all():
-                samples.add(sample)
-        return list(samples)
-
 
 
 class Label(models.Model):

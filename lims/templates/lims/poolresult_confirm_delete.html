@@ -2,14 +2,14 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="card border-danger">
-    <h1 class="card-header border-danger text-danger">Delete Test Result: {{ testresult.name }}</h1>
+    <h1 class="card-header border-danger text-danger">Delete Pool Result: {{ poolresult.name }}</h1>
         <div class="card-body">
             <form method="post">{% csrf_token %}
-                <h3>Are you sure you want to delete test result?</h3>
-                <p class="text-danger">This will permenently delete all data associated with this test result.</p>
+                <h3>Are you sure you want to delete pool result?</h3>
+                <p class="text-danger">This will permenently delete all data associated with this pool result.</p>
                 <div class="d-grid gap-2 d-md-block mt-2">
                     <button class="btn btn-outline-danger" type="submit">Delete <span data-feather="x-octagon"></span></button>
-                    <a class="btn btn-success btn" href="{% url 'lims:result_detail' testresult.id %}" role="button">Cancel <span data-feather="corner-up-left"></span></a>
+                    <a class="btn btn-success btn" href="{% url 'lims:pool_result_detail' sampleresult.id %}" role="button">Cancel <span data-feather="corner-up-left"></span></a>
                 </div>
             </form>
         </div>

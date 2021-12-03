@@ -6,50 +6,43 @@
 {% endblock head %}
 
 {% block content %}
-
 <div class='content-section'>
-    <form id="sample-form" method="POST">
+    <form id="pool-form" method="POST">
         {% csrf_token %}
         <fieldset class="form-group">
-            <legend class="border-bottom mb-6">Samples for Event: {{ event.name }}</legend>
-            <p class="text-muted">Select samples to print labels.</p>
-            <table id="sample-table" class="display table table-hover">
+            <legend class="border-bottom mb-6">Select pools to add results</legend>
+            <p>Click to select multiple pools.</p>
+            <table id="pools" class="display table table-hover"> 
                 <thead>
                     <tr>
-                    <th>Sample ID</th>
-                    <th>Subject ID</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Sample Type</th>
-                    <th>Created On</th>
+                        <th>Pool</th>
+                        <th>Storage Box</th>
+                        <th>Storage Location</th>
+                        <th>Storage Box Position</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for sample in samples %} 
-                    <tr id="{{ sample.id }}">
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">{{ sample.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
-                    <td>{{ sample.subject.first_name }}</td>
-                    <td>{{ sample.subject.last_name }}</td>
-                    <td>{{ sample.sample_type }}</td>
-                    <td>{{ sample.created_on }}</td>
-                    </tr>
+                    {% for pool in pool_list %}
+                        <tr id="{{ pool.id }}">
+                            <td>{{ pool.name }}</td>
+                            <td>{{ pool.box.box_name }}</td>
+                            <td>{{ pool.box.storage_location }}</td>
+                            <td>{{ pool.box_position.position }}</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
-                </table>
-            <hr>
-            <legend class="border-bottom mb-6">Select Print Options</legend>
-            {{ form|crispy }}
+            </table>
+
         </fieldset>
+        <p class="text-muted">Pools that already have a result for the current test and replicate number will not show up in the list.
+            Try changing the replicate number if you have additional results for the same test.</p>
         <div class="d-grid gap-2 d-md-block mt-2">
-            <button class="btn btn-success" type="submit">Print <span data-feather="printer"></span></button>
-            <!-- <a class="btn btn-primary btn" href="{% url 'lims:sample_labels_options' event.id %}" role="button">Next: Print Options <span data-feather="printer"></span></a> -->
-            <a class="btn btn-outline-danger btn" href="{% url 'lims:sample_list' %}" role="button">Cancel</a>
-            <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="home"></span></a>
-        </div>
+            <button class="btn btn-success" type="submit">Add</button>
+           <a class="btn btn-outline-danger mr-5" href="{% url 'lims:pool_result_list' %}" role="button">Cancel</a>
+       </div>
     </form>
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block js %}
 
@@ -60,7 +53,7 @@
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
     $(document).ready( function () {
-    let table = $('#sample-table').DataTable({
+    let table = $('#pools').DataTable({
         rowReorder: false,
         fixedHeader: true,
         dom: 'Bfrtip',
@@ -76,10 +69,8 @@
             $(nRow).attr('id', 'id_' + aData.DT_RowId); // or whatever you choose to set as the id
         },
         })
-    table.rows({ page: 'all'}).select();
-
     // Handle form submission event
-   $('#sample-form').on('submit', function(e){
+   $('#pool-form').on('submit', function(e){
       let form = this;
 
       let rows = table.rows( {selected: true} ).ids().toArray();

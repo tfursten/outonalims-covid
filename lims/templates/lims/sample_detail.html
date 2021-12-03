@@ -10,8 +10,10 @@
             <span class="badge bg-secondary">{{ sample.collection_status }}</span>
         {% elif sample.collection_status == "Collected" %}
             <span class="badge bg-success">{{ sample.collection_status }}</span>
-        {% else %}
+        {% elif sample.collection_status == "Withdrew" %}
             <span class="badge bg-danger">{{ sample.collection_status }}</span>
+        {% else %}
+            <span class="badge bg-warning">{{ sample.collection_status }}</span>
         {% endif %}
     </div>
     <div class="card-header">
@@ -30,30 +32,37 @@
         <p class="card-text">Created: {{ sample.created_on }}</p> 
     </div>
     <div class="card-header">
-        {% if sample.box.id %}
-            <strong>Sample Box: </strong><a href="{% url 'lims:box_detail' sample.box.id %}">{{ sample.box.box_name }}</a>
-            <div class="card-body">
-                <p class="card-text">Box Position: {{ sample.box_postion }}</p>
-                <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
-                <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
-            </div>
+        {% if sample.box %}
+            <strong>Sample Box: </strong><a href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a>
         {% else %}
-            <strong>Sample Box: </strong> None
+            <strong>Sample Box: </strong>None
         {% endif %}
     </div>
+    {% if sample.box %}
+    <div class="card-body">
+        <p class="card-text">Box Position: <a href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></p>
+        <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
+        <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
+    </div>
+    {% else %}
+    <div class="card-body">
+        <p class="card-text">Box Position: None</p>
+        <p class="card-text">Box Location: None</p>
+        <p class="card-text">Box Shelf: None</p>
+    </div>
+    {% endif %}
     <div class="card-header"><strong>Notes:</strong></div>
     <div class="card-body">
         <p class="card-text">{{ sample.notes }}</p>
-
     </div>
-    {{ sample.results.all }}
     {% for result in results %}
-    <div class="card-header"><strong>Result: </strong><a href="#">{{ result.name }}</a> </div>
+    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:sample_result_detail' result.id %}">Result {{ result.id }}</a> </div>
     <div class="card-body">
         <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
         <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
         <p class="card-text"><strong>Status: </strong>{{ result.result }}</p>
         <p class="card-text"><strong>Value: </strong>{{ result.value }}</p>
+        <p class="card-text"><strong>Replicate: </strong>{{ result.replicate }}</p>
     </div>
     {% endfor %}
 

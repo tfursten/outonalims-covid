@@ -7,45 +7,22 @@
 {% endblock head %}
 {% block content %}
 
-<div class="card" id="print-content">
-    <h1 class="card-header">Pool: {{ pool.name }}</h1>
-    <div class="card-body">
-      <strong>Status: </strong>
-      {% if pool.status == "Pending" %}
-            <span class="badge bg-secondary">Pending</span>
-      {% elif pool.status == "Negative" %}
-          <span class="badge bg-success">Negative</span>
-      {% else %}
-          <span class="badge bg-danger">Positive</span>
-      {% endif %}
-    </div>
-</div>
 
+<h3 class="border-bottom mt-2">Participants in Pool: {{ pool.name }}</h3>
 {% if pool.samples.all %}
-<h3 class="border-bottom mt-2">Participants in Pool</h3>
 
 <table id="sample_table" class="display table table-hover"> 
   <thead>
       <tr>
-          <th>Pool</th>
-          <th>Status</th>
-          <th>Sample ID</th>
           <th>First Name</th>
           <th>Last Name</th>
-          <th>Location</th>
-          <th>Grade</th>
       </tr>
   </thead>
   <tbody>
-      {% for sample in pool.get_all_samples %}
+      {% for subject in pool.get_all_subjects %}
           <tr>
-              <td>{{ pool.name }}</td>
-              <td>{{ pool.status }}</td>
-              <td>{{ sample.name }}</td>
-              <td>{{ sample.subject.first_name }}</td>
-              <td>{{ sample.subject.last_name }}</td>
-              <td>{{ sample.subject.location }}</td>
-              <td>{{ sample.subject.grade }}</td>
+              <td>{{ subject.first_name }}</td>
+              <td>{{ subject.last_name }}</td>
           </tr>
       {% endfor %}
   </tbody>
@@ -71,22 +48,13 @@
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
   
-    function printDiv(divName) {
-        let printContents = document.getElementById("print-content").innerHTML;
-        w=window.open();
-        w.document.write(printContents);
-        w.print();
-        w.close();
-    }
-
-    
     
     $(document).ready( function () {
     $('#sample_table').DataTable({
     rowReorder: false,
-    order: [[6, 'asc'], [5, 'asc'], [4, 'asc'], [3, 'asc']],
+    order: [[1, 'asc'], [0, 'asc']],
     fixedHeader: true,
-    dom: 'B<"clear">lfrtip',
+    dom: 'Bfrtip',
     buttons: {
         name: 'primary',
         buttons: [ 
