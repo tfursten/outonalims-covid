@@ -121,7 +121,7 @@ class SampleForm(ModelForm):
         fields = ['collection_status', 'notes']
 
 
-class SamplePrint(forms.Form):
+class SamplePrint(forms.Form):    
     start_position = forms.IntegerField(min_value=1, initial=1,
         help_text="Change starting position of the labels on the label sheet. Positions start at 1 and increment down each column.")
     replicates = forms.IntegerField(min_value=1, initial=1,
@@ -271,7 +271,8 @@ class SampleResultForm(ModelForm):
                     'sample': sample
                 })
             super(SampleResultForm, self).__init__(*args, **kwargs)
-            self.fields['sample'].queryset = Sample.objects.order_by('name')
+            self.fields['sample'].queryset = Sample.objects.filter(
+                collection_status="Collected").order_by('name')
         
 
 class PoolResultForm(ModelForm):
@@ -287,3 +288,13 @@ class PoolResultForm(ModelForm):
             super(PoolResultForm, self).__init__(*args, **kwargs)
             self.fields['pool'].queryset = Pool.objects.order_by('name')
 
+
+class PoolResultSelectTestForm(ModelForm):
+    class Meta:
+        model = PoolResult
+        fields = ['test', 'replicate']
+
+class SampleResultSelectTestForm(ModelForm):
+    class Meta:
+        model = SampleResult
+        fields = ['test', 'replicate']

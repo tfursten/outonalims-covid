@@ -3,6 +3,8 @@
 <div class="card">
     <h1 class="card-header">Sample Result: {{ sampleresult.id }}</h1>
     <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Event: </strong><a href="{% url 'lims:event_detail' sampleresult.sample.collection_event.id %}">{{ sampleresult.sample.collection_event.name }}</a></li>
+      <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' sampleresult.sample.location.id %}">{{ sampleresult.sample.location.name }}</a></li>
       <li class="list-group-item"><strong>Test: </strong><a href="{% url 'lims:test_detail' sampleresult.test.id %}">{{ sampleresult.test.name }}</a></li>
       <li class="list-group-item"><strong>Detects:</strong> {{ sampleresult.test.detects }}</li>
       <li class="list-group-item"><strong>Sample: </strong><a href="{% url 'lims:sample_detail' sampleresult.sample.id %}">{{ sampleresult.sample.name }}</a></li>

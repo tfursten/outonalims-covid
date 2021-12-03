@@ -13,8 +13,6 @@ urlpatterns = [
     path('samples/detail/<str:pk>/edit/', views.SampleUpdateView.as_view(), name="edit_sample"),
     path('samples/add/', views.add_samples, name="new_samples"),
     path('samples/add/<str:event_id>/<str:sample_type>', views.verify_subjects, name="verify_new_samples"),
-    path('samples/event/<str:event_id>/', views.event_samples, name="event_samples"),
-    path('samples/event/<str:event_id>/<str:label_paper>/<str:start_position>/<str:replicates>/<str:sort_by1>/<str:sort_by2>/<str:sort_by3>/<str:sort_by4>/sample_label_pdf/', views.sample_labels_pdf, name="sample_label_pdf"),
     path('samples/event/<str:event_id>/sample-label-options/', views.sample_label_options, name="sample_labels_options"),
     path('projects/', views.ProjectListView.as_view(), name="project_list"),
     path('projects/detail/<str:pk>/', views.ProjectDetailView.as_view(), name="project_detail"),
@@ -86,17 +84,20 @@ urlpatterns = [
     path('test/detail/<str:pk>/remove/', views.TestDeleteView.as_view(), name="delete_test"),
     path('sample-result/', views.SampleResultListView.as_view(), name="sample_result_list"),
     path('sample-result/new/', views.SampleResultFormView.as_view(), name="new_sample_result"),
+    path('sample-result/add-multiple/', views.sampleresult_multiple_view, name="new_multi_sample_result"),
+    path('sample-result/add-multiple/<str:test_id>/<str:rep>/add-samples/', views.sampleresult_multiple_add_samples, name="sampleresult_multiple_add_samples"),
     path('sample-result/detail/<str:pk>/', views.SampleResultDetailView.as_view(), name="sample_result_detail"),
     path('sample-result/detail/<str:pk>/edit/', views.SampleResultUpdateView.as_view(), name="edit_sample_result"),
     path('sample-result/detail/<str:pk>/remove/', views.SampleResultDeleteView.as_view(), name="delete_sample_result"),
     path('pool-result/', views.PoolResultListView.as_view(), name="pool_result_list"),
     path('pool-result/new/', views.PoolResultFormView.as_view(), name="new_pool_result"),
+    path('pool-result/add-multiple/', views.poolresult_multiple_view, name="new_multi_pool_result"),
+    path('pool-result/add-multiple/<str:test_id>/<str:rep>/add-pools/', views.poolresult_multiple_add_pools, name="poolresult_multiple_add_pools"),
     path('pool-result/detail/<str:pk>/', views.PoolResultDetailView.as_view(), name="pool_result_detail"),
     path('pool-result/detail/<str:pk>/edit/', views.PoolResultUpdateView.as_view(), name="edit_pool_result"),
     path('pool-result/detail/<str:pk>/remove/', views.PoolResultDeleteView.as_view(), name="delete_pool_result"),
     path('help/', views.help, name="help"),
     path('samples/table-edit/', views.sample_table_update_view, name="sample_table_update"),
-    path('subjects/table-edit/', views.subject_table_update_view, name="subject_table_update"),
     path('pools/table-edit/', views.pool_table_update_view, name="pool_table_update"),
     path('poolboxes/table-edit/', views.poolbox_table_update_view, name="poolbox_table_update"),
     path('sampleboxes/table-edit/', views.samplebox_table_update_view, name="samplebox_table_update"),
@@ -104,9 +105,6 @@ urlpatterns = [
     path('poolresults/table-edit/', views.poolresults_table_update_view, name="poolresults_table_update"),
     path('pooladdsamples/table-edit/', views.pooladdsamples_table_update_view, name="pooladdsamples_table_update"),
     path('pooladdpools/table-edit/', views.pooladdpools_table_update_view, name="pooladdpools_table_update"),
-    path('events/table-edit/', views.events_table_update_view, name="events_table_update")
-
-
-
+    path('events/table-edit/', views.events_table_update_view, name="events_table_update"),
 
 ]
