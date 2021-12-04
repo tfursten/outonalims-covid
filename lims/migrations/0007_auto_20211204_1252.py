@@ -153,7 +153,11 @@ class Migration(migrations.Migration):
             name='dose_2',
             field=models.BooleanField(blank=True, null=True),
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='subject',
+            name='ethnicity'
+        ),
+        migrations.AddField(
             model_name='subject',
             name='ethnicity',
             field=models.BooleanField(blank=True, null=True),
