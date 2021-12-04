@@ -1,10 +1,11 @@
 import io
+import datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.contrib.auth.decorators import login_required
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -13,12 +14,15 @@ from django.contrib import messages
 from django.db.models import ProtectedError
 from .models import (
     Sample, Project, Location, Researcher, Event,
-    Subject, Box, Pool, Label, Test, TestResult)
+    Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
+    Pool, Label, Test, SampleResult, PoolResult)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
-    EventForm, SubjectForm, SampleForm, BoxForm,
-    SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm,
-    LabelForm, TestForm, TestResultForm, FixIDS, SampleNoticeForm)
+    EventForm, SubjectForm, SampleForm, SampleBoxForm, PoolBoxForm,
+    BoxPositionSampleForm, BoxPositionPoolForm,
+    SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
+    SampleResultSelectTestForm,
+    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -341,13 +345,7 @@ def verify_subjects(request, event_id, sample_type):
             sample.save(force_insert=True)
         return redirect('lims:event_samples', event_id=event_id)
 
-@login_required
-def event_samples(request, event_id):
-    event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event)
-    context = {'samples': samples, 'event': event}
-    return render(request, 'lims/samples_for_event.html', context)
-    
+   
 
 @login_required
 def select_event_for_sample(request):
@@ -356,8 +354,8 @@ def select_event_for_sample(request):
         form = SelectEventForm(request.POST, hide_type=True)
         if form.is_valid():
             event = request.POST.get('event')
-            return redirect('lims:event_samples', event_id=event)
-    return render(request, 'lims/samples_print_labels.html', {'form': form})
+            return redirect('lims:sample_labels_options', event_id=event)
+    return render(request, 'lims/samples_print_labels_select_event.html', {'form': form})
 
 @login_required
 def select_event_for_sample_list(request):
@@ -427,13 +425,26 @@ def subject_list(request, event_id):
     subjects = Sample.get_subjects_at_event(event)
     context = {'subjects': subjects, 'event': event}
     return render(request, 'lims/subject_list_for_event.html', context=context)
-    
+
+
+# @login_required
+# def event_samples(request, event_id):
+#     event = Event.objects.get(pk=event_id)
+#     samples = Sample.get_samples_for_event(event)
+#     context = {'samples': samples, 'event': event}
+#     return render(request, 'lims/samples_for_event.html', context)
+ 
+
 @login_required
 def sample_label_options(request, event_id):
     form = SamplePrint()
+    event = Event.objects.get(pk=event_id)
+    samples = Sample.get_samples_for_event(event)
+    context = {'samples': samples, 'event': event, 'form': form}
     if request.method == "POST":
         form = SamplePrint(request.POST)
         if form.is_valid():
+            print(request.POST)
             start_position = request.POST.get('start_position')
             label_paper = request.POST.get('label_paper')
             reps = request.POST.get('replicates')
@@ -441,13 +452,14 @@ def sample_label_options(request, event_id):
             sort_by2 = request.POST.get('sort_by2')
             sort_by3 = request.POST.get('sort_by3')
             sort_by4 = request.POST.get('sort_by4')
-
-            return redirect('lims:sample_label_pdf',
+            selected_samples = request.POST.getlist('ids')
+            print("selected", selected_samples)
+            return sample_labels_pdf(samples=selected_samples,
                 event_id=event_id, start_position=start_position,
                 label_paper=label_paper, replicates=reps,
                 sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
                 sort_by4=sort_by4)
-    return render(request, 'lims/sample_print_options.html', {'form': form})    
+    return render(request, 'lims/sample_print_options.html', context)    
 
 
 def get_x_y_coordinates(
@@ -461,9 +473,9 @@ def get_x_y_coordinates(
             y_coord = top_margin + (y * row)
             yield (x_coord * mm, y_coord * mm)
 
-@login_required
+
 def sample_labels_pdf(
-    request, event_id, start_position,
+    samples, event_id, start_position,
     label_paper, replicates, sort_by1,
     sort_by2, sort_by3, sort_by4):
     """
@@ -472,7 +484,11 @@ def sample_labels_pdf(
     # Create a file-like buffer to receive PDF data.
 
     event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(event, sort_by1, sort_by2, sort_by3, sort_by4)
+    print("SAMPLES", samples)
+    samples = Sample.get_samples_for_event(
+        event, sort_by1, sort_by2, sort_by3, sort_by4).filter(
+            pk__in=samples)
+    print("FILTERED", samples)
     ids = [sample.name for sample in samples]
     locations = [str(sample.subject.location) for sample in samples]
     grades = [str(sample.subject.grade) for sample in samples]
@@ -534,7 +550,7 @@ class SampleDetailView(SamplePermissionsMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        results = TestResult.objects.filter(sample=self.kwargs['pk'])
+        results = SampleResult.objects.filter(sample=self.kwargs['pk'])
         context['results'] = results
         return context
 
@@ -543,12 +559,13 @@ class SampleUpdateView(SamplePermissionsMixin, LoginRequiredMixin, UpdateView):
     template_name_suffix = '_update'
     form_class = SampleForm
     success_message = "Sample was successfully updated"
+
     def get_success_url(self):
         return reverse('lims:sample_detail', args=(self.object.id,))
 
-# ============== RESULTS ================================
+# ============== SAMPLE RESULTS ================================
 
-class ResultListView(SamplePermissionsMixin, ListView):
+class SampleResultListView(SamplePermissionsMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
 
@@ -556,52 +573,92 @@ class ResultListView(SamplePermissionsMixin, ListView):
         """
         Return all results
         """
-        return TestResult.objects.all()
+        return SampleResult.objects.all()
 
-class ResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
-    model = TestResult
+class SampleResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = SampleResult
     template_name_suffix = '_new'
-    form_class = TestResultForm
-    success_message = "Test result was successfully added"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully added"
 
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
-class ResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
-    model = TestResult
+
+@login_required
+def sampleresult_multiple_view(request):
+    form = SampleResultSelectTestForm()
+    if request.method == 'POST':
+        form = SampleResultSelectTestForm(request.POST)
+        if form.is_valid():
+            test = request.POST.get('test')
+            replicate = request.POST.get('replicate')
+            return redirect(
+                'lims:sampleresult_multiple_add_samples',
+                test_id=test, rep=str(replicate))
+    return render(request, 'lims/sample_result_multiple.html', {'form':form})
+
+
+@login_required
+def sampleresult_multiple_add_samples(request, test_id, rep):
+    test = Test.objects.get(pk=test_id)
+    existing_sample_list = [
+        sampleresult.sample.id for sampleresult in 
+        SampleResult.objects.filter(test=test, replicate=rep)]
+    print(existing_sample_list)
+    sample_query_set = Sample.objects.filter(
+        collection_status="Collected").exclude(
+            id__in=existing_sample_list)
+    print(sample_query_set)
+    if request.method == 'POST':
+        selected_samples = request.POST.getlist('ids')
+        print(selected_samples)
+        for sample_id in selected_samples:
+            sample = Sample.objects.get(pk=sample_id)
+            result = SampleResult(sample=sample, replicate=int(rep), test=test)
+            result.save()
+        return redirect(
+            'lims:sample_result_list')
+
+    return render(request, 'lims/sampleresult_add_samples.html',
+        {'sample_list':sample_query_set})
+
+
+class SampleResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = SampleResult
     template_name_suffix = '_sample_new'
-    form_class = TestResultForm
-    success_message = "Test result was successfully added"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully added"
 
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
     def get_form_kwargs(self):
-        kwargs = super(ResultSampleFormView, self).get_form_kwargs()
+        kwargs = super(SampleResultSampleFormView, self).get_form_kwargs()
         kwargs['sample'] = self.kwargs['pk']
         return kwargs
     
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
         
 
 
-class ResultDetailView(SamplePermissionsMixin, DetailView):
-    model = TestResult
+class SampleResultDetailView(SamplePermissionsMixin, DetailView):
+    model = SampleResult
 
 
-class ResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
-    model = TestResult
+class SampleResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
+    model = SampleResult
     template_name_suffix = '_update'
-    form_class = TestResultForm
-    success_message = "Test result was successfully updated"
+    form_class = SampleResultForm
+    success_message = "Sample result was successfully updated"
     def get_success_url(self):
-        return reverse('lims:result_detail', args=(self.object.id,))
+        return reverse('lims:sample_result_detail', args=(self.object.id,))
 
 
-class ResultDeleteView(SamplePermissionsMixin, DeleteView):
-    model = TestResult
-    success_url = reverse_lazy('lims:result_list', args=())
+class SampleResultDeleteView(SamplePermissionsMixin, DeleteView):
+    model = SampleResult
+    success_url = reverse_lazy('lims:sample_result_list', args=())
     def post(self, request, *args, **kwargs):
         try:
             return self.delete(request, *args, **kwargs)
@@ -609,10 +666,108 @@ class ResultDeleteView(SamplePermissionsMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 
+# ============== POOL RESULTS ================================
+
+class PoolResultListView(SamplePermissionsMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'result_list'
+
+    def get_queryset(self):
+        """
+        Return all results
+        """
+        return PoolResult.objects.all()
+
+class PoolResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = PoolResult
+    template_name_suffix = '_new'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+@login_required
+def poolresult_multiple_view(request):
+    form = PoolResultSelectTestForm()
+    if request.method == 'POST':
+        form = PoolResultSelectTestForm(request.POST)
+        if form.is_valid():
+            test = request.POST.get('test')
+            replicate = request.POST.get('replicate')
+            return redirect(
+                'lims:poolresult_multiple_add_pools',
+                test_id=test, rep=str(replicate))
+    return render(request, 'lims/pool_result_multiple.html', {'form':form})
 
 
-# ============== BOXES ================================
-class BoxListView(LoginRequiredMixin, ListView):
+@login_required
+def poolresult_multiple_add_pools(request, test_id, rep):
+    test = Test.objects.get(pk=test_id)
+    existing_pool_list = [
+        poolresult.pool.id for poolresult in 
+        PoolResult.objects.filter(test=test, replicate=rep)]
+    print(existing_pool_list)
+    pool_query_set = Pool.objects.all().exclude(id__in=existing_pool_list)
+
+    if request.method == 'POST':
+        selected_pools = request.POST.getlist('ids')
+        print(selected_pools)
+        for pool_id in selected_pools:
+            pool = Pool.objects.get(pk=pool_id)
+            result = PoolResult(pool=pool, replicate=int(rep), test=test)
+            result.save()
+        return redirect(
+            'lims:pool_result_list')
+
+    return render(request, 'lims/poolresult_add_pools.html',
+        {'pool_list':pool_query_set})
+
+    
+
+
+class PoolResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+    model = PoolResult
+    template_name_suffix = '_pool_new'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+    def get_form_kwargs(self):
+        kwargs = super(PoolResultSampleFormView, self).get_form_kwargs()
+        kwargs['pool'] = self.kwargs['pk']
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+        
+
+class PoolResultDetailView(SamplePermissionsMixin, DetailView):
+    model = PoolResult
+
+
+class PoolResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
+    model = PoolResult
+    template_name_suffix = '_update'
+    form_class = PoolResultForm
+    success_message = "Pool result was successfully updated"
+    def get_success_url(self):
+        return reverse('lims:pool_result_detail', args=(self.object.id,))
+
+
+class PoolResultDeleteView(SamplePermissionsMixin, DeleteView):
+    model = PoolResult
+    success_url = reverse_lazy('lims:pool_result_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+# ============== SAMPLE BOXES ================================
+class SampleBoxListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'box_list'
 
@@ -620,38 +775,218 @@ class BoxListView(LoginRequiredMixin, ListView):
         """
         Return all boxes
         """
-        return Box.objects.all()
+        return SampleBox.objects.all()
 
-class BoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
-    model = Box
+class SampleBoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = SampleBox
     template_name_suffix = '_new'
-    form_class = BoxForm
+    form_class = SampleBoxForm
     success_message = "Storage box was successfully added: %(box_name)s"
 
     def get_success_url(self):
-        return reverse('lims:box_detail', args=(self.object.id,))
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
 
 
-class BoxDetailView(LoginRequiredMixin, DetailView):
-    model = Box
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+
+        size = form.cleaned_data['size']
+        for pos in range(size):
+            box_position = SampleBoxPosition(position=pos+1)
+            box_position.save()
+            self.object.positions.add(box_position)
+        self.object.save()
+        form.save_m2m() 
+        return HttpResponseRedirect(self.get_success_url()) 
 
 
-class BoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
-    model = Box
+class SampleBoxDetailView(LoginRequiredMixin, DetailView):
+    model = SampleBox
+
+
+class SampleBoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBox
     template_name_suffix = '_update'
-    form_class = BoxForm
+    # form_class = SampleBoxForm
+    fields = ['box_name', 'storage_location', 'storage_shelf']
     success_message = "Box was successfully updated:  %(box_name)s"
     def get_success_url(self):
-        return reverse('lims:box_detail', args=(self.object.id,))
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
 
-class BoxDeleteView(LoginRequiredMixin, DeleteView):
-    model = Box
-    success_url = reverse_lazy('lims:box_list', args=())
+class SampleBoxDeleteView(LoginRequiredMixin, DeleteView):
+    model = SampleBox
+    success_url = reverse_lazy('lims:sample_box_list', args=())
     def post(self, request, *args, **kwargs):
         try:
             return self.delete(request, *args, **kwargs)
         except ProtectedError:
             return render(request, "lims/protected_error.html")
+
+
+# ============== POOL BOXES ================================
+class PoolBoxListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'box_list'
+
+    def get_queryset(self):
+        """
+        Return all boxes
+        """
+        return PoolBox.objects.all()
+
+class PoolBoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = PoolBox
+    template_name_suffix = '_new'
+    form_class = PoolBoxForm
+    success_message = "Storage box was successfully added"
+
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.object.id,))
+
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+
+        size = form.cleaned_data['size']
+        for pos in range(size):
+            box_position = PoolBoxPosition(position=pos+1)
+            box_position.save()
+            self.object.positions.add(box_position)
+        self.object.save()
+        form.save_m2m() 
+        return HttpResponseRedirect(self.get_success_url()) 
+
+
+class PoolBoxDetailView(LoginRequiredMixin, DetailView):
+    model = PoolBox
+
+
+class PoolBoxUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBox
+    template_name_suffix = '_update'
+    # form_class = PoolBoxForm
+    fields = ['box_name', 'storage_location', 'storage_shelf']
+    success_message = "Box was successfully updated:  %(box_name)s"
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.object.id,))
+
+class PoolBoxDeleteView(LoginRequiredMixin, DeleteView):
+    model = PoolBox
+    success_url = reverse_lazy('lims:pool_box_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+# ============== BOX POSITIONS ================================
+class SampleBoxPosDetailView(LoginRequiredMixin, DetailView):
+    model = SampleBoxPosition
+
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPosDetailView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+
+class SampleBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBoxPosition
+    template_name_suffix = '_update'
+    form_class = BoxPositionSampleForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPositionUpdateView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+    
+    def get_success_url(self):
+        return reverse('lims:sample_box_detail', args=(self.get_context_data()['samplebox'].id,))
+
+
+class SampleBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBoxPosition
+    template_name_suffix = '_update_continuous'
+    form_class = BoxPositionSampleForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(SampleBoxPositionContinuousUpdateView, self).get_context_data(**kwargs)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['samplebox'] = box
+        return context
+    
+    def get_success_url(self):
+        next_position = self.get_context_data()['samplebox'].get_next_empty_position()
+        if next_position:
+            return reverse(
+                'lims:edit_sample_box_position_continuous',
+                args=(self.get_context_data()['samplebox'].id,
+                self.get_context_data()['samplebox'].get_next_empty_position()))
+        else:
+            if 'newbox' in self.request.POST:
+                # add new sample box when full
+                return reverse('lims:new_sample_box')
+            else:
+                return reverse('lims:sample_box_list')
+
+
+class PoolBoxPosDetailView(LoginRequiredMixin, DetailView):
+    model = PoolBoxPosition
+
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPosDetailView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+
+
+class PoolBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBoxPosition
+    template_name_suffix = '_update'
+    form_class = BoxPositionPoolForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPositionUpdateView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+    
+    def get_success_url(self):
+        return reverse('lims:pool_box_detail', args=(self.get_context_data()['poolbox'].id,))
+
+class PoolBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = PoolBoxPosition
+    template_name_suffix = '_update_continuous'
+    form_class = BoxPositionPoolForm
+    success_message = "Box position was successfully updated"
+    
+    def get_context_data(self, **kwargs):
+        context = super(PoolBoxPositionContinuousUpdateView, self).get_context_data(**kwargs)
+        box = PoolBox.objects.get(id=self.kwargs.get('pk_box', ''))
+        context['poolbox'] = box
+        return context
+    
+    def get_success_url(self):
+        next_position = self.get_context_data()['poolbox'].get_next_empty_position()
+        if next_position:
+            return reverse(
+                'lims:edit_pool_box_position_continuous',
+                args=(self.get_context_data()['poolbox'].id,
+                self.get_context_data()['poolbox'].get_next_empty_position()))
+        
+        else:
+            if 'newbox' in self.request.POST:
+                # add new sample box when full
+                return reverse('lims:new_pool_box')
+            else:
+                return reverse('lims:pool_box_list')
+
+
 
 
 # ============== POOLS ================================
@@ -725,6 +1060,11 @@ class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
 class PoolDetailView(LoginRequiredMixin, DetailView):
     model = Pool
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        results = PoolResult.objects.filter(pool=self.kwargs['pk'])
+        context['results'] = results
+        return context
 
 
 class PoolReportDetailView(SubjectPermissionsMixin, DetailView):
@@ -852,10 +1192,6 @@ class TestDeleteView(LoginRequiredMixin, DeleteView):
 def help(request):
     return render(request, 'lims/help.html')
 
-
-    
-
-
 # ============== FIX IDS =================
 
 def fix_cualid_function(existing_ids, check_id, thresh=0.5):
@@ -897,3 +1233,443 @@ def search_view(request):
         return redirect('lims:sample_detail', pk=int(sample[0].id))
     else:
         return render(request, 'lims/sample_not_found.html', {'sample': code})
+
+  
+
+@login_required
+def sample_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        json_response = {"data": []}
+        samples = []
+        statuses = []
+        for k, v in request.POST.items():
+            if "collection_status" in k:
+                collection_status = v
+                sample_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                try:
+                    sample = Sample.objects.get(pk=sample_id)
+                except Sample.DoesNotExist:
+                    return render(request, "lims/sample_not_found.html")
+                ori_post = request.POST.copy()
+                ori_post['collection_status'] = collection_status
+                ori_post['instance'] = sample
+                form = SampleForm(ori_post)
+                if form.is_valid():
+                    samples.append(sample)
+                    statuses.append(collection_status)
+                    json_response['data'].append({
+                            "DT_RowId": str(sample_id),
+                            "sample_id": ori_post['data[{}][sample_id]'.format(sample_id)],
+                            "subject_id": ori_post['data[{}][subject_id]'.format(sample_id)],
+                            "collection_event": ori_post['data[{}][collection_event]'.format(sample_id)],
+                            "location": ori_post['data[{}][location]'.format(sample_id)],
+                            "collection_status": collection_status,
+                            "sample_type": str(sample.sample_type),
+                            "box_id": ori_post['data[{}][box_id]'.format(sample_id)],
+                            "box_position": ori_post['data[{}][box_position]'.format(sample_id)],
+                        })
+                else:
+                    return JsonResponse({"error": str(form.errors)})
+        for sample, status in zip(samples, statuses):
+            sample.collection_status = status
+            sample.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def pool_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        json_response = {"data": []}
+        pools = []
+        statuses = []
+        for k, v in request.POST.items():
+            if "notification_status" in k:
+                notification_status = v
+                pool_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                try:
+                    pool = Pool.objects.get(pk=pool_id)
+                except Pool.DoesNotExist as e:
+                    return JsonResponse({"error": str(e)})
+                ori_post = request.POST.copy()
+                ori_post['notification_status'] = notification_status
+                ori_post['name'] = pool.name
+                form = PoolForm(ori_post, instance=pool)
+                if form.is_valid():
+                    pools.append(pool)
+                    statuses.append(notification_status)
+                    json_response['data'].append({
+                            "DT_RowId": str(pool_id),
+                            "name": ori_post['data[{}][name]'.format(pool_id)],
+                            "notification_status": notification_status,
+                            "storage_box": ori_post['data[{}][storage_box]'.format(pool_id)],
+                            "storage_location": ori_post['data[{}][storage_location]'.format(pool_id)],
+                            "box_position": ori_post['data[{}][box_position]'.format(pool_id)],
+                        })
+                else:
+                    return JsonResponse({"error": str(form.errors)})
+        for pool, status in zip(pools, statuses):
+            pool.notificaiton_status = status
+            pool.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def poolbox_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "location" in k:
+                    update_values[row_id]['location'] = v
+                elif "shelf" in k:
+                    update_values[row_id]['shelf'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                pool_box = PoolBox.objects.get(pk=object_id)
+                update_values[object_id]['object'] = pool_box
+            except PoolBox.DoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['box_name'] = vals['object'].box_name
+            ori_post['size'] = vals['object'].size
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = PoolBoxForm(ori_post, instance=vals['object'])
+            if form.is_valid():
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "box_id": ori_post['data[{}][box_id]'.format(obj_id)],
+                        "available_space": ori_post['data[{}][available_space]'.format(obj_id)],
+                        "n_pools": ori_post['data[{}][n_pools]'.format(obj_id)],
+                        "size": ori_post['data[{}][size]'.format(obj_id)],
+                        "location": vals['location'],
+                        "shelf": vals['shelf']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            poolbox = vals['object']
+            poolbox.storage_location = vals['location']
+            poolbox.storage_shelf = vals['shelf']
+            poolbox.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def samplebox_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "location" in k:
+                    update_values[row_id]['location'] = v
+                elif "shelf" in k:
+                    update_values[row_id]['shelf'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                sample_box = SampleBox.objects.get(pk=object_id)
+                update_values[object_id]['object'] = sample_box
+            except SampleBox.DoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['box_name'] = vals['object'].box_name
+            ori_post['size'] = vals['object'].size
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = SampleBoxForm(ori_post, instance=vals['object'])
+            if form.is_valid():
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "box_id": ori_post['data[{}][box_id]'.format(obj_id)],
+                        "available_space": ori_post['data[{}][available_space]'.format(obj_id)],
+                        "n_samples": ori_post['data[{}][n_samples]'.format(obj_id)],
+                        "size": ori_post['data[{}][size]'.format(obj_id)],
+                        "location": vals['location'],
+                        "shelf": vals['shelf']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            samplebox = vals['object']
+            samplebox.storage_location = vals['location']
+            samplebox.storage_shelf = vals['shelf']
+            samplebox.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def sampleresults_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "status" in k:
+                    update_values[row_id]['result'] = v
+                elif "measurement" in k:
+                    update_values[row_id]['value'] = v
+                elif "notes" in k:
+                    update_values[row_id]['notes'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                sample_result = SampleResult.objects.get(pk=object_id)
+                update_values[object_id]['object'] = sample_result
+            except SampleResult.DoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['sample'] = vals['object'].sample
+            ori_post['test'] = vals['object'].test
+            ori_post['replicate'] = vals['object'].replicate
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = SampleResultForm(ori_post, instance=vals['object'])
+            print(form.errors)
+            if form.is_valid():
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
+                        "event": ori_post['data[{}][event]'.format(obj_id)],
+                        "location": ori_post['data[{}][location]'.format(obj_id)],
+                        "test": ori_post['data[{}][test]'.format(obj_id)],
+                        "sample": ori_post['data[{}][sample]'.format(obj_id)],
+                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
+                        "status": vals['result'],
+                        "measurement": vals['value'],
+                        "notes": vals['notes']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            sampleresult = vals['object']
+            sampleresult.result = vals['result']
+            sampleresult.value = vals['value']
+            sampleresult.notes = vals['notes']
+            sampleresult.save()
+            
+        return JsonResponse(json_response)
+
+@login_required
+def poolresults_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "status" in k:
+                    update_values[row_id]['result'] = v
+                elif "measurement" in k:
+                    update_values[row_id]['value'] = v
+                elif "notes" in k:
+                    update_values[row_id]['notes'] = v
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                pool_result = PoolResult.objects.get(pk=object_id)
+                update_values[object_id]['object'] = pool_result
+            except PoolResult.DoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        json_response = {"data": []}
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['pool'] = vals['object'].pool
+            ori_post['test'] = vals['object'].test
+            ori_post['replicate'] = vals['object'].replicate
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = PoolResultForm(ori_post, instance=vals['object'])
+            if form.is_valid():
+                json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
+                        "test": ori_post['data[{}][test]'.format(obj_id)],
+                        "pool": ori_post['data[{}][pool]'.format(obj_id)],
+                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
+                        "status": vals['result'],
+                        "measurement": vals['value'],
+                        "notes": vals['notes']
+                    })
+            else:
+                return JsonResponse({"error": str(form.errors)})
+        # Update database
+        for obj_id, vals in update_values.items():
+            poolresult = vals['object']
+            poolresult.result = vals['result']
+            poolresult.value = vals['value']
+            poolresult.notes = vals['notes']
+            poolresult.save()
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def events_table_update_view(request):
+    if (request.method == "POST") and (request.POST.get('action') == "edit"):
+        update_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in update_values:
+                    update_values[row_id] = {}
+                if "collection_date" in k:
+                    update_values[row_id]['date'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id in update_values.keys():
+            try:
+                event = Event.objects.get(pk=object_id)
+                update_values[object_id]['object'] = event
+            except Event.DoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        # Form validation
+        for obj_id, vals in update_values.items():
+            ori_post = request.POST.copy()
+            # add box name as it is required for form validation
+            ori_post['name'] = vals['object'].name
+            for k, v in vals.items():
+                if k != 'object':
+                    ori_post[k] = v
+            form = EventForm(ori_post, instance=vals['object'])
+            
+            if not form.is_valid():
+                return JsonResponse({"error": str(form.errors)})
+                
+        # Update database
+        json_response = {"data": []}
+
+        for obj_id, vals in update_values.items():
+            event = vals['object']
+            print(datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date())
+            event.date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date()
+            event.save()
+            status = "Completed" if event.is_complete else "Pending"
+            json_response['data'].append({
+                        "DT_RowId": str(obj_id),
+                        "event_name": ori_post['data[{}][event_name]'.format(obj_id)],
+                        "event_status": status,
+                        "collection_date": event.date
+                    })
+
+            
+        return JsonResponse(json_response)
+
+
+@login_required
+def pooladdsamples_table_update_view(request):
+    # verify that the post is a remove action
+
+    if (request.method == "POST") and (request.POST.get('action') == 'remove'):
+        delete_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in delete_values:
+                    delete_values[row_id] = {}
+                if "pool_name" in k:
+                    delete_values[row_id]['pool_name'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id, values in delete_values.items():
+            try:
+                sample = Sample.objects.get(pk=object_id)
+                delete_values[object_id]['sample_obj'] = sample
+                pool = Pool.objects.get(name=values["pool_name"])
+                delete_values[object_id]['pool_obj'] = pool
+
+            except ObjectDoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        json_response = {"data": []}
+        # Update database
+        for obj_id, vals in delete_values.items():
+            sample = vals['sample_obj']
+            pool = vals['pool_obj']
+            pool.samples.remove(sample)
+            pool.save()
+            
+        return JsonResponse(json_response)
+
+@login_required
+def pooladdpools_table_update_view(request):
+        # verify that the post is a remove action
+    if (request.method == "POST") and (request.POST.get('action') == 'remove'):
+        delete_values = {}
+        # pull values from request
+        for k, v in request.POST.items():
+            if "data" in k:
+                row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
+                if row_id not in delete_values:
+                    delete_values[row_id] = {}
+                if "pool_name" in k:
+                    delete_values[row_id]['pool_name'] = v
+                
+        # Pull objects and check if object exists
+        # return if object/s don't exist without doing any update
+        for object_id, values in delete_values.items():
+            try:
+                pool_child = Pool.objects.get(pk=object_id)
+                delete_values[object_id]['pool_child_obj'] = pool_child
+                pool = Pool.objects.get(name=values["pool_name"])
+                delete_values[object_id]['pool_obj'] = pool
+
+            except ObjectDoesNotExist as e:
+                return JsonResponse({"error": str(e)})
+        json_response = {"data": []}
+        # Update database
+        for obj_id, vals in delete_values.items():
+            pool_child = vals['pool_child_obj']
+            pool = vals['pool_obj']
+            pool.pools.remove(pool_child)
+            pool.save()
+            
+        return JsonResponse(json_response)
+
+

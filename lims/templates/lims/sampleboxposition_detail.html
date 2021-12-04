@@ -1,0 +1,29 @@
+{% extends "lims/base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1 class="card-header">Sample Box: {{ samplebox.box_name }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Position:</strong> {{ sampleboxposition.position }}</li>
+      {% if sampleboxposition.sample %}
+      <li class="list-group-item"><strong>Sample:</strong> <a href="{% url 'lims:sample_detail' sampleboxposition.sample.id %}">{{ sampleboxposition.sample }}</a></li>
+      {% else %}
+      <li class="list-group-item"><strong>Sample:</strong> None</li>
+      {% endif %}
+    </ul>
+</div>
+
+<div class="d-grid gap-0 d-md-block mt-2">
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box_position' samplebox.id sampleboxposition.id %}" role="button">Edit Sample in Position <span data-feather="edit"></span></a>
+  <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_sample_box' %}" role="button">Add New Box <span data-feather="plus"></span></a>
+  <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sample_box_detail' samplebox.id%}" role="button">Box <span data-feather="corner-up-left"></span></a>
+  <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sample_box_list' %}" role="button">Sample Boxes <span data-feather="corner-up-left"></span></a>
+  <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+</div>
+
+
+
+
+
+{% endblock content %}
+

@@ -4,13 +4,16 @@ from django import forms
 from django.forms import ModelForm, CheckboxInput, SelectMultiple
 from .models import (
     Sample, Project, Location, Researcher,
-    Event, Subject, Box, Pool, Label, TestResult,
+    Event, Subject, SampleBox, PoolBox,
+    SampleBoxPosition, PoolBoxPosition,
+     Pool, Label, SampleResult, PoolResult,
     Test)
 from string import capwords
 from django.utils.encoding import force_text
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.forms import widgets
+
 
 
 class DateInput(forms.DateInput):
@@ -69,6 +72,10 @@ class EventForm(ModelForm):
         return "%s" % obj.name
 
 
+
+
+
+
 class SubjectForm(ModelForm):
     class Meta:
         model = Subject
@@ -78,17 +85,26 @@ class SubjectForm(ModelForm):
         'location', 'age', 'sex', 'race',
         'ethnicity', 'grade', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
-        'teacher_name','vaccine_status', 'dose_1',
-        'dose_2', 'dose_3', 'prior_covid', 'pneumococcal_vaccine',
+        'teacher_name', 'dose_1', 'dose_1_date',
+        'dose_2', 'dose_2_date', 'booster', 'booster_date',
+        'pneumococcal_vaccine',
         'pneumococcal_date', 'notes'
         ]
+
+        labels = {
+            "ethnicity": "Hispanic or Latino/a",
+            "dose_1": "COVID-19 Vaccine Dose 1",
+            "dose_2": "COVID-19 Vaccine Dose 2",
+            "booster": "COVID-19 Vaccine Booster"
+        }
         widgets = {
             'consent_date': DateInput(),
             'withdrawn_date': DateInput(),
-            'dose_1': DateInput(),
-            'dose_2': DateInput(),
-            'dose_3': DateInput(),
-            'pneumococcal_date': DateInput()
+            'dose_1_date': DateInput(),
+            'dose_2_date': DateInput(),
+            'booster_date': DateInput(),
+            'pneumococcal_date': DateInput(),
+            'race': forms.CheckboxSelectMultiple(),
         }
     def __init__(self, *args, **kwargs):
         super(SubjectForm, self).__init__(*args, **kwargs)
@@ -102,10 +118,10 @@ class SubjectForm(ModelForm):
 class SampleForm(ModelForm):
     class Meta:
         model = Sample
-        fields = ['collection_status', 'box', 'box_position', 'notes']
+        fields = ['collection_status', 'notes']
 
 
-class SamplePrint(forms.Form):
+class SamplePrint(forms.Form):    
     start_position = forms.IntegerField(min_value=1, initial=1,
         help_text="Change starting position of the labels on the label sheet. Positions start at 1 and increment down each column.")
     replicates = forms.IntegerField(min_value=1, initial=1,
@@ -119,10 +135,36 @@ class SamplePrint(forms.Form):
 
 
 
-class BoxForm(ModelForm):
+class SampleBoxForm(ModelForm):
     class Meta:
-        model = Box
-        fields = ['box_name', 'storage_location', 'storage_shelf']
+        model = SampleBox
+        fields = ['box_name', 'size', 'storage_location', 'storage_shelf']
+   
+
+
+class PoolBoxForm(ModelForm):
+    class Meta:
+        model = PoolBox
+        fields = ['box_name', 'size', 'storage_location', 'storage_shelf']
+
+
+class BoxPositionSampleForm(ModelForm):
+    class Meta:
+        model = SampleBoxPosition
+        fields = ['sample']
+    def __init__(self, *args, **kwargs):
+        super(BoxPositionSampleForm, self).__init__(*args, **kwargs)
+        self.fields['sample'].queryset = Sample.objects.filter(collection_status="Collected").order_by("name")
+        
+
+
+class BoxPositionPoolForm(ModelForm):
+    class Meta:
+        model = PoolBoxPosition
+        fields = ['pool']
+    def __init__(self, *args, **kwargs):
+        super(BoxPositionPoolForm, self).__init__(*args, **kwargs)
+        self.fields['pool'].queryset = Pool.objects.all().order_by("-created_on", "name")
 
 
 class SelectEventForm(ModelForm):
@@ -171,12 +213,12 @@ Please come to <LOCATION> at <TIME> ...
 class PoolForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes']
+        fields = ['name', 'notification_status', 'notes']
 
 class PoolUpdateForm(ModelForm):
     class Meta:
         model = Pool
-        fields = ['name', 'status', 'notification_status', 'box', 'box_position', 'notes', 'samples', 'pools']
+        fields = ['name', 'notification_status', 'notes', 'samples', 'pools']
     def __init__(self, *args, **kwargs):
         super(PoolUpdateForm, self).__init__(*args, **kwargs)
         self.fields['pools'].queryset = Pool.objects.exclude(id__in=[self.instance.id])
@@ -218,9 +260,9 @@ class TestForm(ModelForm):
         fields = ['name', 'protocol', 'detects']
 
 
-class TestResultForm(ModelForm):
+class SampleResultForm(ModelForm):
     class Meta:
-        model = TestResult
+        model = SampleResult
         fields = ['sample', 'test', 'replicate', 'result', 'value', 'notes', 'researcher']
     def __init__(self, *args, **kwargs):
             if 'sample' in kwargs:
@@ -228,8 +270,31 @@ class TestResultForm(ModelForm):
                 kwargs.update(initial={
                     'sample': sample
                 })
-            super(TestResultForm, self).__init__(*args, **kwargs)
-            self.fields['sample'].queryset = Sample.objects.order_by('name')
+            super(SampleResultForm, self).__init__(*args, **kwargs)
+            self.fields['sample'].queryset = Sample.objects.filter(
+                collection_status="Collected").order_by('name')
         
 
+class PoolResultForm(ModelForm):
+    class Meta:
+        model = PoolResult
+        fields = ['pool', 'test', 'replicate', 'result', 'value', 'notes', 'researcher']
+    def __init__(self, *args, **kwargs):
+            if 'pool' in kwargs:
+                pool = kwargs.pop('pool')
+                kwargs.update(initial={
+                    'pool': pool
+                })
+            super(PoolResultForm, self).__init__(*args, **kwargs)
+            self.fields['pool'].queryset = Pool.objects.order_by('name')
 
+
+class PoolResultSelectTestForm(ModelForm):
+    class Meta:
+        model = PoolResult
+        fields = ['test', 'replicate']
+
+class SampleResultSelectTestForm(ModelForm):
+    class Meta:
+        model = SampleResult
+        fields = ['test', 'replicate']

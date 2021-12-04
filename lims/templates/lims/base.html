@@ -125,11 +125,13 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'lims:sample_list' %}">
-              <span data-feather="droplet"></span>
-              Samples
+            <a class="nav-link" href="{% url 'lims:test_list' %}">
+              <span data-feather="clipboard"></span>
+              Tests
             </a>
           </li>
+          <hr class="mt-3 mb-3">
+
           <li class="nav-item">
             <a class="nav-link" href="{% url 'lims:pool_list' %}">
               <span data-feather="git-merge"></span>
@@ -137,23 +139,40 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'lims:box_list' %}">
+            <a class="nav-link" href="{% url 'lims:pool_box_list' %}">
               <span data-feather="archive"></span>
-              Storage Boxes
+              Pool Boxes
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'lims:result_list' %}">
+            <a class="nav-link" href="{% url 'lims:pool_result_list' %}">
               <span data-feather="thermometer"></span>
-              Test Results
+              Pool Results
+            </a>
+          </li>
+          
+          <hr class="mt-3 mb-3">
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lims:sample_list' %}">
+              <span data-feather="droplet"></span>
+              Samples
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'lims:test_list' %}">
-              <span data-feather="clipboard"></span>
-              Tests
+            <a class="nav-link" href="{% url 'lims:sample_box_list' %}">
+              <span data-feather="archive"></span>
+              Sample Boxes
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lims:sample_result_list' %}">
+              <span data-feather="thermometer"></span>
+              Sample Results
+            </a>
+          </li>
+
+
           <hr class="mt-3 mb-3">
           
           <li class="nav-item">

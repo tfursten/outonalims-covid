@@ -1,23 +1,18 @@
 {% extends "lims/base.html" %}
+{% load static %}
 {% block head %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.dataTables.min.css' %}"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.bootstrap5.min.css' %}"/>
 {% endblock head %}
 {% block content %}
+{% csrf_token %}
 
 <div class="card">
     <h1 class="card-header">Pool: {{ pool.name }}</h1>
     <div class="card-body">
-      <p>
-      <strong>Status: </strong>
-      {% if pool.status == "Pending" %}
-            <span class="badge bg-secondary">Pending</span>
-      {% elif pool.status == "Negative" %}
-          <span class="badge bg-success">{{ pool.status }}</span>
-      {% else %}
-          <span class="badge bg-danger">{{ pool.status }}</span>
-      {% endif %}
-      </p>
+
       <p>
       <strong>Notification Status: </strong>
       {% if pool.notification_status == "Pending" %}
@@ -28,10 +23,41 @@
           <span class="badge bg-success">{{ pool.notification_status }}</span>
       {% endif %}
       </p>
+      
+      {% if pool.box %}
+      <p><strong>Pool Box: </strong><a href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></p>
+      {% else %}
+      <p><strong>Pool Box: </strong>None</p>
+      {% endif %}
+      {% if pool.box %}
+      <p><strong>Box Position: </strong><a href="{% url 'lims:pool_box_position_detail' pool.box.id pool.box_position.id%}">{{ pool.box_position.position }}</a></p>
+      {% else %}
+      <p><strong>Box Position: </strong>None</p>
+      {% endif %}
       <p class="card-text"><strong>Notes:</strong> {{ pool.notes }}</p>
       <p class="card-text"><strong>Created:</strong> {{ pool.created_on }}</p>
 
     </div>
+    {% for result in results %}
+    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:pool_result_detail' result.id %}">Result {{ result.id }}</a> </div>
+    <div class="card-body">
+        <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
+        <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
+        <p class="card-text"><strong>Status: </strong>
+          {% if result.result == "Positive" %}
+                <span class="badge bg-danger">{{ result.result }}</span>
+          {% elif result.result == "Negative" %}
+              <span class="badge bg-success">{{ result.result }}</span>
+          {% elif result.result == "Pending" %}
+              <span class="badge bg-secondary">{{ result.result }}</span>
+          {% else %}
+              <span class="badge bg-primary">{{ result.result }}</span>
+          {% endif %}
+          </p>
+        <p class="card-text"><strong>Value: </strong>{{ result.value }}</p>
+        <p class="card-text"><strong>Replicate: </strong>{{ result.replicate }}</p>
+    </div>
+    {% endfor %}
     <h3 class="card-header">Locations</h3>
     <ul class="list-group list-group-flush">
       {% for location in pool.get_all_locations %}
@@ -57,21 +83,27 @@
   </thead>
   <tbody>
       {% for sample in pool.samples.all %}
-          <tr>
+          <tr id="{{ sample.id }}">
               <td>{{ pool.name }}</td>
               <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">
                   {{ sample.name }}
               </a></td>
               {% if sample.box %}
-              <td><a class="table-link" href="{% url 'lims:box_detail' sample.box.id %}">
-                {{ sample.box.name }}
+              <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">
+                {{ sample.box.box_name }}
               </a></td>
-              {% else %}
-              <td>None</td>
-              {% endif %}
-              <td>{{ sample.box_position }}</td>
+              <td><a class="table-link" href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">
+                {{ sample.box_position.position }}
+              </a></td>
               <td>{{ sample.box.storage_location }}</td>
               <td>{{ sample.box.storage_shelf }}</td>
+              {% else %}
+              <td>None</td>
+              <td>None</td>
+              <td>None</td>
+              <td>None</td>
+              {% endif %}
+              
               
           </tr>
       {% endfor %}
@@ -85,7 +117,7 @@
   <thead>
       <tr>
           <th>Pool Name</th>
-          <th>Pools to Add</th>
+          <th>Pools</th>
           <th>Storage Box</th>
           <th>Box Position</th>
           <th>Box Storage Location</th>
@@ -94,19 +126,19 @@
   </thead>
   <tbody>
       {% for p in pool.pools.all %}
-          <tr>
+          <tr id="{{ p.id }}">
               <td>{{ pool.name }}</td>
               <td><a class="table-link" href="{% url 'lims:pool_detail' p.id %}">
                   {{ p.name }}
               </a></td>
               {% if p.box %}
-              <td><a class="table-link" href="{% url 'lims:box_detail' p.box.id %}">
-                {{ p.box.name }}
+              <td><a class="table-link" href="{% url 'lims:sample_box_detail' p.box.id %}">
+                {{ p.box.box_name }}
               </a></td>
               {% else %}
               <td>None</td>
               {% endif %}
-              <td>{{ p.box_position }}</td>
+              <td>{{ p.box_position.position }}</td>
               <td>{{ p.box.storage_location }}</td>
               <td>{{ p.box.storage_shelf }}</td>
               
@@ -119,6 +151,7 @@
 
 <div class="d-grid gap-0 d-md-block mt-2">
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_pool' pool.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:new_result_pool' pool.id %}" role="button">Add Result <span data-feather="edit"></span></a>
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:pool_report' pool.id %}" role="button">Print Report <span data-feather="printer"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_pool' %}" role="button">Add New Pool <span data-feather="plus"></span></a>
   <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:add_pool_samples' pool.id %}" role="button">Add Samples to Pool <span data-feather="plus"></span></a>
@@ -137,62 +170,169 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
 <script>
-    $(document).ready( function () {
+ $.ajaxSetup({
+    data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+ });
+ let editor_sample; // use a global for the submit and return data rendering in the examples
+ let editor_pool; // use a global for the submit and return data rendering in the examples
+
+ $(document).ready(function() {
+     editor_sample = new $.fn.dataTable.Editor( {
+         ajax: "{% url 'lims:pooladdsamples_table_update' %}",
+         table: "#sample_table",
+         fields: [ 
+            
+            {
+                label: "Pool Name",
+                name: "pool_name",
+                type: "readonly",
+            },
+            {
+                label: "Sample ID",
+                name: "samples",
+                type: "readonly",
+            },
+            {
+                label: "Storage Box",
+                name: "storage_box",
+                type: "readonly",
+            },
+            {
+                label: "Box Position",
+                name: "box_position",
+                type: "readonly",
+            },
+            {
+                label: "Box Storage Location",
+                name: "storage_location",
+                type: "readonly"
+            },
+            {
+                label: "Box Storage Shelf",
+                name: "storage_shelf",
+                type: "readonly",
+            },
+
+         ]
+     } );
+
+
+  editor_pool = new $.fn.dataTable.Editor( {
+         ajax: "{% url 'lims:pooladdpools_table_update' %}",
+         table: "#pool_table",
+         fields: [ 
+            
+            {
+                label: "Pool Name",
+                name: "pool_name",
+                type: "readonly",
+            },
+            {
+                label: "Pools",
+                name: "pools",
+                type: "readonly",
+            },
+            {
+                label: "Storage Box",
+                name: "storage_box",
+                type: "readonly",
+            },
+            {
+                label: "Box Position",
+                name: "box_position",
+                type: "readonly",
+            },
+            {
+                label: "Box Storage Location",
+                name: "storage_location",
+                type: "readonly"
+            },
+            {
+                label: "Box Storage Shelf",
+                name: "storage_shelf",
+                type: "readonly",
+            },
+
+         ]
+     } );
+    
+
     $('#sample_table').DataTable({
-    rowReorder: true,
-    fixedHeader: true,
-    dom: 'B<"clear">lfrtip',
-    buttons: {
-        name: 'primary',
-        buttons: [ 
-        {
-          extend: 'copy',
-          title: 'Samples for Pool'
-        },
-        {
-          extend: 'pdf',
-          title: 'Samples for Pool'
-        },
-        {
-          extend: 'csv',
-          title: 'Samples for Pool'
-        },
-        {
-          extend: 'excel',
-          title: 'Samples for Pool'
-        }]
-        }}
-      );
-    } );
-    $(document).ready( function () {
+      rowReorder: true,
+      fixedHeader: true,
+      dom: 'Bfrtip',
+      select: true,
+      columns: [
+        { data: "pool_name" },
+        { data: "samples" },
+        { data: "storage_box" },
+        { data: "box_position" },
+        { data: "storage_location" },
+        { data: "storage_shelf" }
+      ],
+      buttons: {
+          name: 'primary',
+          buttons: [ 
+          {
+            extend: 'copy',
+            title: 'Samples for Pool'
+          },
+          {
+            extend: 'pdf',
+            title: 'Samples for Pool'
+          },
+          {
+            extend: 'csv',
+            title: 'Samples for Pool'
+          },
+          {
+            extend: 'excel',
+            title: 'Samples for Pool'
+          },
+          { extend: "remove",   editor: editor_sample }]
+          }}
+        );
+  
+    
     $('#pool_table').DataTable({
-    rowReorder: true,
-    fixedHeader: true,
-    dom: 'B<"clear">lfrtip',
-    buttons: {
-        name: 'primary',
-        buttons: [ 
-        {
-          extend: 'copy',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'pdf',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'csv',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'excel',
-          title: 'Pools for Pool'
-        }]
-
-
-        }}
-      );
-    } );
+      rowReorder: true,
+      fixedHeader: true,
+      dom: 'Bfrtip',
+      select: true,
+      columns: [
+        { data: "pool_name" },
+        { data: "pools" },
+        { data: "storage_box" },
+        { data: "box_position" },
+        { data: "storage_location" },
+        { data: "storage_shelf" }
+      ],
+      buttons: {
+          name: 'primary',
+          buttons: [ 
+          {
+            extend: 'copy',
+            title: 'Pools for Pool'
+          },
+          {
+            extend: 'pdf',
+            title: 'Pools for Pool'
+          },
+          {
+            extend: 'csv',
+            title: 'Pools for Pool'
+          },
+          {
+            extend: 'excel',
+            title: 'Pools for Pool'
+          },
+          { extend: "remove",   editor: editor_pool }]
+          }}
+        );
+ });
 </script>
 {% endblock js %}
