@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='subject',
             name='pneumococcal_vaccine'
-        )
+        ),
         migrations.AddField(
             model_name='subject',
             name='pneumococcal_vaccine',
