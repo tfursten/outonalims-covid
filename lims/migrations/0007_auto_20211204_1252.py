@@ -162,7 +162,11 @@ class Migration(migrations.Migration):
             name='ethnicity',
             field=models.BooleanField(blank=True, null=True),
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='subject',
+            name='pneumococcal_vaccine'
+        )
+        migrations.AddField(
             model_name='subject',
             name='pneumococcal_vaccine',
             field=models.BooleanField(blank=True, null=True),
