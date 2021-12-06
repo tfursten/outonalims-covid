@@ -82,8 +82,8 @@ class SubjectForm(ModelForm):
         fields = ['first_name',
         'last_name', 'consent_status', 'consent_date',
         'withdrawn_date',
-        'location', 'age', 'sex', 'race',
-        'ethnicity', 'grade', 'phone', 'email',
+        'location', 'age', 'grade', 'sex', 'race',
+        'ethnicity', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
         'teacher_name', 'dose_1', 'dose_1_date',
         'dose_2', 'dose_2_date', 'booster', 'booster_date',
@@ -237,9 +237,12 @@ class LabelForm(ModelForm):
     class Meta:
         model = Label
         exclude = ['created_on']
+        fields = ['name', 'paper_size', 'rows', 'columns',
+        'top_margin', 'left_margin', 'label_width', 'label_height',
+        'row_margin', 'col_margin', 'top_padding', 'left_padding', 'font_size',
+        'max_chars', 'qr_size', 'line_spacing' ]
     rows = forms.IntegerField(min_value=0, label="Number of Rows")
     columns = forms.IntegerField(min_value=0, label="Number of Columns")
-    # paper_size = forms.ChoiceField(label="Paper Size", initial="LETTER")
     top_margin = forms.FloatField(min_value=0.0, label="Margin from top of sheet to first row of labels (mm)")
     left_margin = forms.FloatField(min_value=0.0, label="Margin from left of sheet to first column of labels (mm)")
     label_width = forms.FloatField(min_value=0.0, label="Width of labels (mm)")
