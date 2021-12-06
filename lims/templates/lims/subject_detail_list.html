@@ -69,18 +69,18 @@
                     <td>{{ subject.age }}</td>
                     <td>{{ subject.sex }}</td>
                     <td>{{ subject.race.all | join:", " }}</td>
-                    <td>{{ subject.ethnicity }}</td>
+                    <td>{{ subject.ethnicity | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.phone }}</td>
                     <td>{{ subject.email }}</td>
                     <td>{{ subject.gardian_name }}</td>
                     <td>{{ subject.gardian_relationship }}</td>
-                    <td>{{ subject.dose_1 }}</td>
+                    <td>{{ subject.dose_1 | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.dose_1_date }}</td>
-                    <td>{{ subject.dose_2 }}</td>
+                    <td>{{ subject.dose_2 | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.dose_2_date }}</td>
-                    <td>{{ subject.booster }}</td>
+                    <td>{{ subject.booster | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.booster_date }}</td>
-                    <td>{{ subject.pneumococcal_vaccine }}</td>
+                    <td>{{ subject.pneumococcal_vaccine | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.pneumococcal_date }}</td>
                     <td>{{ subject.notes }}</td>
                     <td>{{ subject.created_on }}</td>
