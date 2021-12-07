@@ -38,8 +38,9 @@ class SamplePermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             # This will redirect to the login view
-            return self.handle_no_permission(request)
-        if self.request.user.groups.filter(name="Staff-DataEntry").exists():
+            print(request)
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name__in=["Manager", "Staff-Lab"]).exists():
             # Redirect the user to not auth page
             return render(request, 'lims/not_authorized_error.html')
         # Checks pass, let http method handlers process the request
@@ -56,8 +57,8 @@ class SubjectPermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             # This will redirect to the login view
-            return self.handle_no_permission(request)
-        if self.request.user.groups.filter(name="Staff-Lab").exists():
+            return self.handle_no_permission()
+        if not self.request.user.groups.filter(name__in=["Manager", "Staff-DataEntry"]).exists():
             # Redirect the user to not auth page
             return render(request, 'lims/not_authorized_error.html')
         # Checks pass, let http method handlers process the request
@@ -668,7 +669,7 @@ class SampleResultDeleteView(SamplePermissionsMixin, DeleteView):
 
 # ============== POOL RESULTS ================================
 
-class PoolResultListView(SamplePermissionsMixin, ListView):
+class PoolResultListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
 
@@ -678,7 +679,7 @@ class PoolResultListView(SamplePermissionsMixin, ListView):
         """
         return PoolResult.objects.all()
 
-class PoolResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+class PoolResultFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = PoolResult
     template_name_suffix = '_new'
     form_class = PoolResultForm
@@ -726,7 +727,7 @@ def poolresult_multiple_add_pools(request, test_id, rep):
     
 
 
-class PoolResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateView):
+class PoolResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = PoolResult
     template_name_suffix = '_pool_new'
     form_class = PoolResultForm
@@ -744,11 +745,11 @@ class PoolResultSampleFormView(SuccessMessageMixin, SamplePermissionsMixin, Crea
         return reverse('lims:pool_result_detail', args=(self.object.id,))
         
 
-class PoolResultDetailView(SamplePermissionsMixin, DetailView):
+class PoolResultDetailView(LoginRequiredMixin, DetailView):
     model = PoolResult
 
 
-class PoolResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateView):
+class PoolResultUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = PoolResult
     template_name_suffix = '_update'
     form_class = PoolResultForm
@@ -757,7 +758,7 @@ class PoolResultUpdateView(SuccessMessageMixin, SamplePermissionsMixin, UpdateVi
         return reverse('lims:pool_result_detail', args=(self.object.id,))
 
 
-class PoolResultDeleteView(SamplePermissionsMixin, DeleteView):
+class PoolResultDeleteView(LoginRequiredMixin, DeleteView):
     model = PoolResult
     success_url = reverse_lazy('lims:pool_result_list', args=())
     def post(self, request, *args, **kwargs):
