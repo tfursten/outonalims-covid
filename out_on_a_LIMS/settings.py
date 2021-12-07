@@ -152,7 +152,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 LOGIN_REDIRECT_URL = "lims:index"
 LOGOUT_REDIRECT_URL = "lims:index"
-LOGIN_URL = "login"
+LOGIN_URL = "/login/"
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # During development only
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
