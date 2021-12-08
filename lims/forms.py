@@ -85,10 +85,11 @@ class SubjectForm(ModelForm):
         'location', 'age', 'grade', 'sex', 'race',
         'ethnicity', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
-        'teacher_name', 'dose_1', 'dose_1_date',
-        'dose_2', 'dose_2_date', 'booster', 'booster_date',
+        'teacher_name', 'dose_1', 'dose_1_month', 'dose_1_year',
+        'dose_2', 'dose_2_month', 'dose_2_year',
+        'booster', 'booster_month', 'booster_year',
         'pneumococcal_vaccine',
-        'pneumococcal_date', 'notes'
+        'pneumococcal_year', 'notes'
         ]
 
         labels = {
@@ -100,10 +101,6 @@ class SubjectForm(ModelForm):
         widgets = {
             'consent_date': DateInput(),
             'withdrawn_date': DateInput(),
-            'dose_1_date': DateInput(),
-            'dose_2_date': DateInput(),
-            'booster_date': DateInput(),
-            'pneumococcal_date': DateInput(),
             'race': forms.CheckboxSelectMultiple(),
         }
     def __init__(self, *args, **kwargs):

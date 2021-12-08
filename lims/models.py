@@ -1,11 +1,13 @@
+import calendar
+import uuid
 from django.db import models
 from phone_field import PhoneField
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from datetime import datetime
 from cualid import create_ids
-import uuid
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 # 
 
 # require email for users
@@ -96,6 +98,7 @@ class Subject(models.Model):
         ('Not Consented', 'Not Consented'),
         ('Withdrawn', 'Withdrawn')
     ]
+    MONTH_CHOICES = [(m, m) for m in list(calendar.month_name[1:])]
 
     subject_ui = models.CharField(max_length=6, blank=True, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
@@ -117,11 +120,14 @@ class Subject(models.Model):
     dose_1 = models.BooleanField(null=True, blank=True)
     dose_2 = models.BooleanField(null=True, blank=True)
     booster = models.BooleanField(null=True, blank=True)
-    dose_1_date = models.DateField(null=True, blank=True)
-    dose_2_date = models.DateField(null=True, blank=True)
-    booster_date = models.DateField(null=True, blank=True)
+    dose_1_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    dose_1_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    dose_2_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    dose_2_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    booster_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    booster_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
     pneumococcal_vaccine = models.BooleanField(null=True, blank=True)
-    pneumococcal_date = models.DateField(null=True, blank=True)
+    pneumococcal_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
     notes = models.CharField(max_length=300, blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
