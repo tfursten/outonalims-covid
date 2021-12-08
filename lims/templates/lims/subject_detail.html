@@ -27,13 +27,13 @@
       <li class="list-group-item"><Strong>Gardian Relationship:</Strong> {{ subject.gardian_relationship}}</li>
       <li class="list-group-item"><Strong>Teacher Name:</Strong> {{ subject.teacher_name}}</li>
       <li class="list-group-item"><Strong>COVID-19 Vaccine Dose 1:</Strong> {{ subject.dose_1 | yesno:"Yes,No,None"}}</li>
-      <li class="list-group-item"><Strong>Dose 1 Date:</Strong> {{ subject.dose_1_date}}</li>
+      <li class="list-group-item"><Strong>Dose 1 Date:</Strong> {{ subject.dose_1_month }}/{{ subject.dose_1_year }}</li>
       <li class="list-group-item"><Strong>COVID-19 Vaccine Dose 2:</Strong> {{ subject.dose_2 | yesno:"Yes,No,None"}}</li>
-      <li class="list-group-item"><Strong>Dose 2 Date:</Strong> {{ subject.dose_2_date}}</li>
+      <li class="list-group-item"><Strong>Dose 2 Date:</Strong> {{ subject.dose_2_month}}/{{ subject.dose_2_year }}</li>
       <li class="list-group-item"><Strong>COVID-19 Vaccine Booster:</Strong> {{ subject.booster | yesno:"Yes,No,None"}}</li>
-      <li class="list-group-item"><Strong>Booster Date:</Strong> {{ subject.booster_date}}</li>
+      <li class="list-group-item"><Strong>Booster Date:</Strong> {{ subject.booster_month }}/{{ subject.booster_year}}</li>
       <li class="list-group-item"><Strong>Pneumococcal Vaccine:</Strong> {{ subject.pneumococcal_vaccine | yesno:"Yes,No,None"}}</li>
-      <li class="list-group-item"><Strong>Pneumococcal Vaccine Date:</Strong> {{ subject.pneumococcal_date }}</li>
+      <li class="list-group-item"><Strong>Pneumococcal Vaccine Date:</Strong> {{ subject.pneumococcal_year }}</li>
       <li class="list-group-item"><Strong>Notes:</Strong> {{ subject.notes }}</li>
       <li class="list-group-item"><Strong>Created:</Strong> {{ subject.created_on }}</li>
 
