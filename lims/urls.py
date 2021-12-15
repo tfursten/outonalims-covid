@@ -11,6 +11,7 @@ urlpatterns = [
     path('samples/detail/<str:pk>/', views.SampleDetailView.as_view(), name="sample_detail"),
     path('samples/detail/<str:pk>/result/new', views.SampleResultSampleFormView.as_view(), name="new_result_sample"),
     path('samples/detail/<str:pk>/edit/', views.SampleUpdateView.as_view(), name="edit_sample"),
+    path('samples/event/<str:event_id>/', views.event_samples, name="event_samples"),
     path('samples/add/', views.add_samples, name="new_samples"),
     path('samples/add/<str:event_id>/<str:sample_type>', views.verify_subjects, name="verify_new_samples"),
     path('samples/event/<str:event_id>/sample-label-options/', views.sample_label_options, name="sample_labels_options"),
