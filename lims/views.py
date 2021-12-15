@@ -321,6 +321,7 @@ def add_samples(request):
                 event_id=event, sample_type=sample_type)
     return render(request, 'lims/samples_new.html', {'form':form})
 
+
 @login_required
 def verify_subjects(request, event_id, sample_type):
     event = Event.objects.get(pk=event_id)
@@ -428,12 +429,12 @@ def subject_list(request, event_id):
     return render(request, 'lims/subject_list_for_event.html', context=context)
 
 
-# @login_required
-# def event_samples(request, event_id):
-#     event = Event.objects.get(pk=event_id)
-#     samples = Sample.get_samples_for_event(event)
-#     context = {'samples': samples, 'event': event}
-#     return render(request, 'lims/samples_for_event.html', context)
+@login_required
+def event_samples(request, event_id):
+    event = Event.objects.get(pk=event_id)
+    samples = Sample.get_samples_for_event(event)
+    context = {'samples': samples, 'event': event}
+    return render(request, 'lims/samples_for_event.html', context)
  
 
 @login_required
