@@ -7,9 +7,7 @@
 {% endblock head %}
 {% block content %}
 
-
 <h3 class="border-bottom mt-2">Participants in Pool: {{ pool.name }}</h3>
-{% if pool.samples.all %}
 
 <table id="sample_table" class="display table table-hover"> 
   <thead>
@@ -28,7 +26,6 @@
   </tbody>
 </table>
 
-{% endif %}
 
 <div class="d-grid gap-2 d-md-block mt-2">
   <a class="btn btn-primary btn mt-2" href="{% url 'lims:edit_pool' pool.id %}" role="button">Edit <span data-feather="edit"></span></a>
