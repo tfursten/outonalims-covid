@@ -428,11 +428,9 @@ class Pool(models.Model):
         for pool in self.pools.all():
             for sample in pool.samples.all():
                 samples.add(sample)
-        print(list(samples))
         return list(samples)
     
     def get_all_subjects(self):
-        
         samples = self.get_all_samples()
         subjects = set()
         for sample in samples:
