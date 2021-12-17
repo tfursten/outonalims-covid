@@ -6,13 +6,17 @@
 
 {% block content %}
 <h1 class="border-bottom">Participants for {{ event.name }}</h1>
+<div>
+    Toggle column: <a class="toggle-vis" data-column="0">Event</a> - <a class="toggle-vis" data-column="1">First Name</a> - <a class="toggle-vis" data-column="2">Last Name</a> - <a class="toggle-vis" data-column="3">Phone</a> - <a class="toggle-vis" data-column="4">Location</a> - <a class="toggle-vis" data-column="5">Grade</a>
+</div>
     <table id="participant_table" class="display table table-hover"> 
         <thead>
             <tr>
                 <th>Event</th>
                 <th>First Name</th>
                 <th>Last Name</th>
-                <th>Classroom</th>
+                <th>Phone</th>
+                <th>Location</th>
                 <th>Grade</th>
             </tr>
         </thead>
@@ -22,6 +26,7 @@
                     <td>{{ event.name }}</td>
                     <td>{{ subject.first_name }}</td>
                     <td>{{ subject.last_name }}</td>
+                    <td>{{ subject.phone }}</td>
                     <td>{{ subject.location.name }}</td>
                     <td>{{ subject.grade }}</td>
                 </tr>
@@ -39,30 +44,55 @@
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
-    $(document).ready( function () {
-    $('#participant_table').DataTable({
+$(document).ready( function () {
+    let table = $('#participant_table').DataTable({
     rowReorder: false,
-    order: [[4, 'asc'], [3, 'asc'], [2, 'asc'], [1, 'asc']],
+    order: [[5, 'asc'], [3, 'asc'], [2, 'asc'], [1, 'asc'], [4, 'asc']],
     fixedHeader: true,
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
         buttons: [ 
-            'copy',
+            {
+                extend:'copy',
+                exportOptions: {
+                    columns: ':visible'
+                }
+            },
             {
                 extend:'csv', 
-                title: '{{ event.name }}_participant_list'
+                title: '{{ event.name }}_participant_list',
+                exportOptions: {
+                    columns: ':visible'
+                }
             },
             {
                 extend:'excel',
-                title: '{{ event.name }}_participant_list'
+                title: '{{ event.name }}_participant_list',
+                exportOptions: {
+                    columns: ':visible'
+                }
             },
             {
                 extend: 'pdf',
-                title: '{{ event.name }}_participant_list'
+                title: '{{ event.name }}_participant_list',
+                exportOptions: {
+                    columns: ':visible'
+                }
             }]
 
-        }}
+        }})
+
+    $('a.toggle-vis').on( 'click', function (e) {
+        e.preventDefault();
+ 
+        // Get the column API object
+        let column = table.column( $(this).attr('data-column') );
+        console.log(column)
+        // Toggle the visibility
+        column.visible( ! column.visible() );
+    }
+
     );
 } );
 </script>
