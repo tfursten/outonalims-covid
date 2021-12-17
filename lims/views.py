@@ -38,7 +38,6 @@ class SamplePermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             # This will redirect to the login view
-            print(request)
             return self.handle_no_permission()
         if not self.request.user.groups.filter(name__in=["Manager", "Staff-Lab"]).exists():
             # Redirect the user to not auth page
@@ -446,7 +445,6 @@ def sample_label_options(request, event_id):
     if request.method == "POST":
         form = SamplePrint(request.POST)
         if form.is_valid():
-            print(request.POST)
             start_position = request.POST.get('start_position')
             label_paper = request.POST.get('label_paper')
             reps = request.POST.get('replicates')
@@ -455,7 +453,6 @@ def sample_label_options(request, event_id):
             sort_by3 = request.POST.get('sort_by3')
             sort_by4 = request.POST.get('sort_by4')
             selected_samples = request.POST.getlist('ids')
-            print("selected", selected_samples)
             return sample_labels_pdf(samples=selected_samples,
                 event_id=event_id, start_position=start_position,
                 label_paper=label_paper, replicates=reps,
@@ -486,11 +483,9 @@ def sample_labels_pdf(
     # Create a file-like buffer to receive PDF data.
 
     event = Event.objects.get(pk=event_id)
-    print("SAMPLES", samples)
     samples = Sample.get_samples_for_event(
         event, sort_by1, sort_by2, sort_by3, sort_by4).filter(
             pk__in=samples)
-    print("FILTERED", samples)
     ids = [sample.name for sample in samples]
     locations = [str(sample.subject.location) for sample in samples]
     grades = [str(sample.subject.grade) for sample in samples]
@@ -607,14 +602,11 @@ def sampleresult_multiple_add_samples(request, test_id, rep):
     existing_sample_list = [
         sampleresult.sample.id for sampleresult in 
         SampleResult.objects.filter(test=test, replicate=rep)]
-    print(existing_sample_list)
     sample_query_set = Sample.objects.filter(
         collection_status="Collected").exclude(
             id__in=existing_sample_list)
-    print(sample_query_set)
     if request.method == 'POST':
         selected_samples = request.POST.getlist('ids')
-        print(selected_samples)
         for sample_id in selected_samples:
             sample = Sample.objects.get(pk=sample_id)
             result = SampleResult(sample=sample, replicate=int(rep), test=test)
@@ -709,12 +701,10 @@ def poolresult_multiple_add_pools(request, test_id, rep):
     existing_pool_list = [
         poolresult.pool.id for poolresult in 
         PoolResult.objects.filter(test=test, replicate=rep)]
-    print(existing_pool_list)
     pool_query_set = Pool.objects.all().exclude(id__in=existing_pool_list)
 
     if request.method == 'POST':
         selected_pools = request.POST.getlist('ids')
-        print(selected_pools)
         for pool_id in selected_pools:
             pool = Pool.objects.get(pk=pool_id)
             result = PoolResult(pool=pool, replicate=int(rep), test=test)
@@ -1588,7 +1578,6 @@ def events_table_update_view(request):
 
         for obj_id, vals in update_values.items():
             event = vals['object']
-            print(datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date())
             event.date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').date()
             event.save()
             status = "Completed" if event.is_complete else "Pending"
