@@ -25,29 +25,9 @@
                 <th>Location</th>
                 <th>Collection Status</th>
                 <th>Sample Type</th>
-                <th>Box ID</th>
-                <th>Box Position</th>
             </tr>
         </thead>
-        <tbody>
-            {% for sample in sample_list %}
-                <tr id="{{ sample.id }}">
-                    <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">{{ sample.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></td>
-                    <td>{{ sample.collection_status }}</td>
-                    <td>{{ sample.sample_type }}</td>
-                    {% if sample.box %}
-                    <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></td>
-                    {% else %}
-                    <td>None</td>
-                    <td>None</td>
-                    {% endif %}
-                </tr>
-            {% endfor %}
-        </tbody>
+        
     </table>
 
 {% endblock content %}
@@ -69,7 +49,6 @@
     data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
  });
  let editor; // use a global for the submit and return data rendering in the examples
-
  $(document).ready(function() {
      editor = new $.fn.dataTable.Editor( {
         //  ajax: {
@@ -83,27 +62,27 @@
         //  },
          ajax: "{% url 'lims:sample_table_update' %}",
          table: "#sample_table",
-      
+         idSrc:  'id',
          fields: [ 
-            
+             
+             {
+                 label: "Sample ID",
+                 name: "name",
+                 type: "readonly",
+             },
             {
                 label: "Subject ID",
-                name: "subject_id",
-                type: "readonly",
-            },
-            {
-                label: "Sample ID",
-                name: "sample_id",
+                name: "subject__subject_ui",
                 type: "readonly",
             },
             {
                 label: "Collection Event",
-                name: "collection_event",
+                name: "collection_event__name",
                 type: "readonly",
             },
             {
                 label: "Location",
-                name: "location",
+                name: "location__name",
                 type: "readonly",
             },
             {
@@ -122,16 +101,6 @@
                 label: "Sample Type",
                 name: "sample_type",
                 type: "readonly"
-            },
-            {
-                label: "Box ID",
-                name: "box_id",
-                type: "readonly",
-            },
-            {
-                label: "Box Position",
-                name: "box_position",
-                type: "readonly",
             },
          ]
      } );
@@ -157,15 +126,38 @@
     rowReorder: false,
     fixedHeader: true,
     stateSave: true,
+    ajax: {
+        url:"{% url 'lims:sample_list_json' %}",
+        csrfmiddlewaretoken: '{{ csrf_token }}' 
+        },
     order: [],
     dom: 'B<"clear">lfrtip',
     columns: [
             { 
-              data: "sample_id",
-            },
-            { data: "subject_id" },
-            { data: "collection_event" },
-            { data: "location" },
+              data: "name",
+              render: function ( data, type, row ) {
+                let str = '<a class="table-link" href="{% url 'lims:sample_detail' 1 %}">' + data + '</a>'
+                let newstr = str.replace("1", row.id)
+                return newstr
+            }},
+            { data: "subject__subject_ui",
+              render: function ( data, type, row ) {
+                let str = '<a class="table-link" href="{% url 'lims:subject_detail' 1 %}">' + data + '</a>'
+                let newstr = str.replace("1", row.subject__id)
+                return newstr
+            }},
+            { data: "collection_event__name" ,
+              render: function ( data, type, row ) {
+                let str = '<a class="table-link" href="{% url 'lims:event_detail' 1 %}">' + data + '</a>'
+                let newstr = str.replace("1", row.collection_event__id)
+                return newstr
+            }},
+            { data: "location__name",
+              render: function ( data, type, row ) {
+                let str = '<a class="table-link" href="{% url 'lims:location_detail' 1 %}">' + data + '</a>'
+                let newstr = str.replace("1", row.location__id)
+                return newstr
+            }},
             { 
                 "data": "collection_status",
                 render: function ( status ) {
@@ -174,8 +166,6 @@
                         }
             },
             { data: "sample_type" },
-            { data: "box_id"},
-            { data: "box_position"},
    
         ],
     select: {
