@@ -7,6 +7,7 @@ app_name = 'lims'
 urlpatterns = [
     path('', views.index, name='index'),
     path('samples/', views.SampleListView.as_view(), name='sample_list'),
+    path('samples/json/', views.sample_list_json_view, name='sample_list_json'),
     path('samples/search/', views.search_view, name="sample_search"),
     path('samples/detail/<str:pk>/', views.SampleDetailView.as_view(), name="sample_detail"),
     path('samples/detail/<str:pk>/result/new', views.SampleResultSampleFormView.as_view(), name="new_result_sample"),
