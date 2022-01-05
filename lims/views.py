@@ -1,11 +1,14 @@
 import io
 import datetime
+import json
+import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.core import serializers
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -305,6 +308,20 @@ class SampleListView(SamplePermissionsMixin, ListView):
     context_object_name = 'sample_list'
     model = Sample
 
+    def get_queryset(self):
+        return None
+
+
+def sample_list_json_view(request):
+    samples = Sample.objects.all().values(
+        'id', 'name', 'subject__subject_ui', 'subject__id',
+        'collection_event__name', 'collection_event__id', 'location__name',
+        'location__id',
+        'collection_status', 'sample_type'
+        )
+    print(reverse('lims:sample_detail', args=('XX',)))
+    data = {'data': list(samples)}
+    return JsonResponse(data, safe=False)
 
 
 @login_required
@@ -1250,15 +1267,15 @@ def sample_table_update_view(request):
                     samples.append(sample)
                     statuses.append(collection_status)
                     json_response['data'].append({
-                            "DT_RowId": str(sample_id),
-                            "sample_id": ori_post['data[{}][sample_id]'.format(sample_id)],
-                            "subject_id": ori_post['data[{}][subject_id]'.format(sample_id)],
-                            "collection_event": ori_post['data[{}][collection_event]'.format(sample_id)],
-                            "location": ori_post['data[{}][location]'.format(sample_id)],
+                            "id": str(sample_id),
+                            "name": ori_post['data[{}][name]'.format(sample_id)],
+                            "subject__subject_ui": ori_post['data[{}][subject__subject_ui]'.format(sample_id)],
+                            "collection_event__name": ori_post['data[{}][collection_event__name]'.format(sample_id)],
+                            "collection_event__id": str(sample.collection_event.id),
+                            "location__name": ori_post['data[{}][location__name]'.format(sample_id)],
+                            "location__id": str(sample.location.id),
                             "collection_status": collection_status,
-                            "sample_type": str(sample.sample_type),
-                            "box_id": ori_post['data[{}][box_id]'.format(sample_id)],
-                            "box_position": ori_post['data[{}][box_position]'.format(sample_id)],
+                            "sample_type": str(sample.sample_type)
                         })
                 else:
                     return JsonResponse({"error": str(form.errors)})
