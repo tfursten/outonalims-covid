@@ -1,4 +1,5 @@
 {% extends "lims/base.html" %}
+{% load static %}
 {% load crispy_forms_tags %}
 {% block head %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
@@ -79,7 +80,10 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
-<script>
+<script type="module">
+    import QrScanner from "{% static 'lims/qr-scanner/js/qr-scanner.min.js' %}";
+    QrScanner.WORKER_PATH = "{% static 'lims/qr-scanner/js/qr-scanner-worker.min.js' %}";
+      
     $(document).ready( function () {
     let table = $('#samples').DataTable({
         rowReorder: false,
@@ -98,7 +102,8 @@
         },
         })
 
-      const qrSearchScanner = new QrScanner(videoElemSearch, result => write_search_result(result));
+        const qrSearchScanner = new QrScanner(videoElemSearch, result => write_search_result(result));
+        QrScanner.listCameras()
       
       let scanSearch = document.getElementById('scanSearchModal')
       scanSearchModal.addEventListener('show.bs.modal', function (event) {
