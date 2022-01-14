@@ -8,6 +8,7 @@ from datetime import datetime
 from cualid import create_ids
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.postgres.fields import ArrayField
 # 
 
 # require email for users
@@ -126,6 +127,16 @@ class Subject(models.Model):
     dose_2_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
     booster_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
     booster_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    first_covid_case_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    first_covid_case_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    second_covid_case_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    second_covid_case_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    third_covid_case_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    third_covid_case_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    fourth_covid_case_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    fourth_covid_case_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
+    fifth_covid_case_month = models.CharField(max_length=20, choices=MONTH_CHOICES, blank=True, null=True)
+    fifth_covid_case_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
     pneumococcal_vaccine = models.BooleanField(null=True, blank=True)
     pneumococcal_year = models.PositiveIntegerField(validators=[MinValueValidator(1980)], blank=True, null=True)
     notes = models.CharField(max_length=300, blank=True, null=True)

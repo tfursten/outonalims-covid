@@ -88,6 +88,11 @@ class SubjectForm(ModelForm):
         'teacher_name', 'dose_1', 'dose_1_month', 'dose_1_year',
         'dose_2', 'dose_2_month', 'dose_2_year',
         'booster', 'booster_month', 'booster_year',
+        'first_covid_case_month', 'first_covid_case_year',
+        'second_covid_case_month', 'second_covid_case_year',
+        'third_covid_case_month', 'third_covid_case_year',
+        'fourth_covid_case_month', 'fourth_covid_case_year',
+        'fifth_covid_case_month', 'fifth_covid_case_year',
         'pneumococcal_vaccine',
         'pneumococcal_year', 'notes'
         ]
