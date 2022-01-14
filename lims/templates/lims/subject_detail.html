@@ -32,6 +32,11 @@
       <li class="list-group-item"><Strong>Dose 2 Date:</Strong> {{ subject.dose_2_month}}/{{ subject.dose_2_year }}</li>
       <li class="list-group-item"><Strong>COVID-19 Vaccine Booster:</Strong> {{ subject.booster | yesno:"Yes,No,None"}}</li>
       <li class="list-group-item"><Strong>Booster Date:</Strong> {{ subject.booster_month }}/{{ subject.booster_year}}</li>
+      <li class="list-group-item"><Strong>First COVID-19 Case:</Strong> {{ subject.first_covid_case_month }}/{{ subject.first_covid_case_year}}</li>
+      <li class="list-group-item"><Strong>Second COVID-19 Case:</Strong> {{ subject.second_covid_case_month }}/{{ subject.second_covid_case_year}}</li>
+      <li class="list-group-item"><Strong>Third COVID-19 Case:</Strong> {{ subject.third_covid_case_month }}/{{ subject.third_covid_case_year}}</li>
+      <li class="list-group-item"><Strong>Fourth COVID-19 Case:</Strong> {{ subject.fourth_covid_case_month }}/{{ subject.fourth_covid_case_year}}</li>
+      <li class="list-group-item"><Strong>Fifth COVID-19 Case:</Strong> {{ subject.fifth_covid_case_month }}/{{ subject.fifth_covid_case_year}}</li>
       <li class="list-group-item"><Strong>Pneumococcal Vaccine:</Strong> {{ subject.pneumococcal_vaccine | yesno:"Yes,No,None"}}</li>
       <li class="list-group-item"><Strong>Pneumococcal Vaccine Date:</Strong> {{ subject.pneumococcal_year }}</li>
       <li class="list-group-item"><Strong>Notes:</Strong> {{ subject.notes }}</li>
