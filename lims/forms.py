@@ -96,7 +96,9 @@ class SubjectForm(ModelForm):
             "ethnicity": "Hispanic or Latino/a",
             "dose_1": "COVID-19 Vaccine Dose 1",
             "dose_2": "COVID-19 Vaccine Dose 2",
-            "booster": "COVID-19 Vaccine Booster"
+            "booster": "COVID-19 Vaccine Booster",
+            "gardian_name": "Guardian Name",
+            "gardian_relationship": "Guardian Relationship"
         }
         widgets = {
             'consent_date': DateInput(),

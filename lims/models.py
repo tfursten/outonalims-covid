@@ -453,6 +453,12 @@ class Pool(models.Model):
         else:
             return None
 
+    def get_subject_email_list(self):
+        subjects = self.get_all_subjects()
+        emails = list(set([subject.email for subject in subjects if subject.email != None]))
+        emails = ";".join(emails)
+        return emails
+
 
 class SampleResult(models.Model):
     RESULT_CHOICES = [
