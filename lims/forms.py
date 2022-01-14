@@ -103,7 +103,23 @@ class SubjectForm(ModelForm):
             "dose_2": "COVID-19 Vaccine Dose 2",
             "booster": "COVID-19 Vaccine Booster",
             "gardian_name": "Guardian Name",
-            "gardian_relationship": "Guardian Relationship"
+            "gardian_relationship": "Guardian Relationship",
+            "first_covid_case_month": "1st COVID-19 case month",
+            "first_covid_case_year": "1st COVID-19 case year",
+            "second_covid_case_month": "2nd COVID-19 case month",
+            "second_covid_case_year": "2nd COVID-19 case year",
+            "third_covid_case_month": "3rd COVID-19 case month",
+            "third_covid_case_year": "3rd COVID-19 case year",
+            "fourth_covid_case_month": "4th COVID-19 case month",
+            "fourth_covid_case_year": "4th COVID-19 case year",
+            "fifth_covid_case_month": "5th COVID-19 case month",
+            "fifth_covid_case_year": "5th COVID-19 case year",
+
+
+
+
+
+
         }
         widgets = {
             'consent_date': DateInput(),
