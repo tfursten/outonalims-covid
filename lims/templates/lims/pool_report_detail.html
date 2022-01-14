@@ -8,12 +8,18 @@
 {% block content %}
 
 <h3 class="border-bottom mt-2">Participants in Pool: {{ pool.name }}</h3>
-
+<div>
+  Toggle column: <a class="toggle-vis" data-column="0">First Name</a> - <a class="toggle-vis" data-column="1">Last Name</a> - <a class="toggle-vis" data-column="2">Guardian Name</a> - <a class="toggle-vis" data-column="3">Guardian Relationship</a> - <a class="toggle-vis" data-column="4">Phone Number</a> - <a class="toggle-vis" data-column="5">Email</a>
+</div>
 <table id="sample_table" class="display table table-hover"> 
   <thead>
       <tr>
           <th>First Name</th>
           <th>Last Name</th>
+          <th>Guardian Name</th>
+          <th>Guardian Relationship</th>
+          <th>Phone Number</th>
+          <th>Email</th>
       </tr>
   </thead>
   <tbody>
@@ -21,6 +27,10 @@
           <tr>
               <td>{{ subject.first_name }}</td>
               <td>{{ subject.last_name }}</td>
+              <td>{{ subject.gardian_name }}</td>
+              <td>{{ subject.gardian_relationship }}</td>
+              <td>{{ subject.phone }}</td>
+              <td><a class="table-link" href="mailto:{{ subject.email }}">{{ subject.email }}</a></td>
           </tr>
       {% endfor %}
   </tbody>
@@ -28,7 +38,7 @@
 
 
 <div class="d-grid gap-2 d-md-block mt-2">
-  <a class="btn btn-primary btn mt-2" href="{% url 'lims:edit_pool' pool.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  <a class="btn btn-primary btn mt-2" href="mailto:{{ pool.get_subject_email_list }}" target="_blank" rel="noopener noreferrer" role="button">Email Participants <span data-feather="mail"></span></a>
   <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:pool_list' %}" role="button">Pools <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-primary btn mt-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
   <a class="btn btn-outline-danger btn mt-2" href="{% url 'lims:delete_pool' pool.id %}" role="button">Delete <span data-feather="trash"></span></a>
@@ -47,7 +57,7 @@
   
     
     $(document).ready( function () {
-    $('#sample_table').DataTable({
+    let table = $('#sample_table').DataTable({
     rowReorder: false,
     order: [[1, 'asc'], [0, 'asc']],
     fixedHeader: true,
@@ -57,52 +67,46 @@
         buttons: [ 
         {
           extend: 'copy',
+          exportOptions: {
+                    columns: ':visible'
+                },
           title: 'Participants in Pool: {{ pool.name }}'
         },
         {
           extend: 'pdf',
+          exportOptions: {
+                    columns: ':visible'
+                },
           title: 'Participants in Pool: {{ pool.name }}'
         },
         {
           extend: 'csv',
+          exportOptions: {
+                    columns: ':visible'
+                },
           title: 'Participants in Pool: {{ pool.name }}'
         },
         {
           extend: 'excel',
+          exportOptions: {
+                    columns: ':visible'
+                },
           title: 'Participants in Pool: {{ pool.name }}'
         }]
-        }}
-      );
-    } );
-    $(document).ready( function () {
-    $('#pool_table').DataTable({
-    rowReorder: true,
-    fixedHeader: true,
-    order: [],
-    dom: 'B<"clear">lfrtip',
-    buttons: {
-        name: 'primary',
-        buttons: [ 
-        {
-          extend: 'copy',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'pdf',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'csv',
-          title: 'Pools for Pool'
-        },
-        {
-          extend: 'excel',
-          title: 'Pools for Pool'
-        }]
+        }})
+  
+      $('a.toggle-vis').on( 'click', function (e) {
+        e.preventDefault();
+ 
+        // Get the column API object
+        let column = table.column( $(this).attr('data-column') );
+        console.log(column)
+        // Toggle the visibility
+        column.visible( ! column.visible() );
+    }
 
-
-        }}
-      );
+     );
     } );
+    
 </script>
 {% endblock js %}
