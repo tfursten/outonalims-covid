@@ -35,6 +35,11 @@
                 <th>Dose 2 Date</th>
                 <th>Booster</th>
                 <th>Booster Date</th>
+                <th>First COVID-19 Case</th>
+                <th>Second COVID-19 Case</th>
+                <th>Third COVID-19 Case</th>
+                <th>Fourth COVID-19 Case</th>
+                <th>Fifth COVID-19 Case</th>
                 <th>Pneumococcal Vaccine</th>
                 <th>Pneumococcal Date</th>
                 <th>Notes</th>
@@ -80,6 +85,11 @@
                     <td>{{ subject.dose_2_month }}/{{ subject.dose_2_year }}</td>
                     <td>{{ subject.booster | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.booster_month }}/{{ subject.booster_year }}</td>
+                    <td>{{ subject.first_covid_case_month }}/{{ subject.first_covid_case_year }}</td>
+                    <td>{{ subject.second_covid_case_month }}/{{ subject.second_covid_case_year }}</td>
+                    <td>{{ subject.third_covid_case_month }}/{{ subject.third_covid_case_year }}</td>
+                    <td>{{ subject.fourth_covid_case_month }}/{{ subject.fourth_covid_case_year }}</td>
+                    <td>{{ subject.fifth_covid_case_month }}/{{ subject.fifth_covid_case_year }}</td>
                     <td>{{ subject.pneumococcal_vaccine | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.pneumococcal_year }}</td>
                     <td>{{ subject.notes }}</td>
