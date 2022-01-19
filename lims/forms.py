@@ -146,7 +146,7 @@ class SamplePrint(forms.Form):
         help_text="Change starting position of the labels on the label sheet. Positions start at 1 and increment down each column.")
     replicates = forms.IntegerField(min_value=1, initial=1,
         help_text="Enter the number of labels to print per sample.", widget = forms.HiddenInput(), required = False)
-    label_paper = forms.ModelChoiceField(queryset=Label.objects.all(), initial="CL-114T1-5Col")
+    label_paper = forms.ModelChoiceField(queryset=Label.objects.all(), initial=1)
     sort_by1 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Sort by", initial='GRADE')
     sort_by2 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Then by", initial="NAME")
     sort_by3 = forms.ChoiceField(choices = [('NAME', 'Subject Name'), ('LOCATION', 'Location'), ('GRADE', 'Grade'), ('TYPE', 'Sample Type')], label="Then by", initial="LOCATION")
