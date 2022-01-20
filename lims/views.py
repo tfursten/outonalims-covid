@@ -505,7 +505,7 @@ def sample_labels_pdf(
             pk__in=samples)
     ids = [sample.name for sample in samples]
     locations = [str(sample.subject.location) for sample in samples]
-    grades = [str(sample.subject.grade) for sample in samples]
+    grades = [str(sample.subject.grade) if sample.subject.grade else "" for sample in samples]
     last_names = [str(sample.subject.last_name) for sample in samples]
     first_names = [str(sample.subject.first_name) for sample in samples]
     sample_types = [str(sample.sample_type) for sample in samples]
