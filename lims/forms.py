@@ -208,6 +208,7 @@ class SampleNoticeForm(ModelForm):
     initial = """Name: {FIRST_NAME} {LAST_NAME}
 Grade: {GRADE}
 Teacher: {TEACHER}
+Classroom: {CLASSROOM}
 _______________________________________________
 Please come to <LOCATION> at <TIME> ... 
     """
