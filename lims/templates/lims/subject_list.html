@@ -30,21 +30,7 @@
                 <th>Grade</th>
             </tr>
         </thead>
-        <tbody>
-            {% for subject in subject_list %}
-                <tr id="{{ subject.id }}">
-                    <td><a class="table-link" href="{% url 'lims:subject_detail' subject.id %}">
-                        {{ subject.subject_ui }}
-                    </a></td>
-                    <td>{{ subject.first_name }}</td>
-                    <td>{{ subject.last_name }}</td>
-                    <td>{{ subject.consent_status }}</td>
-                    <td><a class="table-link" href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></td>
-                    <td><a class="table-link" href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></td>
-                    <td>{{ subject.grade }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
+        
     </table>
 
 {% endblock content %}
@@ -71,10 +57,20 @@
     rowReorder: false,
     stateSave: true,
     fixedHeader: true,
+    ajax: {
+        url:"{% url 'lims:subject_list_json' %}",
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    },
     order: [],
     dom: 'B<"clear">lfrtip',
     columns: [
-            { data: "subject_id" },
+            { 
+                data: "subject_ui",
+                render: function ( data, type, row ) {
+                    let str = '<a class="table-link" href="{% url 'lims:subject_detail' 1 %}">' + data + '</a>'
+                    let newstr = str.replace("1", row.id)
+                    return newstr
+            }},
             { data: "first_name" },
             { data: "last_name" },
             { 
@@ -84,8 +80,21 @@
                                 `<span class="badge bg-${consent_status[status]}">${status}</span>` : null     
                         }
             },
-            { data: "project" },
-            { data: "location" },
+            { 
+                data: "location__project__name",
+                render: function ( data, type, row ) {
+                    let str = '<a class="table-link" href="{% url 'lims:project_detail' 1 %}">' + data + '</a>'
+                    let newstr = str.replace("1", row.location__project__id)
+                    return newstr
+                }
+            },
+            { 
+                data: "location__name",
+                render: function ( data, type, row ) {
+                    let str = '<a class="table-link" href="{% url 'lims:location_detail' 1 %}">' + data + '</a>'
+                    let newstr = str.replace("1", row.location__id)
+                    return newstr
+            }},
             { data: "grade"},
    
         ],

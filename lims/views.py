@@ -232,10 +232,24 @@ class EventDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== SUBJECTS ================================
+
 class SubjectListView(SubjectPermissionsMixin, ListView):
-    template_name_suffix = "_list"
-    context_object_name = 'subject_list'
+    template_name = "lims/subject_list.html"
     model = Subject
+    context_object_name = 'subject_list'
+
+    def get_queryset(self):
+        return None
+
+
+@login_required
+def subject_list_json_view(request):
+    subjects = Subject.objects.all().values(
+        'subject_ui', 'first_name', 'last_name', 'consent_status',
+        'location__project__name', 'location__name', 'grade'
+        )
+    data = {'data': list(subjects)}
+    return JsonResponse(data, safe=False)
 
 
 class SubjectDetailListView(SubjectPermissionsMixin, ListView):
@@ -311,7 +325,7 @@ class SampleListView(SamplePermissionsMixin, ListView):
     def get_queryset(self):
         return None
 
-
+@login_required
 def sample_list_json_view(request):
     samples = Sample.objects.all().values(
         'id', 'name', 'subject__subject_ui', 'subject__id',
@@ -319,7 +333,6 @@ def sample_list_json_view(request):
         'location__id',
         'collection_status', 'sample_type'
         )
-    print(reverse('lims:sample_detail', args=('XX',)))
     data = {'data': list(samples)}
     return JsonResponse(data, safe=False)
 
@@ -408,6 +421,7 @@ def sample_notices_pdf(request, event_id, notice_text):
     subjects = Sample.get_subjects_at_event(event)
     teachers = [str(subject.teacher_name) for subject in subjects]
     grades = [str(subject.grade) for subject in subjects]
+    classrooms = [str(subject.location.classroom) for subject in subjects]
     last_names = [str(subject.last_name) for subject in subjects]
     first_names = [str(subject.first_name) for subject in subjects]
     row = 0
@@ -415,10 +429,10 @@ def sample_notices_pdf(request, event_id, notice_text):
     x_start=10
     y_start=(page_height / mm) - 10
     y_space = 55
-    for (ln, fn, teacher, grade) in zip(last_names, first_names, teachers, grades):
+    for (ln, fn, teacher, grade, classroom) in zip(last_names, first_names, teachers, grades, classrooms):
         y = y_start - (row * y_space)
         textobject = notice_canvas.beginText(x_start * mm, y * mm)
-        text = notice_text.format(FIRST_NAME=fn, LAST_NAME=ln, GRADE=grade, TEACHER=teacher)
+        text = notice_text.format(FIRST_NAME=fn, LAST_NAME=ln, GRADE=grade, TEACHER=teacher, CLASSROOM=classroom)
         for line in text.splitlines(False):
             textobject.textLine(line.rstrip())
         notice_canvas.drawText(textobject)
