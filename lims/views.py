@@ -232,10 +232,24 @@ class EventDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 # ============== SUBJECTS ================================
+
 class SubjectListView(SubjectPermissionsMixin, ListView):
-    template_name_suffix = "_list"
-    context_object_name = 'subject_list'
+    template_name = "lims/subject_list.html"
     model = Subject
+    context_object_name = 'subject_list'
+
+    def get_queryset(self):
+        return None
+
+
+@login_required
+def subject_list_json_view(request):
+    subjects = Subject.objects.all().values(
+        'subject_ui', 'first_name', 'last_name', 'consent_status',
+        'location__project__name', 'location__name', 'grade'
+        )
+    data = {'data': list(subjects)}
+    return JsonResponse(data, safe=False)
 
 
 class SubjectDetailListView(SubjectPermissionsMixin, ListView):
@@ -311,7 +325,7 @@ class SampleListView(SamplePermissionsMixin, ListView):
     def get_queryset(self):
         return None
 
-
+@login_required
 def sample_list_json_view(request):
     samples = Sample.objects.all().values(
         'id', 'name', 'subject__subject_ui', 'subject__id',
@@ -319,7 +333,6 @@ def sample_list_json_view(request):
         'location__id',
         'collection_status', 'sample_type'
         )
-    print(reverse('lims:sample_detail', args=('XX',)))
     data = {'data': list(samples)}
     return JsonResponse(data, safe=False)
 
