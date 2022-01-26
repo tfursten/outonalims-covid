@@ -5,9 +5,9 @@ from . import views
 app_name = 'lims'
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('samples/', views.SampleListView.as_view(), name='sample_list'),
-    path('samples/json/', views.sample_list_json_view, name='sample_list_json'),
+    path('', views.index, name="index"),
+    path('samples/', views.SampleListView.as_view(), name="sample_list"),
+    path('samples/json/', views.sample_list_json_view, name="sample_list_json"),
     path('samples/search/', views.search_view, name="sample_search"),
     path('samples/detail/<str:pk>/', views.SampleDetailView.as_view(), name="sample_detail"),
     path('samples/detail/<str:pk>/result/new', views.SampleResultSampleFormView.as_view(), name="new_result_sample"),
@@ -32,6 +32,7 @@ urlpatterns = [
     path('researchers/detail/<str:pk>/edit/', views.ResearcherUpdateView.as_view(), name="edit_researcher"),
     path('researchers/detail/<str:pk>/remove/', views.ResearcherDeleteView.as_view(), name="delete_researcher"),
     path('subject/', views.SubjectListView.as_view(), name="subject_list"),
+    path('subject/json/', views.subject_list_json_view, name="subject_list_json"),
     path('subject/detail_list', views.SubjectDetailListView.as_view(), name="subject_list_detail"),
     path('subject/new/', views.SubjectFormView.as_view(), name="new_subject"),
     path('subject/detail/<str:pk>/', views.SubjectDetailView.as_view(), name="subject_detail"),
