@@ -244,11 +244,21 @@ class SubjectListView(SubjectPermissionsMixin, ListView):
 
 @login_required
 def subject_list_json_view(request):
-    subjects = Subject.objects.all().values(
+    subjects = list(Subject.objects.all().values(
         'subject_ui', 'first_name', 'last_name', 'consent_status',
         'location__project__name', 'location__name', 'grade'
-        )
-    data = {'data': list(subjects)}
+        ))
+    for subject in subjects:
+        sub_id = subject['subject_ui']
+        sub = Subject.objects.get(subject_ui=sub_id)
+        subject['samples'] = sub.total_samples
+        subject['pending'] = sub.pending_samples
+        subject['collected'] = sub.collected_samples
+        subject['absent'] = sub.absent_samples
+        subject['refused'] = sub.refused_samples
+        subject['withdrawn'] = sub.withdrawn_samples
+    
+    data = {'data': subjects}
     return JsonResponse(data, safe=False)
 
 
