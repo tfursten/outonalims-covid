@@ -24,10 +24,15 @@
                 <th>Subject ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
-                <th>Consent Status</th>
-                <th>Project</th>
                 <th>Location</th>
                 <th>Grade</th>
+                <th>Consent Status</th>
+                <th>No. Samples Created</th>
+                <th>No. Samples Pending</th>
+                <th>No. Samples Collected</th>
+                <th>No. Samples Absent</th>
+                <th>No. Samples Refused</th>
+                <th>No. Samples Withdrawn</th>
             </tr>
         </thead>
         
@@ -74,21 +79,6 @@
             { data: "first_name" },
             { data: "last_name" },
             { 
-                "data": "consent_status",
-                render: function ( status ) {
-                            return status ?
-                                `<span class="badge bg-${consent_status[status]}">${status}</span>` : null     
-                        }
-            },
-            { 
-                data: "location__project__name",
-                render: function ( data, type, row ) {
-                    let str = '<a class="table-link" href="{% url 'lims:project_detail' 1 %}">' + data + '</a>'
-                    let newstr = str.replace("1", row.location__project__id)
-                    return newstr
-                }
-            },
-            { 
                 data: "location__name",
                 render: function ( data, type, row ) {
                     let str = '<a class="table-link" href="{% url 'lims:location_detail' 1 %}">' + data + '</a>'
@@ -96,6 +86,19 @@
                     return newstr
             }},
             { data: "grade"},
+            { 
+                "data": "consent_status",
+                render: function ( status ) {
+                            return status ?
+                                `<span class="badge bg-${consent_status[status]}">${status}</span>` : null     
+                        }
+            },
+            { data: "samples"},
+            { data: "pending"},
+            { data: "collected"},
+            { data: "absent"},
+            { data: "refused"},
+            { data: "withdrawn"}
    
         ],
     select: true,
