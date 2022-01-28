@@ -162,31 +162,6 @@ class Subject(models.Model):
         else:
             return len(Sample.objects.filter(subject=self.id, collection_status=collection_status))
 
-    @property
-    def pending_samples(self):
-        return self.get_number_of_samples('Pending')
-
-    @property
-    def collected_samples(self):
-        return self.get_number_of_samples('Collected')
-
-    @property
-    def absent_samples(self):
-        return self.get_number_of_samples('Absent')
-
-    @property
-    def refused_samples(self):
-        return self.get_number_of_samples('Refused')
-
-    @property
-    def withdrawn_samples(self):
-        return self.get_number_of_samples('Withdrew')
-
-    @property
-    def total_samples(self):
-        return self.get_number_of_samples()
-
-
 
     def __str__(self):
         return self.subject_ui
