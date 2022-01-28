@@ -14,7 +14,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     ListView, CreateView, DeleteView, UpdateView, DetailView)
 from django.contrib import messages
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Count, Q
 from .models import (
     Sample, Project, Location, Researcher, Event,
     Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
@@ -244,19 +244,24 @@ class SubjectListView(SubjectPermissionsMixin, ListView):
 
 @login_required
 def subject_list_json_view(request):
-    subjects = list(Subject.objects.all().values(
-        'subject_ui', 'first_name', 'last_name', 'consent_status',
-        'location__project__name', 'location__name', 'grade'
-        ))
-    for subject in subjects:
-        sub_id = subject['subject_ui']
-        sub = Subject.objects.get(subject_ui=sub_id)
-        subject['samples'] = sub.total_samples
-        subject['pending'] = sub.pending_samples
-        subject['collected'] = sub.collected_samples
-        subject['absent'] = sub.absent_samples
-        subject['refused'] = sub.refused_samples
-        subject['withdrawn'] = sub.withdrawn_samples
+    subjects = []
+    for subject in Subject.objects.select_related().all():
+        data = subject.sample_set.aggregate(
+            samples=Count('pk'),
+            pending=Count('pk', filter=Q(collection_status='Pending')),
+            collected=Count('pk', filter=Q(collection_status="Collected")),
+            absent=Count('pk', filter=Q(collection_status="Absent")),
+            refused=Count('pk', filter=Q(collection_status="Refused")),
+            withdrawn=Count('pk', filter=Q(collection_status="Withdrew"))
+            )
+        values = {k: v for k, v in subject.__dict__.items() if k in [
+            'subject_ui', 'first_name', 'last_name', 'consent_status',
+            'location__name', 'grade', 'id']}
+        values['location__name'] = subject.location.name
+        values['location__id'] = subject.location.id
+        data.update(values)
+        subjects.append(data)
+
     
     data = {'data': subjects}
     return JsonResponse(data, safe=False)
