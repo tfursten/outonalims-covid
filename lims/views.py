@@ -267,6 +267,8 @@ def subject_list_json_view(request):
     return JsonResponse(data, safe=False)
 
 
+
+
 class SubjectDetailListView(SubjectPermissionsMixin, ListView):
     template_name_suffix = "_detail_list"
     context_object_name = 'subject_list'
@@ -305,6 +307,31 @@ class SubjectFormView(SuccessMessageMixin, SubjectPermissionsMixin, CreateView):
 
 class SubjectDetailView(SubjectPermissionsMixin, DetailView):
     model = Subject
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        samples = Sample.objects.filter(subject=self.kwargs['pk'])
+        results = []
+        for sample in samples:
+            
+            tests = SampleResult.objects.filter(sample=sample.id)
+            if len(tests):
+                for test in tests:
+                    results.append(
+                        [sample.name, sample.id, sample.collection_event.name, sample.collection_event.id,
+                        sample.collection_event.date, sample.sample_type,
+                        sample.collection_status, test.test.name, test.test.id, test.id,
+                        test.result, test.replicate])
+            else:
+                results.append( 
+                    [sample.name, sample.id, sample.collection_event.name,
+                    sample.collection_event.id, sample.collection_event.date,
+                    sample.sample_type, sample.collection_status, "", "", "",
+                    "", ""])
+
+
+        context['results'] = results
+        return context
 
 
 class SubjectUpdateView(SuccessMessageMixin, SubjectPermissionsMixin, UpdateView):
