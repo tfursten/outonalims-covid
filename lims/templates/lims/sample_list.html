@@ -23,6 +23,7 @@
                 <th>Subject ID</th>
                 <th>Collection Event</th>
                 <th>Location</th>
+                <th>Grade</th>
                 <th>Collection Status</th>
                 <th>Sample Type</th>
             </tr>
@@ -83,6 +84,11 @@
             {
                 label: "Location",
                 name: "location__name",
+                type: "readonly",
+            },
+            {
+                label: "Grade",
+                name: "subject__grade",
                 type: "readonly",
             },
             {
@@ -158,6 +164,9 @@
                 let newstr = str.replace("1", row.location__id)
                 return newstr
             }},
+            {
+                data: "subject__grade"
+            },
             { 
                 "data": "collection_status",
                 render: function ( status ) {

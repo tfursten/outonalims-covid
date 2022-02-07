@@ -370,7 +370,7 @@ class SampleListView(SamplePermissionsMixin, ListView):
 @login_required
 def sample_list_json_view(request):
     samples = Sample.objects.all().values(
-        'id', 'name', 'subject__subject_ui', 'subject__id',
+        'id', 'name', 'subject__subject_ui', 'subject__id', 'subject__grade',
         'collection_event__name', 'collection_event__id', 'location__name',
         'location__id',
         'collection_status', 'sample_type'
