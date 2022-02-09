@@ -2,6 +2,7 @@ import io
 import datetime
 import json
 import time
+import pandas as pd
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
@@ -24,7 +25,7 @@ from .forms import (
     EventForm, SubjectForm, SampleForm, SampleBoxForm, PoolBoxForm,
     BoxPositionSampleForm, BoxPositionPoolForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
-    SampleResultSelectTestForm,
+    SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
     LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm)
 from cualid import create_ids
 import reportlab
@@ -34,6 +35,7 @@ from reportlab_qrcode import QRCodeImage
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from difflib import get_close_matches
+
 
 
 
@@ -376,6 +378,7 @@ def sample_list_json_view(request):
         'collection_status', 'sample_type'
         )
     data = {'data': list(samples)}
+    print(data)
     return JsonResponse(data, safe=False)
 
 
@@ -655,6 +658,68 @@ class SampleResultFormView(SuccessMessageMixin, SamplePermissionsMixin, CreateVi
         return reverse('lims:sample_result_detail', args=(self.object.id,))
 
 
+@login_required   
+def upload_sample_result_file(request):
+    if request.method == 'POST':
+        form = SampleResultUploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            rep = request.POST.get('replicate')
+            researcher = request.POST.get('researcher')
+            data = pd.read_excel(
+                request.FILES['file'],
+                skiprows=23,
+                usecols=["Sample", "Target", "Cq"])
+            data['id'] = data.index
+            data['Sample'] = data['Sample'].apply(lambda x: x.split("_", 1)[0] if Sample.objects.filter(name=x.split("_", 1)[0]).exists() else "Not Found")
+            data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
+            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x != "Undetermined" else "Negative")
+            data['Value'] = data['Cq'].apply(lambda x: x if x != "Undetermined" else None)
+            data['Replicate'] = rep
+            changes = []
+
+            for n, row in data.iterrows():
+                if "Not Found" in row.values:
+                    changes.append("Not Added")
+                    continue
+                sample = Sample.objects.get(name=row.Sample)
+                test = Test.objects.get(name=row.Test)
+                sample_result, created = SampleResult.objects.update_or_create(
+                    sample=sample, test=test, replicate=rep,
+                )
+                sample_result.result = row.Status
+                sample_result.value = row.Value
+                if researcher:
+                    sample_result.researcher.set(researcher)
+                sample_result.save()
+                changes.append("Created" if created else "Updated")
+            
+            data['Changes'] = changes
+            data.Changes = pd.Categorical(data.Changes, 
+                      categories=["Not Added", "Created", "Updated"],
+                      ordered=True)
+            data = data[['id', 'Sample', 'Test', 'Replicate', 'Status', 'Value', 'Changes']]
+            data = data.sort_values('Changes')
+            if "Not Added" in data.Changes.values:
+                
+                messages.add_message(
+                    request,
+                    messages.WARNING,
+                    '{} records could not be added. Please check and resubmit.'.format(
+                        data.Changes.value_counts()['Not Added']
+                    ))
+            
+            data = data.to_json(orient="records")
+            
+            return render(
+                request,
+                'lims/sampleresult_upload_complete.html',
+                {'data': data})
+    else:
+        form = SampleResultUploadFileForm()
+    return render(request, 'lims/sampleresult_upload.html', {'form': form})
+
+
+
 @login_required
 def sampleresult_multiple_view(request):
     form = SampleResultSelectTestForm()
@@ -788,7 +853,65 @@ def poolresult_multiple_add_pools(request, test_id, rep):
     return render(request, 'lims/poolresult_add_pools.html',
         {'pool_list':pool_query_set})
 
-    
+@login_required   
+def upload_pool_result_file(request):
+    if request.method == 'POST':
+        form = PoolResultUploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            rep = request.POST.get('replicate')
+            researcher = request.POST.get('researcher')
+            data = pd.read_excel(
+                request.FILES['file'],
+                skiprows=23,
+                usecols=["Sample", "Target", "Cq"])
+            data['id'] = data.index
+            data['Pool'] = data['Sample'].apply(lambda x: x if Pool.objects.filter(name=x).exists() else "Not Found")
+            data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
+            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x != "Undetermined" else "Negative")
+            data['Value'] = data['Cq'].apply(lambda x: x if x != "Undetermined" else None)
+            data['Replicate'] = rep
+            changes = []
+
+            for n, row in data.iterrows():
+                if "Not Found" in row.values:
+                    changes.append("Not Added")
+                    continue
+                pool = Pool.objects.get(name=row.Pool)
+                test = Test.objects.get(name=row.Test)
+                pool_result, created = PoolResult.objects.update_or_create(
+                    pool=pool, test=test, replicate=rep,
+                )
+                pool_result.result = row.Status
+                pool_result.value = row.Value
+                if researcher:
+                    pool_result.researcher.set(researcher)
+                pool_result.save()
+                changes.append("Created" if created else "Updated")
+            
+            data['Changes'] = changes
+            data.Changes = pd.Categorical(data.Changes, 
+                      categories=["Not Added", "Created", "Updated"],
+                      ordered=True)
+            data = data[['id', 'Pool', 'Test', 'Replicate', 'Status', 'Value', 'Changes']]
+            data = data.sort_values('Changes')
+            if "Not Added" in data.Changes.values:
+                
+                messages.add_message(
+                    request,
+                    messages.WARNING,
+                    '{} records could not be added. Please check and resubmit.'.format(
+                        data.Changes.value_counts()['Not Added']
+                    ))
+            
+            data = data.to_json(orient="records")
+            
+            return render(
+                request,
+                'lims/poolresult_upload_complete.html',
+                {'data': data})
+    else:
+        form = PoolResultUploadFileForm()
+    return render(request, 'lims/poolresult_upload.html', {'form': form})
 
 
 class PoolResultSampleFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
@@ -1526,7 +1649,6 @@ def sampleresults_table_update_view(request):
                 if k != 'object':
                     ori_post[k] = v
             form = SampleResultForm(ori_post, instance=vals['object'])
-            print(form.errors)
             if form.is_valid():
                 json_response['data'].append({
                         "DT_RowId": str(obj_id),
