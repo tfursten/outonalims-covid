@@ -498,7 +498,7 @@ class SampleResult(models.Model):
         ]
 
     def __str__(self):
-        return str(self.name)
+        return "{0}_{1}_{2}".format(self.sample.name, self.test, self.replicate)
 
 
 class PoolResult(models.Model):
