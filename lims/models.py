@@ -527,7 +527,7 @@ class PoolResult(models.Model):
         ]
 
     def __str__(self):
-        return str(self.name)
+        return "{0}_{1}_{2}".format(self.pool.name, self.test, self.replicate)
 
 
 class Label(models.Model):

@@ -1,0 +1,31 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+<div class='content-section'>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-6">Upload Sample Results</legend>
+            <p>Select Excel result file to upload. </p>
+            <p class="text-muted">Any existing sample results will be updated to reflect information in uploaded table. If you wish to add an additional set of results, change the replicate number to avoid overwriting.</p>
+            <p class="text-muted">Data will be read from line #24 of the file and will pull from columns labelled: "Sample", "Target", "Cq".</p>
+            <p class="text-muted">The target name must match an existing <a href="{% url 'lims:test_list' %}">Test</a></p> 
+            <p class="text-muted">The sample name must match an existing <a href="{% url 'lims:sample_list' %}">Sample ID</a> or it must begin with a matching Sample ID followed by an underscore and any additional information.</p> 
+
+            {{ form | crispy }}
+        </fieldset>
+        <div class="d-grid gap-2 d-md-block mt-2">
+          <button class="btn btn-success" type="submit">Submit</button>
+           <a class="btn btn-outline-danger mr-5" href="{% url 'lims:pool_result_list' %}" role="button">Cancel</a>
+       </div>
+    </form>
+</div>
+
+
+{% endblock content %}
+
+
+
+
