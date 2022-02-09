@@ -1649,7 +1649,6 @@ def sampleresults_table_update_view(request):
                 if k != 'object':
                     ori_post[k] = v
             form = SampleResultForm(ori_post, instance=vals['object'])
-            print(form.errors)
             if form.is_valid():
                 json_response['data'].append({
                         "DT_RowId": str(obj_id),
