@@ -49,8 +49,8 @@
                     </a></td>
                     <td>{{ result.replicate }}</td>
                     <td>{{ result.result }}</td>
-                    <td>{{ result.value }}</td>
-                    <td>{{ result.notes }}</td>
+                    <td>{{ result.value | default_if_none:"" }}</td>
+                    <td>{{ result.notes | default_if_none:"" }}</td>
 
                 </tr>
             {% endfor %}
@@ -163,12 +163,12 @@
             [25, 50, 100, 200, "All"]
             ],
     iDisplayLength: 25,
-    autoWidth: false,
+    autoWidth: true,
     dom: 'B<"clear">lfrtip',
     columns: [
             { data: "result_id" },
             { data: "event" },
-            { data: "locaiton" },
+            { data: "location" },
             { data: "test" },
             { data: "sample" },
             { data: "replicate" },
