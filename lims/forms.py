@@ -310,6 +310,12 @@ class PoolResultForm(ModelForm):
             super(PoolResultForm, self).__init__(*args, **kwargs)
             self.fields['pool'].queryset = Pool.objects.order_by('name')
 
+class PoolResultUploadFileForm(ModelForm):
+    file = forms.FileField()
+    class Meta:
+        model = PoolResult
+        fields = ['replicate', 'researcher']
+
 
 class PoolResultSelectTestForm(ModelForm):
     class Meta:
@@ -320,3 +326,9 @@ class SampleResultSelectTestForm(ModelForm):
     class Meta:
         model = SampleResult
         fields = ['test', 'replicate']
+
+class SampleResultUploadFileForm(ModelForm):
+    file = forms.FileField()
+    class Meta:
+        model = SampleResult
+        fields = ['replicate', 'researcher']
