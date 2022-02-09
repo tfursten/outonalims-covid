@@ -208,6 +208,7 @@ class SampleNoticeForm(ModelForm):
     initial = """Name: {FIRST_NAME} {LAST_NAME}
 Grade: {GRADE}
 Teacher: {TEACHER}
+Classroom: {CLASSROOM}
 _______________________________________________
 Please come to <LOCATION> at <TIME> ... 
     """
@@ -327,8 +328,11 @@ class SampleResultSelectTestForm(ModelForm):
         model = SampleResult
         fields = ['test', 'replicate']
 
+
 class SampleResultUploadFileForm(ModelForm):
     file = forms.FileField()
     class Meta:
         model = SampleResult
         fields = ['replicate', 'researcher']
+        
+
