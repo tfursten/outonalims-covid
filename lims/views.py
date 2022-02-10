@@ -510,11 +510,46 @@ def event_samples(request, event_id):
     samples = Sample.get_samples_for_event(event)
     context = {'samples': samples, 'event': event}
     return render(request, 'lims/samples_for_event.html', context)
+
+
+@login_required
+def sample_storage_label_options(request):
+    form = SamplePrint(initial={
+        'label_paper': 3, 'abbreviate': True,
+        'sort_by1': 'LOCATION', 'sort_by2': 'EVENT', 'sort_by3': 'GRADE', 'sort_by4': 'NAME' })
+    samples = Sample.objects.filter(collection_status="Collected").values(
+        'id', 'name', 'subject__subject_ui', 'subject__first_name',
+        'subject__last_name', 'subject__grade',
+        'collection_event__name', 'location__name',
+        'sample_type'
+        )
+    context = {'data': json.dumps(list(samples)), 'form': form}
+    if request.method == "POST":
+        form = SamplePrint(request.POST)
+        if form.is_valid():
+            start_position = request.POST.get('start_position')
+            label_paper = request.POST.get('label_paper')
+            abbreviate = request.POST.get('abbreviate')
+            reps = request.POST.get('replicates')
+            sort_by1 = request.POST.get('sort_by1')
+            sort_by2 = request.POST.get('sort_by2')
+            sort_by3 = request.POST.get('sort_by3')
+            sort_by4 = request.POST.get('sort_by4')
+            selected_samples = request.POST.getlist('ids')
+            return sample_labels_pdf(samples=selected_samples,
+                start_position=start_position,
+                label_paper=label_paper, abbreviate=abbreviate, replicates=reps,
+                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
+                sort_by4=sort_by4, outfile_name="storage_labels")
+    return render(request, 'lims/sample_storage_print_options.html', context=context)   
+
  
 
 @login_required
 def sample_label_options(request, event_id):
-    form = SamplePrint()
+    form = SamplePrint(initial={
+        'label_paper': 1, 'abbreviate': False,
+        'sort_by1': 'GRADE', 'sort_by2': 'NAME', 'sort_by3': 'TYPE', 'sort_by4': 'LOCATION' })
     event = Event.objects.get(pk=event_id)
     samples = Sample.get_samples_for_event(event)
     context = {'samples': samples, 'event': event, 'form': form}
@@ -523,6 +558,7 @@ def sample_label_options(request, event_id):
         if form.is_valid():
             start_position = request.POST.get('start_position')
             label_paper = request.POST.get('label_paper')
+            abbreviate = request.POST.get('abbreviate')
             reps = request.POST.get('replicates')
             sort_by1 = request.POST.get('sort_by1')
             sort_by2 = request.POST.get('sort_by2')
@@ -530,10 +566,11 @@ def sample_label_options(request, event_id):
             sort_by4 = request.POST.get('sort_by4')
             selected_samples = request.POST.getlist('ids')
             return sample_labels_pdf(samples=selected_samples,
-                event_id=event_id, start_position=start_position,
-                label_paper=label_paper, replicates=reps,
+                start_position=start_position,
+                label_paper=label_paper, abbreviate=abbreviate, replicates=reps,
                 sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
-                sort_by4=sort_by4)
+                sort_by4=sort_by4,
+                outfile_name="{}_sample_labels".format(event.name.replace(" ", "_")))
     return render(request, 'lims/sample_print_options.html', context)    
 
 
@@ -550,24 +587,22 @@ def get_x_y_coordinates(
 
 
 def sample_labels_pdf(
-    samples, event_id, start_position,
-    label_paper, replicates, sort_by1,
-    sort_by2, sort_by3, sort_by4):
+    samples, start_position,
+    label_paper, abbreviate, replicates, sort_by1,
+    sort_by2, sort_by3, sort_by4, outfile_name):
     """
     Use Cual-id code to generate labels with barcodes
     """
     # Create a file-like buffer to receive PDF data.
-
-    event = Event.objects.get(pk=event_id)
-    samples = Sample.get_samples_for_event(
-        event, sort_by1, sort_by2, sort_by3, sort_by4).filter(
-            pk__in=samples)
-    ids = [sample.name for sample in samples]
-    locations = [str(sample.subject.location) for sample in samples]
-    grades = [str(sample.subject.grade) if sample.subject.grade else "" for sample in samples]
-    last_names = [str(sample.subject.last_name) for sample in samples]
-    first_names = [str(sample.subject.first_name) for sample in samples]
-    sample_types = [str(sample.sample_type) for sample in samples]
+    
+    sortby = {
+            'GRADE': ['subject__grade'],
+            'NAME': ['subject__last_name', 'subject__first_name'],
+            'LOCATION': ['subject__location'],
+            'TYPE': ['sample_type'],
+            'EVENT': ['collection_event__name']
+            }
+    sortby_list =  sortby[sort_by1] + sortby[sort_by2] + sortby[sort_by3] + sortby[sort_by4]
 
     label = Label.objects.get(pk=label_paper)
     buffer = io.BytesIO()
@@ -585,21 +620,29 @@ def sample_labels_pdf(
         label.label_width, label.label_height,
         label.row_margin, label.col_margin))
     c = int(start_position) - 1
-    for (id_, ln, fn, loc, grade, stype) in zip(ids, last_names, first_names, locations, grades, sample_types):
+    for sample in Sample.objects.filter(pk__in=samples).order_by(*sortby_list).select_related():
         for rep in range(int(replicates)):
             x = xy_coords[c][0] + (label.left_padding * mm)
             y = xy_coords[c][1] - (label.top_padding * mm)
             qr_size = label.qr_size
-            qr_code = QRCodeImage(id_, size=qr_size * mm)
+            qr_code = QRCodeImage(sample.name, size=qr_size * mm)
             qr_code.drawOn(barcode_canvas, x , y - ((qr_size - 4) * mm))
             barcode_canvas.setFont("Helvetica", label.font_size)
-            barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(id_, stype))
             # Add line for last name and first name, cuts off last name before max_chars so that some characters
             # from first name will be included if full name does not fit.
-            barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(
-                ln[:label.max_chars - 2], fn)[:label.max_chars + 1])
-            barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 2) * mm)), "{0} GR: {1}".format(event.name[:label.max_chars - 5], grade))
-            barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 3) * mm)), "{0}".format(loc)[:label.max_chars])
+            if abbreviate == "on":
+                barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(sample.name, sample.sample_type[0]))
+                barcode_canvas.drawString(
+                    x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0} {1}".format(
+                        sample.collection_event.name.replace("Wk", "")[:label.max_chars - 5], str(sample.subject.grade).replace("None", "") ))
+            else:
+                barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(sample.name, sample.sample_type))
+                barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(
+                    sample.subject.last_name[:label.max_chars - 2], sample.subject.first_name)[:label.max_chars + 1])
+                barcode_canvas.drawString(
+                    x + (qr_size * mm), (y - ((label.line_spacing * 2) * mm)), "{0} {1}".format(
+                        sample.collection_event.name[:label.max_chars - 5], str(sample.subject.grade).replace("None", "")))
+                barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 3) * mm)), "{0}".format(sample.location.name)[:label.max_chars])
             if c < ((rows*columns) - 1):
                 c += 1
             else:
@@ -615,7 +658,7 @@ def sample_labels_pdf(
     buffer.seek(0)
     return FileResponse(
         buffer, as_attachment=True,
-        filename='{}_sample_labels.pdf'.format(event.name.replace(" ", "_").replace(".", "")))
+        filename="{}.pdf".format(outfile_name))
 
 
 class SampleDetailView(SamplePermissionsMixin, DetailView):
