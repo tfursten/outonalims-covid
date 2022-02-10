@@ -16,6 +16,7 @@ urlpatterns = [
     path('samples/add/', views.add_samples, name="new_samples"),
     path('samples/add/<str:event_id>/<str:sample_type>', views.verify_subjects, name="verify_new_samples"),
     path('samples/event/<str:event_id>/sample-label-options/', views.sample_label_options, name="sample_labels_options"),
+    path('samples/sample-storage-label-options/', views.sample_storage_label_options, name="sample_storage_labels_options"),
     path('projects/', views.ProjectListView.as_view(), name="project_list"),
     path('projects/detail/<str:pk>/', views.ProjectDetailView.as_view(), name="project_detail"),
     path('projects/detail/<str:pk>/edit/', views.ProjectUpdateView.as_view(), name="edit_project"),
