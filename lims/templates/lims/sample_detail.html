@@ -15,6 +15,9 @@
         {% else %}
             <span class="badge bg-warning">{{ sample.collection_status }}</span>
         {% endif %}
+        <p class="card-text"><strong>Notes:</strong> {{ sample.notes }}</p>
+        <p class="card-text"><strong>Created:</strong> {{ sample.created_on }}</p>
+
     </div>
     <div class="card-header">
         <strong>Subject: </strong><a href="{% url 'lims:subject_detail' sample.subject.id %}">{{ sample.subject.subject_ui }}</a>
@@ -31,32 +34,25 @@
         <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
         <p class="card-text">Created: {{ sample.created_on }}</p> 
     </div>
-    <div class="card-header">
-        {% if sample.box %}
-            <strong>Sample Box: </strong><a href="{% url 'lims:sample_box_detail' sample.box.id %}">{{ sample.box.box_name }}</a>
-        {% else %}
-            <strong>Sample Box: </strong>None
-        {% endif %}
-    </div>
-    {% if sample.box %}
-    <div class="card-body">
-        <p class="card-text">Box Position: <a href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">{{ sample.box_position.position }}</a></p>
-        <p class="card-text">Box Location: {{ sample.box.storage_location }}</p>
-        <p class="card-text">Box Shelf: {{ sample.box.storage_shelf }}</p>
-    </div>
-    {% else %}
-    <div class="card-body">
-        <p class="card-text">Box Position: None</p>
-        <p class="card-text">Box Location: None</p>
-        <p class="card-text">Box Shelf: None</p>
-    </div>
-    {% endif %}
-    <div class="card-header"><strong>Notes:</strong></div>
+    
+        {% for pos in sample.box_position %}
+        <div class="card-header border-top">
+            <strong>Sample Box: </strong><a href="{% url 'lims:sample_box_detail' pos.box.id %}">{{ pos.box.box_name }}</a>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Box Position: <a href="{% url 'lims:sample_box_position_detail' pos.box.id pos.id %}">{{ pos.position }}</a></p>
+            <p class="card-text">Box Location: {{ pos.box.storage_location }}</p>
+            <p class="card-text">Box Shelf: {{ pos.box.storage_shelf }}</p>
+        </div>
+        
+        {% endfor %}
+
+    
     <div class="card-body">
         <p class="card-text">{{ sample.notes }}</p>
     </div>
     {% for result in results %}
-    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:sample_result_detail' result.id %}">Result {{ result.id }}</a> </div>
+    <div class="card-header border-top"><strong>Result ID: </strong><a href="{% url 'lims:sample_result_detail' result.id %}">Result {{ result.id }}</a> </div>
     <div class="card-body">
         <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
         <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>

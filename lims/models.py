@@ -169,10 +169,9 @@ class Subject(models.Model):
 
 class SampleBox(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
-    size = models.PositiveIntegerField(default=81)
+    size = models.PositiveIntegerField(default=100)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
-    positions = models.ManyToManyField('SampleBoxPosition', related_name="sample_box")
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -208,10 +207,9 @@ class SampleBox(models.Model):
 
 class PoolBox(models.Model):
     box_name = models.CharField(max_length=100, unique=True)
-    size = models.PositiveIntegerField(default=81)
+    size = models.PositiveIntegerField(default=100)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     storage_shelf = models.CharField(max_length=100, blank=True, null=True)
-    positions = models.ManyToManyField('PoolBoxPosition', related_name="pool_box")
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
 
     class Meta:
@@ -243,27 +241,6 @@ class PoolBox(models.Model):
                 return position.id
         return None
     
-
-
-class SampleBoxPosition(models.Model):
-    position = models.PositiveIntegerField()
-    sample = models.OneToOneField('Sample', blank=True, null=True, on_delete=models.PROTECT)
-    # if no sample, box position is empty
-    
-    class Meta:
-        ordering = ("position",)
-        # contrant that prevents duplicate positions
-        # constraints = [
-        # models.UniqueConstraint(fields=["box", "position"], name='unique position')
-        # ]
-    
-class PoolBoxPosition(models.Model):
-    position = models.PositiveIntegerField()
-    pool = models.OneToOneField('Pool', blank=True, null=True, on_delete=models.PROTECT)
-    # if no Pool, box position is empty
-    
-    class Meta:
-        ordering = ("position",)
 
 
 class Event(models.Model):
@@ -385,19 +362,14 @@ class Sample(models.Model):
    
     @property
     def box_position(self):
-        if SampleBoxPosition.objects.filter(sample=self.id).exists():
-            return SampleBoxPosition.objects.filter(sample=self.id)[0]
-        else:
-            return None
+        return self.box_samples.all()
+
 
     @property
     def box(self):
         position = self.box_position
-        if position:
-            box = position.sample_box.all()[0]
-            return box
-        else:
-            return None
+        return [pos.box for pos in position]
+        
     
 class Pool(models.Model):
     NOTIFICATION_CHOICES = [
@@ -451,25 +423,48 @@ class Pool(models.Model):
 
     @property
     def box_position(self):
-        if PoolBoxPosition.objects.filter(pool=self.id).exists():
-            return PoolBoxPosition.objects.filter(pool=self.id)[0]
-        else:
-            return None
+        return self.box_pools.all()
+
 
     @property
     def box(self):
         position = self.box_position
-        if position:
-            box = position.pool_box.all()[0]
-            return box
-        else:
-            return None
+        return [pos.box for pos in position]
 
     def get_subject_email_list(self):
         subjects = self.get_all_subjects()
         emails = list(set([subject.email for subject in subjects if subject.email != None]))
         emails = ";".join(emails)
         return emails
+
+
+
+class SampleBoxPosition(models.Model):
+    box = models.ForeignKey(SampleBox, on_delete=models.CASCADE, related_name='positions', default=1)
+    position = models.PositiveIntegerField()
+    sample = models.ForeignKey(
+        Sample, blank=True, null=True,
+        on_delete=models.CASCADE, related_name="box_samples")
+    # if no sample, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
+        # contrant that prevents duplicate positions
+        # constraints = [
+        # models.UniqueConstraint(fields=["box", "position"], name='unique position')
+        # ]
+    
+class PoolBoxPosition(models.Model):
+    box = models.ForeignKey(PoolBox, on_delete=models.CASCADE, related_name='positions', default=1)
+    position = models.PositiveIntegerField()
+    pool = models.ForeignKey(
+        Pool, blank=True, null=True,
+        on_delete=models.CASCADE, related_name="box_pools")
+    # if no Pool, box position is empty
+    
+    class Meta:
+        ordering = ("position",)
+
 
 
 class SampleResult(models.Model):

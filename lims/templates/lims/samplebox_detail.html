@@ -20,6 +20,7 @@
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box' samplebox.id %}" role="button">Edit <span data-feather="edit"></span></a>
   {% if samplebox.get_next_empty_position %}
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box_position_continuous' samplebox.id samplebox.get_next_empty_position %}" role="button">Add Samples to Box <span data-feather="plus"></span></a>
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:sample_box_copy_samples' samplebox.id %}" role="button">Copy Samples to Box <span data-feather="copy"></span></a>
   {% else %}
   <a class="btn btn-primary btn mb-2 disabled" href="#" role="button">Add Samples to Box <span data-feather="plus"></span></a>
   {% endif %}
@@ -44,7 +45,7 @@
               {{ pos.position }}
             </a></td>
             <td><a class="table-link" href="{% url 'lims:sample_box_detail' samplebox.id %}">
-                {{ samplebox.box_name }}
+                {{ pos.box.box_name }}
             </a></td>
             {% if pos.sample %}
 
@@ -78,6 +79,11 @@
     rowReorder: false,
     fixedHeader: true,
     order: [],
+    aLengthMenu: [
+            [25, 50, 100, 200, -1],
+            [25, 50, 100, 200, "All"]
+            ],
+    iDisplayLength: 25,
     dom: 'B<"clear">lfrtip',
     buttons: {
         name: 'primary',
