@@ -12,7 +12,6 @@
 <div class="card">
     <h1 class="card-header">Pool: {{ pool.name }}</h1>
     <div class="card-body">
-
       <p>
       <strong>Notification Status: </strong>
       {% if pool.notification_status == "Pending" %}
@@ -23,23 +22,23 @@
           <span class="badge bg-success">{{ pool.notification_status }}</span>
       {% endif %}
       </p>
-      
-      {% if pool.box %}
-      <p><strong>Pool Box: </strong><a href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></p>
-      {% else %}
-      <p><strong>Pool Box: </strong>None</p>
-      {% endif %}
-      {% if pool.box %}
-      <p><strong>Box Position: </strong><a href="{% url 'lims:pool_box_position_detail' pool.box.id pool.box_position.id%}">{{ pool.box_position.position }}</a></p>
-      {% else %}
-      <p><strong>Box Position: </strong>None</p>
-      {% endif %}
       <p class="card-text"><strong>Notes:</strong> {{ pool.notes }}</p>
       <p class="card-text"><strong>Created:</strong> {{ pool.created_on }}</p>
-
     </div>
+      {% for pos in pool.box_position %}
+      <div class="card-header border-top">
+          <strong>Pool Box: </strong><a href="{% url 'lims:pool_box_detail' pos.box.id %}">{{ pos.box.box_name }}</a>
+      </div>
+      <div class="card-body">
+          <p class="card-text">Box Position: <a href="{% url 'lims:pool_box_position_detail' pos.box.id pos.id %}">{{ pos.position }}</a></p>
+          <p class="card-text">Box Location: {{ pos.box.storage_location }}</p>
+          <p class="card-text">Box Shelf: {{ pos.box.storage_shelf }}</p>
+      </div>
+      
+      {% endfor %}
+
     {% for result in results %}
-    <div class="card-header"><strong>Result ID: </strong><a href="{% url 'lims:pool_result_detail' result.id %}">Result {{ result.id }}</a> </div>
+    <div class="card-header border-top"><strong>Result ID: </strong><a href="{% url 'lims:pool_result_detail' result.id %}">Result {{ result.id }}</a> </div>
     <div class="card-body">
         <p class="card-text"><strong>Test: </strong><a href="{% url 'lims:test_detail' result.test.id %}">{{ result.test.name }}</a></p>
         <p class="card-text"><strong>Detects: </strong>{{ result.test.detects }}</p>
@@ -58,7 +57,7 @@
         <p class="card-text"><strong>Replicate: </strong>{{ result.replicate }}</p>
     </div>
     {% endfor %}
-    <h3 class="card-header">Locations</h3>
+    <h3 class="card-header border-top">Locations</h3>
     <ul class="list-group list-group-flush">
       {% for location in pool.get_all_locations %}
       <li class="list-group-item"><a href="{% url 'lims:location_detail' location.id %}">{{ location.name }}</a></li>
@@ -75,10 +74,6 @@
       <tr>
           <th>Pool Name</th>
           <th>Sample ID</th>
-          <th>Storage Box</th>
-          <th>Box Position</th>
-          <th>Box Storage Location</th>
-          <th>Box Storage Shelf</th>
       </tr>
   </thead>
   <tbody>
@@ -87,24 +82,7 @@
               <td>{{ pool.name }}</td>
               <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">
                   {{ sample.name }}
-              </a></td>
-              {% if sample.box %}
-              <td><a class="table-link" href="{% url 'lims:sample_box_detail' sample.box.id %}">
-                {{ sample.box.box_name }}
-              </a></td>
-              <td><a class="table-link" href="{% url 'lims:sample_box_position_detail' sample.box.id sample.box_position.id %}">
-                {{ sample.box_position.position }}
-              </a></td>
-              <td>{{ sample.box.storage_location }}</td>
-              <td>{{ sample.box.storage_shelf }}</td>
-              {% else %}
-              <td>None</td>
-              <td>None</td>
-              <td>None</td>
-              <td>None</td>
-              {% endif %}
-              
-              
+              </a></td>  
           </tr>
       {% endfor %}
   </tbody>
@@ -118,10 +96,6 @@
       <tr>
           <th>Pool Name</th>
           <th>Pools</th>
-          <th>Storage Box</th>
-          <th>Box Position</th>
-          <th>Box Storage Location</th>
-          <th>Box Storage Shelf</th>
       </tr>
   </thead>
   <tbody>
@@ -131,17 +105,6 @@
               <td><a class="table-link" href="{% url 'lims:pool_detail' p.id %}">
                   {{ p.name }}
               </a></td>
-              {% if p.box %}
-              <td><a class="table-link" href="{% url 'lims:sample_box_detail' p.box.id %}">
-                {{ p.box.box_name }}
-              </a></td>
-              {% else %}
-              <td>None</td>
-              {% endif %}
-              <td>{{ p.box_position.position }}</td>
-              <td>{{ p.box.storage_location }}</td>
-              <td>{{ p.box.storage_shelf }}</td>
-              
           </tr>
       {% endfor %}
   </tbody>

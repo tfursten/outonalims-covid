@@ -378,7 +378,6 @@ def sample_list_json_view(request):
         'collection_status', 'sample_type'
         )
     data = {'data': list(samples)}
-    print(data)
     return JsonResponse(data, safe=False)
 
 
@@ -1024,12 +1023,40 @@ class SampleBoxFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
 
         size = form.cleaned_data['size']
         for pos in range(size):
-            box_position = SampleBoxPosition(position=pos+1)
-            box_position.save()
-            self.object.positions.add(box_position)
-        self.object.save()
-        form.save_m2m() 
+            box_position = SampleBoxPosition(position=pos+1, box=self.object)
+            box_position.save() 
         return HttpResponseRedirect(self.get_success_url()) 
+
+class SampleBoxCopySamples(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = SampleBox
+    fields = []
+    template_name_suffix = '_update_copy'
+    success_message = "Samples were successfully copied to sample storage box"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        box_id = self.object.id
+        box = SampleBox.objects.get(pk=box_id)
+        # Get all boxes of same size
+        boxes = SampleBox.objects.filter(size=box.size).exclude(pk=box_id)
+        context['box_list'] = boxes
+        return context
+        
+    def post(self, request, *args, **kwargs):
+        box = self.get_object()
+        # Box selected to copy from
+        copy_box = SampleBox.objects.get(pk=int(request.POST.getlist('ids')[0]))
+        # copy sample positions from copy box to box.
+        copy_box_pos = copy_box.positions.all()
+        copy_box_pos_map = {pos.position: pos.sample for pos in copy_box_pos}
+        for pos in box.positions.all():
+            pos.sample = copy_box_pos_map[pos.position]
+            pos.save()
+       
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
 
 
 class SampleBoxDetailView(LoginRequiredMixin, DetailView):
@@ -1053,6 +1080,8 @@ class SampleBoxDeleteView(LoginRequiredMixin, DeleteView):
             return self.delete(request, *args, **kwargs)
         except ProtectedError:
             return render(request, "lims/protected_error.html")
+
+
 
 
 # ============== POOL BOXES ================================
@@ -1116,11 +1145,6 @@ class PoolBoxDeleteView(LoginRequiredMixin, DeleteView):
 class SampleBoxPosDetailView(LoginRequiredMixin, DetailView):
     model = SampleBoxPosition
 
-    def get_context_data(self, **kwargs):
-        context = super(SampleBoxPosDetailView, self).get_context_data(**kwargs)
-        box = SampleBox.objects.get(id=self.kwargs.get('pk_box', ''))
-        context['samplebox'] = box
-        return context
 
 class SampleBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = SampleBoxPosition
@@ -1533,9 +1557,6 @@ def pool_table_update_view(request):
                             "DT_RowId": str(pool_id),
                             "name": ori_post['data[{}][name]'.format(pool_id)],
                             "notification_status": notification_status,
-                            "storage_box": ori_post['data[{}][storage_box]'.format(pool_id)],
-                            "storage_location": ori_post['data[{}][storage_location]'.format(pool_id)],
-                            "box_position": ori_post['data[{}][box_position]'.format(pool_id)],
                         })
                 else:
                     return JsonResponse({"error": str(form.errors)})
