@@ -440,11 +440,11 @@ class Pool(models.Model):
 
 
 class SampleBoxPosition(models.Model):
-    box = models.ForeignKey(SampleBox, on_delete=models.CASCADE, related_name='positions', default=1)
+    box = models.ForeignKey(SampleBox, on_delete=models.CASCADE, related_name='positions', null=True, blank=True)
     position = models.PositiveIntegerField()
     sample = models.ForeignKey(
         Sample, blank=True, null=True,
-        on_delete=models.CASCADE, related_name="box_samples")
+        on_delete=models.SET_NULL, related_name="box_samples")
     # if no sample, box position is empty
     
     class Meta:
@@ -455,11 +455,11 @@ class SampleBoxPosition(models.Model):
         # ]
     
 class PoolBoxPosition(models.Model):
-    box = models.ForeignKey(PoolBox, on_delete=models.CASCADE, related_name='positions', default=1)
+    box = models.ForeignKey(PoolBox, on_delete=models.CASCADE, related_name='positions', null=True, blank=True)
     position = models.PositiveIntegerField()
     pool = models.ForeignKey(
         Pool, blank=True, null=True,
-        on_delete=models.CASCADE, related_name="box_pools")
+        on_delete=models.SET_NULL, related_name="box_pools")
     # if no Pool, box position is empty
     
     class Meta:
