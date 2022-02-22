@@ -55,6 +55,7 @@ urlpatterns = [
     path('sample-box/detail/<str:pk>/', views.SampleBoxDetailView.as_view(), name="sample_box_detail"),
     path('sample-box/detail/<str:pk>/edit/', views.SampleBoxUpdateView.as_view(), name="edit_sample_box"),
     path('sample-box/detail/<str:pk>/remove/', views.SampleBoxDeleteView.as_view(), name="delete_sample_box"),
+    path('sample-box/detail/<str:pk>/copy-samples/', views.SampleBoxCopySamples.as_view(), name="sample_box_copy_samples"),
     path('sample-box/detail/<str:pk_box>/position/<str:pk>/', views.SampleBoxPosDetailView.as_view(), name="sample_box_position_detail"),
     path('sample-box/detail/<str:pk_box>/position/<str:pk>/edit-sample/', views.SampleBoxPositionUpdateView.as_view(), name="edit_sample_box_position"),
     path('sample-box/detail/<str:pk_box>/position/<str:pk>/add-samples/', views.SampleBoxPositionContinuousUpdateView.as_view(), name="edit_sample_box_position_continuous"),

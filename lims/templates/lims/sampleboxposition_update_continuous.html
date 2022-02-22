@@ -6,7 +6,7 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
 {% endblock head %}
 {% block content %}
-<legend class="border-bottom mb-6">Update Sample Box: <strong>{{ samplebox.box_name }}</strong> <br> Position: <strong>{{ sampleboxposition.position }}</strong></legend>
+<legend class="border-bottom mb-6">Update Sample Box: <strong>{{ sampleboxposition.box.box_name }}</strong> <br> Position: <strong>{{ sampleboxposition.position }}</strong></legend>
 <div class="d-flex mb-2">
     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#scanSearchModal">
         <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="black" class="bi bi-upc-scan" viewBox="0 0 16 16">

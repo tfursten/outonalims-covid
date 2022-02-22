@@ -18,9 +18,6 @@
             <tr>
                 <th>Name</th>
                 <th>Notification Status</th>
-                <th>Storage Box</th>
-                <th>Storage Location</th>
-                <th>Box Position</th>
             </tr>
         </thead>
         <tbody>
@@ -29,15 +26,6 @@
                     <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id%}">
                         {{ pool.name }}</a></td>
                     <td>{{ pool.notification_status }}</td>
-                    {% if pool.box %}
-                        <td><a class="table-link" href="{% url 'lims:pool_box_detail' pool.box.id %}">{{ pool.box.box_name }}</a></td>
-                        <td>{{ pool.box.storage_location }}</td>
-                        <td><a class="table-link" href="{% url 'lims:pool_box_position_detail' pool.box.id pool.box_position.id %}">{{ pool.box_position.position }}</a></td>
-                    {% else %}
-                        <td>None</td>
-                        <td>None</td>
-                        <td>None</td>
-                    {% endif %}
                     
                 </tr>
             {% endfor %}
@@ -84,21 +72,6 @@
                         { label: "Not Notified", value: "Not Notified" },
                     ]
                 },
-                {
-                    label: "Storage Box",
-                    name: "storage_box",
-                    type: "readonly",
-                },
-                {
-                    label: "Storage Location",
-                    name: "storage_location",
-                    type: "readonly",
-                },
-                {
-                    label: "Box Position",
-                    name: "box_position",
-                    type: "readonly"
-                }
             ]
         } );
         
@@ -133,9 +106,6 @@
                                 `<span class="badge bg-${notification_status[status]}">${status}</span>` : null     
                         }
             },
-            { data: "storage_box" },
-            { data: "storage_location" },
-            { data: "box_position" },
    
         ],
     select: {
