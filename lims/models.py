@@ -453,6 +453,8 @@ class SampleBoxPosition(models.Model):
         # constraints = [
         # models.UniqueConstraint(fields=["box", "position"], name='unique position')
         # ]
+    def __str__(self):
+        return self.box.box_name + self.position
     
 class PoolBoxPosition(models.Model):
     box = models.ForeignKey(PoolBox, on_delete=models.CASCADE, related_name='positions', null=True, blank=True)
@@ -464,6 +466,9 @@ class PoolBoxPosition(models.Model):
     
     class Meta:
         ordering = ("position",)
+
+    def __str__(self):
+        return self.box.box_name + self.position
 
 
 
