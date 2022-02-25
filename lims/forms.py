@@ -55,7 +55,7 @@ class ResearcherForm(ModelForm):
 class EventForm(ModelForm):
     class Meta:
         model = Event
-        fields = ['name', 'location', 'date',
+        fields = ['name', 'location', 'date', 'week',
         'researcher', 'description', 'notes'
         ]
         widgets = {
