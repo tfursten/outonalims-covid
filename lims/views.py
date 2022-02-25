@@ -1803,6 +1803,7 @@ def events_table_update_view(request):
     if (request.method == "POST") and (request.POST.get('action') == "edit"):
         update_values = {}
         # pull values from request
+        print("POST", request.POST)
         for k, v in request.POST.items():
             if "data" in k:
                 row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
@@ -1810,7 +1811,8 @@ def events_table_update_view(request):
                     update_values[row_id] = {}
                 if "collection_date" in k:
                     update_values[row_id]['date'] = v
-                
+                if "week" in k:
+                    update_values[row_id]['week'] = v
         # Pull objects and check if object exists
         # return if object/s don't exist without doing any update
         for object_id in update_values.keys():
@@ -1822,13 +1824,14 @@ def events_table_update_view(request):
         # Form validation
         for obj_id, vals in update_values.items():
             ori_post = request.POST.copy()
-            # add box name as it is required for form validation
+            # add event name and week as it is required for form validation
             ori_post['name'] = vals['object'].name
+            ori_post['week'] = vals
             for k, v in vals.items():
                 if k != 'object':
+                    print(k, v)
                     ori_post[k] = v
             form = EventForm(ori_post, instance=vals['object'])
-            
             if not form.is_valid():
                 return JsonResponse({"error": str(form.errors)})
                 
@@ -1844,7 +1847,8 @@ def events_table_update_view(request):
                         "DT_RowId": str(obj_id),
                         "event_name": ori_post['data[{}][event_name]'.format(obj_id)],
                         "event_status": status,
-                        "collection_date": event.date
+                        "collection_date": event.date,
+                        "week": event.week
                     })
 
             

@@ -248,6 +248,7 @@ class Event(models.Model):
     location = models.ManyToManyField(Location, blank=True)
     researcher = models.ManyToManyField(Researcher, blank=True)
     date = models.DateField()
+    week = models.PositiveIntegerField()
     description = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
