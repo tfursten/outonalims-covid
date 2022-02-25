@@ -20,6 +20,7 @@
       <li class="list-group-item"><a href="{% url 'lims:researcher_detail' researcher.id %}" >{{ researcher.name }}</a></li>
       {% endfor %}
       <li class="list-group-item"><Strong>Collection Date: </Strong>{{ event.date }}</li>
+      <li class="list-group-item"><Strong>Event Week: </Strong>{{ event.week }}</li>
       <li class="list-group-item"><strong>Notes: </strong>{{ event.notes }}</li>
       <li class="list-group-item"><strong>Created: </strong>{{ event.created_on }}</li>
     </ul>
