@@ -711,7 +711,7 @@ def upload_sample_result_file(request):
             data = pd.read_excel(
                 request.FILES['file'],
                 skiprows=23,
-                usecols=["Sample", "Target", "Cq"])
+                usecols=["Sample", "Target", "Cq"], dtype=str)
             data['id'] = data.index
             data['Sample'] = data['Sample'].apply(lambda x: x.split("_", 1)[0] if Sample.objects.filter(name=x.split("_", 1)[0]).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
@@ -906,7 +906,7 @@ def upload_pool_result_file(request):
             data = pd.read_excel(
                 request.FILES['file'],
                 skiprows=23,
-                usecols=["Sample", "Target", "Cq"])
+                usecols=["Sample", "Target", "Cq"], dtype=str)
             data['id'] = data.index
             data['Pool'] = data['Sample'].apply(lambda x: x if Pool.objects.filter(name=x).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
