@@ -3,6 +3,7 @@ import datetime
 import json
 import time
 import pandas as pd
+import numpy as np
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.contrib.messages.views import SuccessMessageMixin
@@ -26,7 +27,7 @@ from .forms import (
     BoxPositionSampleForm, BoxPositionPoolForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
     SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
-    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm)
+    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -714,8 +715,8 @@ def upload_sample_result_file(request):
             data['id'] = data.index
             data['Sample'] = data['Sample'].apply(lambda x: x.split("_", 1)[0] if Sample.objects.filter(name=x.split("_", 1)[0]).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
-            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x != "Undetermined" else "Negative")
-            data['Value'] = data['Cq'].apply(lambda x: x if x != "Undetermined" else None)
+            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x.lower() != "undetermined" else "Negative")
+            data['Value'] = data['Cq'].apply(lambda x: x if x.lower() != "undetermined" else None)
             data['Replicate'] = rep
             changes = []
 
@@ -909,8 +910,8 @@ def upload_pool_result_file(request):
             data['id'] = data.index
             data['Pool'] = data['Sample'].apply(lambda x: x if Pool.objects.filter(name=x).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
-            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x != "Undetermined" else "Negative")
-            data['Value'] = data['Cq'].apply(lambda x: x if x != "Undetermined" else None)
+            data['Status'] = data['Cq'].apply(lambda x: "Positive" if x.lower() != "undetermined" else "Negative")
+            data['Value'] = data['Cq'].apply(lambda x: x if x.lower() != "undetermined" else None)
             data['Replicate'] = rep
             changes = []
 
@@ -1439,7 +1440,144 @@ class TestDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 
+# ============== ANALYSIS =================================
 
+@login_required
+def select_analysis_view(request):
+    form = AnalysisSelectionForm()
+    if request.method == 'POST':
+        form = AnalysisSelectionForm(request.POST)
+        if form.is_valid():
+            return redirect(
+                'lims:analysis_data',
+                test=request.POST.get('test'),
+                project=request.POST.get('project'))
+    return render(request, 'lims/analysis_select.html', {'form': form})
+
+
+
+def sample_storage_label_options(request):
+    form = SamplePrint(initial={
+        'label_paper': 3, 'abbreviate': True,
+        'sort_by1': 'LOCATION', 'sort_by2': 'EVENT', 'sort_by3': 'GRADE', 'sort_by4': 'NAME' })
+    samples = Sample.objects.filter(collection_status="Collected").values(
+        'id', 'name', 'subject__subject_ui', 'subject__first_name',
+        'subject__last_name', 'subject__grade',
+        'collection_event__name', 'location__name',
+        'sample_type'
+        )
+    context = {'data': json.dumps(list(samples)), 'form': form}
+    if request.method == "POST":
+        form = SamplePrint(request.POST)
+        if form.is_valid():
+            start_position = request.POST.get('start_position')
+            label_paper = request.POST.get('label_paper')
+            abbreviate = request.POST.get('abbreviate')
+            reps = request.POST.get('replicates')
+            sort_by1 = request.POST.get('sort_by1')
+            sort_by2 = request.POST.get('sort_by2')
+            sort_by3 = request.POST.get('sort_by3')
+            sort_by4 = request.POST.get('sort_by4')
+            selected_samples = request.POST.getlist('ids')
+            return sample_labels_pdf(samples=selected_samples,
+                start_position=start_position,
+                label_paper=label_paper, abbreviate=abbreviate, replicates=reps,
+                sort_by1=sort_by1, sort_by2=sort_by2, sort_by3=sort_by3,
+                sort_by4=sort_by4, outfile_name="storage_labels")
+    return render(request, 'lims/sample_storage_print_options.html', context=context)   
+
+
+
+
+@login_required
+def analysis_data_view(request, test, project):
+    results = []
+    # Get number of events
+    events = Event.objects.all().values_list("week", flat=True).order_by('week').distinct()
+    results = SampleResult.objects.select_related().filter(test=test, sample__subject__location__project=project).values(
+        'sample__subject__location__project__name',
+        'sample__subject__subject_ui',
+        'sample__subject__location__name',
+        'sample__subject__age',
+        'sample__subject__sex',
+        'sample__subject__ethnicity',
+        'sample__subject__grade',
+        'sample__subject__dose_1',
+        'sample__subject__dose_2',
+        'sample__subject__booster',
+        'sample__subject__dose_1_month',
+        'sample__subject__dose_1_year',
+        'sample__subject__dose_2_month',
+        'sample__subject__dose_2_year',
+        'sample__subject__booster_month',
+        'sample__subject__booster_year',
+        'sample__subject__first_covid_case_month',
+        'sample__subject__first_covid_case_year',
+        'sample__subject__second_covid_case_month',
+        'sample__subject__second_covid_case_year',
+        'sample__subject__third_covid_case_month',
+        'sample__subject__third_covid_case_year',
+        'sample__subject__fourth_covid_case_month',
+        'sample__subject__fourth_covid_case_year',
+        'sample__subject__fifth_covid_case_month',
+        'sample__subject__fifth_covid_case_year',
+        'sample__subject__pneumococcal_vaccine',
+        'sample__subject__pneumococcal_year',
+        'sample__subject__created_on',
+        'sample__subject__consent_status',
+        'sample__collection_event__week',
+        'sample__sample_type',
+        'test',
+        'replicate',
+        'result'
+        )
+    df = pd.DataFrame(results)
+    race_map = {sub: "/ ".join([str(r.name) for r in sub.race.all()]) for sub in Subject.objects.select_related().all()}
+    df['race'] = df['sample__subject__subject_ui'].apply(lambda x: race_map.get(x, None))
+    pdf = df.pivot(
+        values='result',
+        columns=['sample__collection_event__week', 'sample__sample_type', 'replicate'],
+        index=['sample__subject__subject_ui',
+        'sample__subject__location__project__name',
+        'sample__subject__location__name',
+        'sample__subject__age',
+        'sample__subject__sex',
+        'sample__subject__ethnicity',
+        'sample__subject__grade',
+        'sample__subject__dose_1',
+        'sample__subject__dose_2',
+        'sample__subject__booster',
+        'sample__subject__dose_1_month',
+        'sample__subject__dose_1_year',
+        'sample__subject__dose_2_month',
+        'sample__subject__dose_2_year',
+        'sample__subject__booster_month',
+        'sample__subject__booster_year',
+        'sample__subject__first_covid_case_month',
+        'sample__subject__first_covid_case_year',
+        'sample__subject__second_covid_case_month',
+        'sample__subject__second_covid_case_year',
+        'sample__subject__third_covid_case_month',
+        'sample__subject__third_covid_case_year',
+        'sample__subject__fourth_covid_case_month',
+        'sample__subject__fourth_covid_case_year',
+        'sample__subject__fifth_covid_case_month',
+        'sample__subject__fifth_covid_case_year',
+        'sample__subject__pneumococcal_vaccine',
+        'sample__subject__pneumococcal_year',
+        'sample__subject__created_on',
+        'sample__subject__consent_status',
+        'test'])
+    pdf = pdf.replace({'Negative': 0, 'Positive': 1, 'Pending': -1,
+        np.nan: -1, 'Unknown':-1, 'Inconclusive': -1})
+    pdf = pdf.reset_index()
+    pdf.columns = ["_".join(map(str, c)) for c in pdf.columns.values]
+
+
+    
+    context = {'data': pdf.to_json(orient="records"), 'project': project, 'test': test}
+    return render(request, 'lims/analysis_table.html', context=context)
+   
 
 # ============== HELP =================================
 
