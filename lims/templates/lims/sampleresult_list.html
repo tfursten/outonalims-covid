@@ -37,7 +37,7 @@
             {% for result in result_list %}
                 <tr id="{{ result.id }}">
                     <td><a class="table-link" href="{% url 'lims:sample_result_detail' result.id %}">
-                        Result {{ result.id }}
+                        {{ result.id }}
                     </a></td>
                     <td><a class="table-link" href="{% url 'lims:event_detail' result.sample.collection_event.id %}">{{ result.sample.collection_event.name }}</a></td>
                     <td><a class="table-link" href="{% url 'lims:location_detail' result.sample.location.id %}">{{ result.sample.location.name }}</a></td>

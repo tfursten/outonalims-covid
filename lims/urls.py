@@ -113,5 +113,7 @@ urlpatterns = [
     path('pooladdsamples/table-edit/', views.pooladdsamples_table_update_view, name="pooladdsamples_table_update"),
     path('pooladdpools/table-edit/', views.pooladdpools_table_update_view, name="pooladdpools_table_update"),
     path('events/table-edit/', views.events_table_update_view, name="events_table_update"),
+    path('analysis/select/', views.select_analysis_view, name="select_analysis"),
+    path('analysis/<str:project>/<str:test>/data/', views.analysis_data_view, name="analysis_data"),
 
 ]

@@ -716,7 +716,7 @@ def upload_sample_result_file(request):
             data['Sample'] = data['Sample'].apply(lambda x: x.split("_", 1)[0] if Sample.objects.filter(name=x.split("_", 1)[0]).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
             data['Status'] = data['Cq'].apply(lambda x: "Positive" if x.lower() != "undetermined" else "Negative")
-            data['Value'] = data['Cq'].apply(lambda x: x if x.lower() != "undetermined" else None)
+            data['Value'] = data['Cq']
             data['Replicate'] = rep
             changes = []
 
@@ -911,7 +911,7 @@ def upload_pool_result_file(request):
             data['Pool'] = data['Sample'].apply(lambda x: x if Pool.objects.filter(name=x).exists() else "Not Found")
             data['Test'] = data['Target'].apply(lambda x: x if Test.objects.filter(name=x).exists() else "Not Found")
             data['Status'] = data['Cq'].apply(lambda x: "Positive" if x.lower() != "undetermined" else "Negative")
-            data['Value'] = data['Cq'].apply(lambda x: x if x.lower() != "undetermined" else None)
+            data['Value'] = data['Cq']
             data['Replicate'] = rep
             changes = []
 
@@ -1527,21 +1527,37 @@ def analysis_data_view(request, test, project):
         'sample__subject__consent_status',
         'sample__collection_event__week',
         'sample__sample_type',
-        'test',
+     
         'replicate',
         'result'
         )
     df = pd.DataFrame(results)
-    race_map = {sub: "/ ".join([str(r.name) for r in sub.race.all()]) for sub in Subject.objects.select_related().all()}
+    race_map = {
+        sub.subject_ui: "/ ".join([str(r.name) for r in sub.race.all()])
+        for sub in Subject.objects.select_related().all()}
     df['race'] = df['sample__subject__subject_ui'].apply(lambda x: race_map.get(x, None))
+    df['sample__collection_event__week'] = df['sample__collection_event__week'].apply(
+        lambda x: "Week {}".format(x))
+
+
+    # Check if multiple samples are collected in same week, outside of different sample types and 
+    # Replicate results. 
+    df['Sample_Rep'] = 1
+    for n, d in df.groupby(
+        ['sample__collection_event__week', 'sample__subject__subject_ui', 'sample__sample_type', 'replicate']):
+        for i, row in enumerate(d.index):
+            df.loc[row, 'Sample_Rep'] += i
+
     pdf = df.pivot(
         values='result',
-        columns=['sample__collection_event__week', 'sample__sample_type', 'replicate'],
-        index=['sample__subject__subject_ui',
+        columns=['sample__collection_event__week', 'sample__sample_type', 'replicate', 'Sample_Rep'],
+        index=[
         'sample__subject__location__project__name',
+        'sample__subject__subject_ui',
         'sample__subject__location__name',
         'sample__subject__age',
         'sample__subject__sex',
+        'race',
         'sample__subject__ethnicity',
         'sample__subject__grade',
         'sample__subject__dose_1',
@@ -1567,15 +1583,55 @@ def analysis_data_view(request, test, project):
         'sample__subject__pneumococcal_year',
         'sample__subject__created_on',
         'sample__subject__consent_status',
-        'test'])
+    
+        ])
     pdf = pdf.replace({'Negative': 0, 'Positive': 1, 'Pending': -1,
         np.nan: -1, 'Unknown':-1, 'Inconclusive': -1})
     pdf = pdf.reset_index()
-    pdf.columns = ["_".join(map(str, c)) for c in pdf.columns.values]
 
-
+    column_map = {
+        'race': "Race",
+        'sample__subject__age': "Age",
+        'sample__subject__booster': "COVID-19 Vaccine Booster",
+        'sample__subject__booster_month': "COVID-19 Vaccine Booster Month",
+        'sample__subject__booster_year': "COVID-19 Vaccine Booster Booster Year",
+        'sample__subject__consent_status': "Consent Status",
+        'sample__subject__created_on': "Created On",
+        'sample__subject__dose_1': "COVID-19 Vaccine Dose 1",
+        'sample__subject__dose_1_month': "COVID-19 Vaccine Dose 1 Month",
+        'sample__subject__dose_1_year': "COVID-19 Vaccine Dose 1 Year",
+        'sample__subject__dose_2': "COVID-19 Vaccine Dose 2",
+        'sample__subject__dose_2_month': "COVID-19 Vaccine Dose 2 Month",
+        'sample__subject__dose_2_year': "COVID-19 Vaccine Dose 2 Year",
+        'sample__subject__ethnicity': "Hispanic",
+        'sample__subject__subject_ui': "Subject ID",
+        'sample__subject__fifth_covid_case_month': "COVID-19 5th Case Month",
+        'sample__subject__fifth_covid_case_year': "COVID-19 5th Case Year",
+        'sample__subject__first_covid_case_month': "COVID-19 1st Case Month",
+        'sample__subject__first_covid_case_year': "COVID-19 1st Case Year",
+        'sample__subject__fourth_covid_case_month': "COVID-19 4th Case Month",
+        'sample__subject__fourth_covid_case_year': "COVID-19 4th Case Year",
+        'sample__subject__grade': "Grade",
+        'sample__subject__location__name': "Location",
+        'sample__subject__location__project__name': "Project",
+        'sample__subject__pneumococcal_vaccine': "Pneumococcal Vaccine",
+        'sample__subject__pneumococcal_year': "Pneumococcal Vaccine Year",
+        'sample__subject__second_covid_case_month': "COVID-19 2nd Case Month",
+        'sample__subject__second_covid_case_year': "COVID-19 2nd Case Year",
+        'sample__subject__sex': "Sex",
+        'sample__subject__third_covid_case_month': "COVID-19 3rd Case Month",
+        'sample__subject__third_covid_case_year': "COVID-19 3rd Case Year",
     
-    context = {'data': pdf.to_json(orient="records"), 'project': project, 'test': test}
+    }
+    pdf.columns = ["_".join(map(str, c)).rstrip("_")
+        for c in pdf.columns.values]
+    pdf['sample__subject__created_on'] = df['sample__subject__created_on'].dt.strftime('%Y-%m-%d')
+    headers = [ 
+        {'data': h, 'title': column_map.get(h, h)} 
+        for h in pdf.columns.values]
+    
+    context = {'data': pdf.to_json(orient="records"),
+    'project': project, 'test': test, 'headers': headers}
     return render(request, 'lims/analysis_table.html', context=context)
    
 
