@@ -15,56 +15,20 @@
     <form id="sample-form" method="POST">
         {% csrf_token %}
         <fieldset class="form-group">
-            <legend class="border-bottom mb-6">Results for </legend>
-            <p class="text-muted">Select samples to print storage labels.</p>
+            <legend class="border-bottom mb-6">Results for Project <strong>{{ project.name }}</strong> for Test <strong>{{ test.name }}</strong></legend>
+            <p class="text-muted">Test results columns are labeled by week, sample type (i.e., Nasal or Oral), test replicate, sample replicates (i.e multiple samples collected in the same week). A "1" indicates a positive results, "0" indicates a negative result, and "-1" indicates all other statuses.</p>
             <table id="sample-table" class="display table table-hover">
                 <thead>
                     <tr>
-                        <!-- <th>Subject ID</th>
-                        <th>Project</th>
-                        <th>Location</th>
-                        <th>Age</th>
-                        <th>Sex</th>
-                        <th>Race</th>
-                        <th>Ethnicity</th>
-                        <th>Grade</th>
-                        <th>SARS-CoV-2 Vaccine Dose 1</th>
-                        <th>SARS-CoV-2 Vaccine Dose 1 Month</th>
-                        <th>SARS-CoV-2 Vaccine Dose 1 Year</th>
-                        <th>SARS-CoV-2 Vaccine Dose 2</th>
-                        <th>SARS-CoV-2 Vaccine Dose 2 Month</th>
-                        <th>SARS-CoV-2 Vaccine Dose 2 Year</th>
-                        <th>SARS-CoV-2 Vaccine Booster</th>
-                        <th>SARS-CoV-2 Vaccine Booster Month</th>
-                        <th>SARS-CoV-2 Vaccine Booster Year</th>
-                        <th>COVID-19 1st Case Month</th>
-                        <th>COVID-19 1st Case Year</th>
-                        <th>COVID-19 2nd Case Month</th>
-                        <th>COVID-19 2nd Case Year</th>
-                        <th>COVID-19 3rd Case Month</th>
-                        <th>COVID-19 3rd Case Year</th>
-                        <th>COVID-19 4th Case Month</th>
-                        <th>COVID-19 4th Case Year</th>
-                        <th>COVID-19 5th Case Month</th>
-                        <th>COVID-19 5th Case Year</th>
-                        <th>Pneumococcal Vaccine</th>
-                        <th>Pneumococcal Vaccine Year</th>
-                        <th>Consent Status</th>
-                        <th>Created On</th>
-                        <th>Test</th> -->
-
                     </tr>
                 </thead>
 
                 </table>
             <hr>
-            <legend class="border-bottom mb-6">Select Print Options</legend>
-            {{ form|crispy }}
+            
         </fieldset>
         <div class="d-grid gap-2 d-md-block mt-2">
-            <button class="btn btn-success" type="submit">Print <span data-feather="printer"></span></button>
-            <a class="btn btn-outline-danger btn" href="{% url 'lims:sample_list' %}" role="button">Cancel</a>
-            <a class="btn btn-outline-primary btn" href="{% url 'lims:index' %}" role="button">Home <span data-feather="home"></span></a>
+            <a class="btn btn-outline-danger btn" href="{% url 'lims:index' %}" role="button">Close</a>
         </div>
     </form>
 </div>
@@ -102,13 +66,26 @@
         columns: headers,
         buttons: {
             name: 'primary',
-            buttons: [ 'copy', 'csv', 'excel', 'pdf' ],
+            buttons: [ 
+        {
+          extend: 'copy',
+          title: '{{ project.name }} Test {{ test.name }} analysis'
         },
-            select: {
-                style: 'multi+shift'
+        {
+          extend: 'pdf',
+          title: '{{ project.name }} Test {{ test.name }} analysis'
         },
-        })
+        {
+          extend: 'csv',
+          title: '{{ project.name }} Test {{ test.name }} analysis'
+        },
+        {
+          extend: 'excel',
+          title: '{{ project.name }} Test {{ test.name }} analysis'
+        },
+        ]}
 
+    })
     })
 </script>
 {% endblock js %}
