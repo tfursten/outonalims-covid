@@ -16,21 +16,8 @@
                 <thead>
                     <tr>
                         <th>Pool</th>
-                        <th>Storage Box</th>
-                        <th>Storage Location</th>
-                        <th>Storage Box Position</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for pool in pool_list %}
-                        <tr id="{{ pool.id }}">
-                            <td>{{ pool.name }}</td>
-                            <td>{{ pool.box.box_name }}</td>
-                            <td>{{ pool.box.storage_location }}</td>
-                            <td>{{ pool.box_position.position }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
             </table>
 
         </fieldset>
@@ -51,21 +38,34 @@
 <script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
 <script>
     $(document).ready( function () {
+    let data = {{ data | safe }}
     let table = $('#pools').DataTable({
         rowReorder: false,
         fixedHeader: true,
+        data: data,
+        rowId: function(a) {
+            return a.id;
+        },
+        aLengthMenu: [
+            [10, 25, 50, 100, 200, -1],
+            [10, 25, 50, 100, 200, "All"]
+            ],
+        iDisplayLength: 10,
         dom: 'B<"clear">lfrtip',
+        columns: [
+            {
+                data: "name",
+                title: "Pool Name"
+            }
+        ],
         buttons: {
             name: 'primary',
             buttons: [ 'copy', 'csv', 'excel', 'pdf' ],
         },
             select: {
-                style: 'multi'
+                style: 'multi+shift'
             },
-        'fnCreatedRow': function(nRow, aData, iDataIndex) {
-            $(nRow).attr('data-id', aData.DT_RowId); // or whatever you choose to set as the id
-            $(nRow).attr('id', 'id_' + aData.DT_RowId); // or whatever you choose to set as the id
-        },
+        
         })
     // Handle form submission event
    $('#pool-form').on('submit', function(e){
