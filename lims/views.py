@@ -1538,8 +1538,7 @@ def analysis_data_view(request, test, project):
         sub.subject_ui: "/ ".join([str(r.name) for r in sub.race.all()])
         for sub in Subject.objects.select_related().all()}
     df['race'] = df['sample__subject__subject_ui'].apply(lambda x: race_map.get(x, None))
-    df['sample__collection_event__week'] = df['sample__collection_event__week'].apply(
-        lambda x: "Week {}".format(x))
+    
 
 
     # Check if multiple samples are collected in same week, outside of different sample types and 
@@ -1549,6 +1548,9 @@ def analysis_data_view(request, test, project):
         ['sample__collection_event__week', 'sample__subject__subject_ui', 'sample__sample_type', 'replicate']):
         for i, row in enumerate(d.index):
             df.loc[row, 'Sample_Rep'] += i
+  
+    df['sample__collection_event__week'] = df['sample__collection_event__week'].apply(
+        lambda x: "Week_{}".format(x))
 
     pdf = df.pivot(
         values='result',
@@ -1630,10 +1632,22 @@ def analysis_data_view(request, test, project):
     pdf.columns = ["_".join(map(str, c)).rstrip("_")
         for c in pdf.columns.values]
     pdf['sample__subject__created_on'] = df['sample__subject__created_on'].dt.strftime('%Y-%m-%d')
+    # Add headers without results
     headers = [ 
         {'data': h, 'title': column_map.get(h, h)} 
-        for h in pdf.columns.values]
-    
+        for h in pdf.columns.values if "Week" not in h]
+    # sort results
+    def get_sorting_values(x):
+        vals = x.split("_")
+        vals[1] = int(vals[1])
+        vals[3] = int(vals[3])
+        vals[4] = int(vals[4])
+        return vals
+    [headers.append({'data': h, 'title': h})
+        for h in sorted([hh for hh in pdf.columns.values if "Week" in hh],
+        key=get_sorting_values)]
+
+
     context = {'data': pdf.to_json(orient="records"),
     'project': project, 'test': test, 'headers': headers}
     return render(request, 'lims/analysis_table.html', context=context)
