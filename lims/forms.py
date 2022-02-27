@@ -335,7 +335,7 @@ class SampleResultUploadFileForm(ModelForm):
 
 class AnalysisSelectionForm(forms.Form):
     project = forms.ModelChoiceField(
-        queryset=Project.objects.all())
+        queryset=Project.objects.all(), initial=1)
     test = forms.ModelChoiceField(
         queryset=Test.objects.all()
     )
