@@ -1303,8 +1303,10 @@ class PoolAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         pool_id = self.object.id
         # Get all pools that are not current pool
-        pools = Pool.objects.exclude(id__in=[pool_id])
-        context['pool_list'] = pools
+        pools = Pool.objects.exclude(pk=pool_id).values(
+            'id', 'name'
+        )
+        context['data'] = list(pools)
         return context
         
     def post(self, request, *args, **kwargs):
