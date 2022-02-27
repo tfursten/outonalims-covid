@@ -1493,6 +1493,8 @@ def sample_storage_label_options(request):
 def analysis_data_view(request, test, project):
     results = []
     # Get number of events
+    project = Project.objects.get(pk=project)
+    test = Test.objects.get(pk=test)
     events = Event.objects.all().values_list("week", flat=True).order_by('week').distinct()
     results = SampleResult.objects.select_related().filter(test=test, sample__subject__location__project=project).values(
         'sample__subject__location__project__name',
