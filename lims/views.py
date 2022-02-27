@@ -1527,7 +1527,7 @@ def analysis_data_view(request, test, project):
         'sample__subject__consent_status',
         'sample__collection_event__week',
         'sample__sample_type',
-     
+        'test__name',
         'replicate',
         'result'
         )
@@ -1553,6 +1553,7 @@ def analysis_data_view(request, test, project):
         columns=['sample__collection_event__week', 'sample__sample_type', 'replicate', 'Sample_Rep'],
         index=[
         'sample__subject__location__project__name',
+        'test__name',
         'sample__subject__subject_ui',
         'sample__subject__location__name',
         'sample__subject__age',
@@ -1591,6 +1592,7 @@ def analysis_data_view(request, test, project):
 
     column_map = {
         'race': "Race",
+        'test__name': "Test",
         'sample__subject__age': "Age",
         'sample__subject__booster': "COVID-19 Vaccine Booster",
         'sample__subject__booster_month': "COVID-19 Vaccine Booster Month",
