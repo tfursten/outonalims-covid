@@ -1273,7 +1273,12 @@ class PoolAddSamples(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['sample_list']=Sample.objects.filter(collection_status='Collected')
+        samples = Sample.objects.filter(collection_status="Collected").values(
+        'id', 'name',
+        'collection_event__name', 'location__name',
+        'collection_status', 'sample_type'
+        )
+        context['data'] = list(samples)
         return context
         
     def post(self, request, *args, **kwargs):

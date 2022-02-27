@@ -23,21 +23,12 @@
                 <thead>
                     <tr>
                         <th>Sample</th>
+                        <th>Sample Type</th>
                         <th>Event</th>
                         <th>Location</th>
                         <th>Collection Status</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for sample in sample_list %}
-                        <tr id="{{ sample.id }}">
-                            <td>{{ sample.name }}</td>
-                            <td>{{ sample.collection_event.name }}</td>
-                            <td>{{ sample.location.name }}</td>
-                            <td>{{ sample.collection_status }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
             </table>
 
         </fieldset>
@@ -79,21 +70,50 @@
     import QrScanner from "{% static 'lims/qr-scanner/js/qr-scanner.min.js' %}";
     QrScanner.WORKER_PATH = "{% static 'lims/qr-scanner/js/qr-scanner-worker.min.js' %}";
     $(document).ready( function () {
+    let data = {{ data | safe }}
     let table = $('#samples').DataTable({
         rowReorder: false,
         fixedHeader: true,
+        data: data,
         dom: 'B<"clear">lfrtip',
+        rowId: function(a) {
+            return a.id;
+        },
+        aLengthMenu: [
+            [10, 25, 50, 100, 200, -1],
+            [10, 25, 50, 100, 200, "All"]
+            ],
+        iDisplayLength: 10,
+        columns: [
+        {
+            data: "name",
+            title: "Sample"
+        },
+        {
+            data: "sample_type",
+            title: "Sample Type"
+        },
+        {
+            data: "collection_event__name",
+            title: "Event"
+        },
+        {
+            data: "location__name",
+            title: "Location"
+        },
+        {
+            data: "collection_status",
+            title: "Collection Status"
+        },
+        ],
         buttons: {
             name: 'primary',
             buttons: [ 'copy', 'csv', 'excel', 'pdf' ],
         },
             select: {
-                style: 'multi'
+                style: 'multi+shift'
             },
-        'fnCreatedRow': function(nRow, aData, iDataIndex) {
-            $(nRow).attr('data-id', aData.DT_RowId); // or whatever you choose to set as the id
-            $(nRow).attr('id', 'id_' + aData.DT_RowId); // or whatever you choose to set as the id
-        },
+        
         })
 
       const qrSearchScanner = new QrScanner(videoElemSearch, result => write_search_result(result));
