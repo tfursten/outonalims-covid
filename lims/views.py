@@ -1202,7 +1202,9 @@ class SampleBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMi
     
     def get_success_url(self):
         next_position = self.get_context_data()['samplebox'].get_next_empty_position()
+        print("NEXT POS: ", next_position)
         if next_position:
+            print("NEXT POSITION")
             return reverse(
                 'lims:edit_sample_box_position_continuous',
                 args=(self.get_context_data()['samplebox'].id,

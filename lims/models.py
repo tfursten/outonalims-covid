@@ -182,26 +182,20 @@ class SampleBox(models.Model):
         return str(self.box_name)
 
     def number_of_samples_in_box(self):
-        count = 0
-        for position in self.positions.all():
-            if not position.sample == None:
-                count += 1
-        return count
+        return self.positions.filter(sample__isnull=False).count()
 
     def is_full(self):
-        if self.number_of_samples_in_box() >= self.size:
-            return True
-        else:
-            return False
+        return self.number_of_samples_in_box() >= self.size
     
     def remaining(self):
         return self.size - self.number_of_samples_in_box()
 
     def get_next_empty_position(self):
-        for position in self.positions.all().order_by('position'):
-            if position.sample == None:
-                return position.id
-        return None
+        next_pos = self.positions.filter(sample__isnull=True).order_by('position').first()
+        if next_pos:
+            return next_pos.id
+        else:
+            return None
             
 
 
@@ -220,26 +214,21 @@ class PoolBox(models.Model):
         return str(self.box_name)
 
     def number_of_pools_in_box(self):
-        count = 0
-        for position in self.positions.all():
-            if not position.pool == None:
-                count += 1
-        return count
+        return self.positions.filter(pool__isnull=False).count()
 
     def is_full(self):
-        if self.number_of_pools_in_box() >= self.size:
-            return True
-        else:
-            return False
+        return self.number_of_pools_in_box() >= self.size
     
     def remaining(self):
         return self.size - self.number_of_pools_in_box()
 
     def get_next_empty_position(self):
-        for position in self.positions.all().order_by('position'):
-            if position.pool == None:
-                return position.id
-        return None
+        next_pos = self.positions.filter(pool__isnull=True).order_by('position').first()
+        if next_pos:
+            return next_pos.id
+        else:
+            return None
+     
     
 
 
@@ -455,7 +444,7 @@ class SampleBoxPosition(models.Model):
         # models.UniqueConstraint(fields=["box", "position"], name='unique position')
         # ]
     def __str__(self):
-        return self.box.box_name + self.position
+        return str(self.box.box_name) + " " + str(self.position)
     
 class PoolBoxPosition(models.Model):
     box = models.ForeignKey(PoolBox, on_delete=models.CASCADE, related_name='positions', null=True, blank=True)
@@ -469,7 +458,7 @@ class PoolBoxPosition(models.Model):
         ordering = ("position",)
 
     def __str__(self):
-        return self.box.box_name + self.position
+        return str(self.box.box_name) + " " + str(self.position)
 
 
 
