@@ -16,6 +16,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     ListView, CreateView, DeleteView, UpdateView, DetailView)
 from django.contrib import messages
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import ProtectedError, Count, Q
 from .models import (
     Sample, Project, Location, Researcher, Event,
@@ -685,6 +686,19 @@ class SampleResultListView(SamplePermissionsMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sample_results = SampleResult.objects.all().values(
+        'id', 'sample__collection_event__name', 'sample__collection_event__id',
+        'sample__location__id', 'sample__location__name',
+        'test__name', 'test__id', 'sample__id', 'sample__name',
+        'sample__sample_type', 'replicate', 'result', 'value',
+        'notes', 'created_on')
+
+        context['data'] = json.dumps(
+            list(sample_results), cls=DjangoJSONEncoder)
+        return context
+
     def get_queryset(self):
         """
         Return all results
@@ -846,6 +860,17 @@ class SampleResultDeleteView(SamplePermissionsMixin, DeleteView):
 class PoolResultListView(LoginRequiredMixin, ListView):
     template_name_suffix = "_list"
     context_object_name = 'result_list'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pool_results = PoolResult.objects.all().values(
+            'id', 'test__name', 'test__id', 'pool__id', 'pool__name',
+            'replicate', 'result', 'value',
+            'notes', 'created_on')
+
+        context['data'] = json.dumps(
+            list(pool_results), cls=DjangoJSONEncoder)
+        return context
 
     def get_queryset(self):
         """
@@ -1906,9 +1931,9 @@ def sampleresults_table_update_view(request):
                 row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
                 if row_id not in update_values:
                     update_values[row_id] = {}
-                if "status" in k:
+                if "result" in k:
                     update_values[row_id]['result'] = v
-                elif "measurement" in k:
+                elif "value" in k:
                     update_values[row_id]['value'] = v
                 elif "notes" in k:
                     update_values[row_id]['notes'] = v
@@ -1924,27 +1949,27 @@ def sampleresults_table_update_view(request):
         json_response = {"data": []}
         for obj_id, vals in update_values.items():
             ori_post = request.POST.copy()
-            # add box name as it is required for form validation
             ori_post['sample'] = vals['object'].sample
             ori_post['test'] = vals['object'].test
             ori_post['replicate'] = vals['object'].replicate
             for k, v in vals.items():
                 if k != 'object':
                     ori_post[k] = v
+
             form = SampleResultForm(ori_post, instance=vals['object'])
+
             if form.is_valid():
-                json_response['data'].append({
-                        "DT_RowId": str(obj_id),
-                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
-                        "event": ori_post['data[{}][event]'.format(obj_id)],
-                        "location": ori_post['data[{}][location]'.format(obj_id)],
-                        "test": ori_post['data[{}][test]'.format(obj_id)],
-                        "sample": ori_post['data[{}][sample]'.format(obj_id)],
-                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
-                        "status": vals['result'],
-                        "measurement": vals['value'],
-                        "notes": vals['notes']
-                    })
+                data = SampleResult.objects.filter(pk=obj_id).values(
+                    'id', 'sample__collection_event__name', 'sample__collection_event__id',
+                    'sample__location__id', 'sample__location__name',
+                    'test__name', 'test__id', 'sample__id', 'sample__name',
+                    'sample__sample_type', 'replicate', 'created_on', 'result',
+                    'value', 'notes')[0]
+                data['result'] = vals['result']
+                data['value'] = vals['value']
+                data['notes'] = vals['notes']
+
+                json_response['data'].append(data)
             else:
                 return JsonResponse({"error": str(form.errors)})
         # Update database
@@ -1967,9 +1992,9 @@ def poolresults_table_update_view(request):
                 row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
                 if row_id not in update_values:
                     update_values[row_id] = {}
-                if "status" in k:
+                if "result" in k:
                     update_values[row_id]['result'] = v
-                elif "measurement" in k:
+                elif "value" in k:
                     update_values[row_id]['value'] = v
                 elif "notes" in k:
                     update_values[row_id]['notes'] = v
@@ -1985,25 +2010,25 @@ def poolresults_table_update_view(request):
         json_response = {"data": []}
         for obj_id, vals in update_values.items():
             ori_post = request.POST.copy()
-            # add box name as it is required for form validation
             ori_post['pool'] = vals['object'].pool
             ori_post['test'] = vals['object'].test
             ori_post['replicate'] = vals['object'].replicate
             for k, v in vals.items():
                 if k != 'object':
                     ori_post[k] = v
+            
             form = PoolResultForm(ori_post, instance=vals['object'])
             if form.is_valid():
-                json_response['data'].append({
-                        "DT_RowId": str(obj_id),
-                        "result_id": ori_post['data[{}][result_id]'.format(obj_id)],
-                        "test": ori_post['data[{}][test]'.format(obj_id)],
-                        "pool": ori_post['data[{}][pool]'.format(obj_id)],
-                        "replicate": ori_post['data[{}][replicate]'.format(obj_id)],
-                        "status": vals['result'],
-                        "measurement": vals['value'],
-                        "notes": vals['notes']
-                    })
+                data = PoolResult.objects.filter(pk=obj_id).values(
+                    'id', 'test__name', 'test__id', 'pool__name', 'pool__id',
+                    'replicate', 'result', 'value', 'notes', 'created_on'
+                )[0]
+                data['result'] = vals['result']
+                data['value'] = vals['value']
+                data['notes'] = vals['notes']
+                
+                
+                json_response['data'].append(data)
             else:
                 return JsonResponse({"error": str(form.errors)})
         # Update database
