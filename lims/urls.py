@@ -115,5 +115,5 @@ urlpatterns = [
     path('events/table-edit/', views.events_table_update_view, name="events_table_update"),
     path('analysis/select/', views.select_analysis_view, name="select_analysis"),
     path('analysis/<str:project>/<str:test>/data/', views.analysis_data_view, name="analysis_data"),
-
+    path('giftcards/', views.giftcard_drawing_view, name="giftcards"),
 ]
