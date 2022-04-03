@@ -1,0 +1,104 @@
+{% extends "lims/base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/datetime/1.1.1/css/dataTables.dateTime.min.css"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.dataTables.min.css' %}"/>
+<link rel="stylesheet" type="text/css" source="{% static 'lims/data-tables/css/editor.bootstrap5.min.css' %}"/>
+{% endblock head %}
+
+{% block content %}
+
+<h1 class="border-bottom">Giftcard Drawing</h1>
+<p class="text-muted">Select number of giftcards to draw per event</p>
+<form method="POST" id="event-form">{% csrf_token %}
+
+    <table id="event_table" class="display table table-hover"  align="center"  style="width:100%"> 
+        <thead>
+            <tr>
+                <th>Event Name</th>
+                <th>Week</th>
+                <th>Collection Date</th>
+                <th>Location</th>
+                <th>Participants with Collected Sample</th>
+                <th>Number of Giftcards to Draw</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in event_list %}
+                <tr id="{{ event.id }}">
+                    <td><a class="table-link" href="{% url 'lims:event_detail' event.id %}">
+                        {{ event.name }}
+                    </a></td>
+                    <td>{{ event.week }}</td>
+                    <td>{{ event.date }}</td>
+                    <td>{{ event.location.name }}</td>
+                    <td>{{ event.number_of_subjects_with_collected_samples }}</td>
+                    <td><input type="number" name="sample_size" min="0" max="{{ event.number_of_subjects_with_collected_samples }}" data-id="{{ event.id}}_sample_size" value="0"></td>
+                    <td><input hidden type="number" name="event_id" value="{{ event.id }}"></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button class="btn btn-success mt-2" type="submit">Submit</button>
+</form>
+
+{% endblock content %}
+
+{% block js %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/moment.js' %}"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/dataTables.editor.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.bootstrap5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'lims/data-tables/js/editor.dataTables.min.js' %}"></script>
+<script>
+
+ $(document).ready(function() {
+    let table = $('#event_table').DataTable({
+    rowReorder: false,
+    fixedHeader: true,
+    stateSave: true,
+    dom: 'B<"clear">lfrtip',
+    order: [],
+    aLengthMenu: [
+            [25, 50, 100, 200, -1],
+            [25, 50, 100, 200, "All"]
+            ],
+    iDisplayLength: 25,
+    columns: [
+            { data: "event_name" },
+            { data: "week" },
+            { data: "collection_date",
+              type: "date",
+              render: function (row) {//data
+                return moment(row).format('ll');
+              }
+            },
+            {
+                data: "location"
+            },
+            {
+                data: "n_collected"
+            },
+            {
+                data: "n_draw"
+            }
+        ],
+    buttons: [],
+
+
+        }
+    );
+    
+
+    });
+
+</script>
+{% endblock js %}

@@ -256,8 +256,8 @@ class Event(models.Model):
         return subjects
 
     def get_subject_email_list(self):
-        subjects = self.get_subjects_at_same_location()
-        emails = list(set([subject.email for subject in subjects if subject.email != None]))
+        subjects = self.get_subjects_at_same_location().filter(email__isnull=False)
+        emails = list(set([subject.email for subject in subjects]))
         emails = ";".join(emails)
         return emails
 
@@ -267,11 +267,19 @@ class Event(models.Model):
         """
         Check if current date is after collection date
         """
-        if self.date < datetime.now().date():
-            return True
-        else:
-            return False
+        return self.date < datetime.now().date()
 
+    @property
+    def subjects_with_collected_samples(self):
+        return Sample.objects.filter(
+            collection_event=self,
+            collection_status="Collected").values_list(
+                'subject__id', flat=True).distinct()
+
+
+    @property
+    def number_of_subjects_with_collected_samples(self):
+        return self.subjects_with_collected_samples.count()
 
  
 

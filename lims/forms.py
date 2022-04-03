@@ -339,3 +339,5 @@ class AnalysisSelectionForm(forms.Form):
     test = forms.ModelChoiceField(
         queryset=Test.objects.all()
     )
+    
+    

@@ -40,7 +40,6 @@ from difflib import get_close_matches
 
 
 
-
 class SamplePermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -2173,3 +2172,26 @@ def pooladdpools_table_update_view(request):
         return JsonResponse(json_response)
 
 
+
+@login_required
+def giftcard_drawing_view(request):
+    if request.method == 'POST':
+        subject_data = {}
+        email_list = []
+        for event, sample_sz in zip(request.POST.getlist('event_id'), request.POST.getlist('sample_size')):
+            subjects = list(np.random.choice(Event.objects.get(pk=event).subjects_with_collected_samples, int(sample_sz), replace=False))
+            subject_list = Subject.objects.filter(id__in=subjects)
+            email_list += list(Subject.objects.filter(id__in=subjects).values_list('email', flat=True))
+            subject_data.update({"{0}_{1}".format(event, v.id): {
+                'subject': v, 'event': Event.objects.get(pk=event)
+            } for v in subject_list})
+        return render(
+            request, 'lims/subject_giftcard_drawing_list.html',
+            {'subject_data': subject_data, 'email_list': ";".join(email_list)})
+    
+    event_query_set = Event.objects.filter(
+            date__lte=datetime.datetime.now().date()).order_by('-week', 'name')
+    return render(request, 'lims/event_giftcard_list.html', {'event_list': event_query_set})
+
+
+ 
