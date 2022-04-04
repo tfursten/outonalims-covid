@@ -35,8 +35,8 @@
                     <td>{{ event.date }}</td>
                     <td>{{ event.location.name }}</td>
                     <td>{{ event.number_of_subjects_with_collected_samples }}</td>
-                    <td><input type="number" name="sample_size" min="0" max="{{ event.number_of_subjects_with_collected_samples }}" data-id="{{ event.id}}_sample_size" value="0"></td>
-                    <td><input hidden type="number" name="event_id" value="{{ event.id }}"></td>
+                    <td><input type="number" name="sample_size" min="0" max="{{ event.number_of_subjects_with_collected_samples }}" data-id="{{ event.id}}_sample_size" value="0">
+                    <input hidden type="number" name="event_id" value="{{ event.id }}"></td>
                 </tr>
             {% endfor %}
         </tbody>
