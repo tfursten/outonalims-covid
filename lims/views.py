@@ -2263,6 +2263,7 @@ def google_form_json_view(request):
         values['link'] = link
         subjects.append(values)
     data = {'data': subjects}
-    return JsonResponse(data, safe=False)
+    print(data)
+    return JsonResponse(data)
 
 
