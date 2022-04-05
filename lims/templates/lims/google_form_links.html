@@ -54,7 +54,8 @@
     fixedHeader: true,
     ajax: {
         url:"{% url 'lims:google_form_list_json' %}",
-        csrfmiddlewaretoken: '{{ csrf_token }}'
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        timeout: 10000
     },
     order: [],
     aLengthMenu: [
