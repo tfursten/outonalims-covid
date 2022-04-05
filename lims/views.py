@@ -2212,6 +2212,7 @@ class SubjectGoogleFormsLink(SubjectPermissionsMixin, ListView):
 @login_required
 def google_form_json_view(request):    
     subjects = []
+    t1 = time.time()
     for subject in Subject.objects.filter(consent_status="Consented"):
         
         values = {k: v for k, v in subject.__dict__.items() if k in [
@@ -2261,6 +2262,6 @@ def google_form_json_view(request):
         values['link'] = link
         subjects.append(values)
     data = {'data': subjects}
-    print(data)
+    print(time.time() - t1)
     return JsonResponse(data)
 
