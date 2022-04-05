@@ -10,8 +10,8 @@
 {% block content %}
 {% csrf_token %}
 
-<h1 class="border-bottom">Subjects</h1>
-    <table id="subject_table" class="display table table-hover"  align="center"  style="width:100%"> 
+<h1 class="border-bottom">Google Form Links</h1>
+    <table id="link_table" class="display table table-hover"  align="center"  style="width:100%"> 
         <thead>
             
             <tr>
@@ -48,7 +48,7 @@
         "Not Consented": "warning",
         Withdrawn: "danger",
     }
-    $('#subject_table').DataTable({
+    $('#link_table').DataTable({
     rowReorder: false,
     stateSave: true,
     fixedHeader: true,
@@ -85,7 +85,6 @@
             }
    
         ],
-    select: true,
     buttons: {
         name: 'primary',
         buttons: [ 
