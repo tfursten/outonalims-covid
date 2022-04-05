@@ -116,4 +116,7 @@ urlpatterns = [
     path('analysis/select/', views.select_analysis_view, name="select_analysis"),
     path('analysis/<str:project>/<str:test>/data/', views.analysis_data_view, name="analysis_data"),
     path('giftcards/', views.giftcard_drawing_view, name="giftcards"),
+    path('subjects/google-form-links/', views.SubjectGoogleFormsLink.as_view(), name="google_form_links"),
+    path('subjects/google-form-json/', views.google_form_json_view, name="google_form_list_json"),
+
 ]
