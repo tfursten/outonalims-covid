@@ -11,13 +11,6 @@
 {% csrf_token %}
 
 <h1 class="border-bottom">Subjects</h1>
-    <div class="d-grid gap-2 d-md-block mt-2 mb-2">
-        <a class="btn btn-primary btn" href="{% url 'lims:new_subject' %}" role="button">New Subject <span data-feather="plus"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:subject_list_detail' %}" role="button">Subject Detail List <span data-feather="printer"></span></a>
-        <a class="btn btn-primary btn" href="{% url 'lims:google_form_links' %}" role="button">Google Form Links <span data-feather="check-square"></span></a>
-    </div>
-    
-
     <table id="subject_table" class="display table table-hover"  align="center"  style="width:100%"> 
         <thead>
             
@@ -26,14 +19,10 @@
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Location</th>
-                <th>Grade</th>
                 <th>Consent Status</th>
-                <th>No. Samples Created</th>
-                <th>No. Samples Pending</th>
-                <th>No. Samples Collected</th>
-                <th>No. Samples Absent</th>
-                <th>No. Samples Refused</th>
-                <th>No. Samples Withdrawn</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Form Link</th>
             </tr>
         </thead>
         
@@ -64,7 +53,7 @@
     stateSave: true,
     fixedHeader: true,
     ajax: {
-        url:"{% url 'lims:subject_list_json' %}",
+        url:"{% url 'lims:google_form_list_json' %}",
         csrfmiddlewaretoken: '{{ csrf_token }}'
     },
     order: [],
@@ -75,23 +64,10 @@
     iDisplayLength: 25,
     dom: 'B<"clear">lfrtip',
     columns: [
-            { 
-                data: "subject_ui",
-                render: function ( data, type, row ) {
-                    let str = '<a class="table-link" href="{% url 'lims:subject_detail' 1 %}">' + data + '</a>'
-                    let newstr = str.replace("1", row.id)
-                    return newstr
-            }},
+            { data: "subject_ui" },
             { data: "first_name" },
             { data: "last_name" },
-            { 
-                data: "location__name",
-                render: function ( data, type, row ) {
-                    let str = '<a class="table-link" href="{% url 'lims:location_detail' 1 %}">' + data + '</a>'
-                    let newstr = str.replace("1", row.location__id)
-                    return newstr
-            }},
-            { data: "grade"},
+            { data: "location__name" },
             { 
                 "data": "consent_status",
                 render: function ( status ) {
@@ -99,12 +75,14 @@
                                 `<span class="badge bg-${consent_status[status]}">${status}</span>` : null     
                         }
             },
-            { data: "samples"},
-            { data: "pending"},
-            { data: "collected"},
-            { data: "absent"},
-            { data: "refused"},
-            { data: "withdrawn"}
+            {"data": "email"},
+            {"data": "phone"},
+            {
+                "data": "link",
+                render: function ( link ) {
+                    return '<a class="table-link" href="' + link + '">' + link + '</a>'
+                }
+            }
    
         ],
     select: true,
@@ -113,19 +91,19 @@
         buttons: [ 
         {
           extend: 'copy',
-          title: 'Subject List'
+          title: 'Google Form Links'
         },
         {
           extend: 'pdf',
-          title: 'Subject List'
+          title: 'Google Form Links'
         },
         {
           extend: 'csv',
-          title: 'Subject List'
+          title: 'Google Form Links'
         },
         {
           extend: 'excel',
-          title: 'Subject List'
+          title: 'Google Form Links'
         },]
 
         }}
