@@ -2181,7 +2181,9 @@ def giftcard_drawing_view(request):
         for event, sample_sz in zip(request.POST.getlist('event_id'), request.POST.getlist('sample_size')):
             subjects = list(np.random.choice(Event.objects.get(pk=event).subjects_with_collected_samples, int(sample_sz), replace=False))
             subject_list = Subject.objects.filter(id__in=subjects)
-            email_list += list(Subject.objects.filter(id__in=subjects).values_list('email', flat=True))
+            email_list += [email for email in 
+                list(Subject.objects.filter(id__in=subjects).values_list('email', flat=True))
+                if email]
             subject_data.update({"{0}_{1}".format(event, v.id): {
                 'subject': v, 'event': Event.objects.get(pk=event)
             } for v in subject_list})
