@@ -2209,8 +2209,6 @@ class SubjectGoogleFormsLink(SubjectPermissionsMixin, ListView):
         None
         
 
-
-
 @login_required
 def google_form_json_view(request):    
     subjects = []
@@ -2264,5 +2262,4 @@ def google_form_json_view(request):
         subjects.append(values)
     data = {'data': subjects}
     return JsonResponse(data, safe=False)
-
 
