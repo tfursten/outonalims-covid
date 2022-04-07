@@ -2266,4 +2266,3 @@ def google_form_json_view(request):
     except Exception as e:
         print(e)
         return JsonResponse({'data': [], 'error': str(e)})
-
