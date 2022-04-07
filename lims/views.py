@@ -2217,6 +2217,7 @@ def google_form_json_view(request):
             values = {k: v for k, v in subject.__dict__.items() if k in [
                 'subject_ui', 'first_name', 'last_name', 'consent_status', 'email', 'phone']}
             values['location__name'] = subject.location.name
+            values['phone'] = str(values['phone'])
             values['token'] = hashlib.sha1(subject.subject_ui.encode("utf-8")).hexdigest()
             link = "https://docs.google.com/forms/d/e/1FAIpQLSd36HGXLXU53GePdrhZYE3FRh-qC7OeHsYygBwHqLgQsKfGfg/viewform?usp=pp_url"
             link = link + "&entry.1867617705={fn}".format(fn=subject.first_name)
