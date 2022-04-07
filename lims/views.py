@@ -2210,58 +2210,59 @@ class SubjectGoogleFormsLink(SubjectPermissionsMixin, ListView):
         
 
 @login_required
-def google_form_json_view(request):    
-    subjects = []
-    t1 = time.time()
-    for subject in Subject.objects.filter(consent_status="Consented"):
-        
-        values = {k: v for k, v in subject.__dict__.items() if k in [
-            'subject_ui', 'first_name', 'last_name', 'consent_status', 'email', 'phone']}
-        values['location__name'] = subject.location.name
-        values['token'] = hashlib.sha1(subject.subject_ui.encode("utf-8")).hexdigest()
-        link = "https://docs.google.com/forms/d/e/1FAIpQLSd36HGXLXU53GePdrhZYE3FRh-qC7OeHsYygBwHqLgQsKfGfg/viewform?usp=pp_url"
-        link = link + "&entry.1867617705={fn}".format(fn=subject.first_name)
-        link = link + "&entry.238338737={ln}".format(ln=subject.last_name)
-        if subject.sex:
-            link = link + "&entry.1104308818={sex}".format(sex=subject.sex.lower().capitalize())
-        for race in subject.race.all():
-            link = link + "&entry.1352371561={race}".format(race=race.name.replace(" ", "+"))
-        if subject.ethnicity:
-            link = link + "&entry.203578053=Yes"
-        elif subject.ethnicity == False:
-            link = link + "&entry.203578053=No"
-        if subject.dose_1:
-            link = link + "&entry.2056866576=Yes"
-        elif subject.dose_1 == False:
-            link = link + "&entry.2056866576=No"
-        link = link + "&entry.697248355={month}".format(month=subject.dose_1_month)
-        link = link + "&entry.549125450={year}".format(year=subject.dose_1_year)
-        if subject.dose_2:
-            link = link + "&entry.1053334543=Yes"
-        elif subject.dose_2 == False:
-            link = link + "&entry.1053334543=No"
-        link = link + "&entry.2054062263={month}".format(month=subject.dose_2_month)
-        link = link + "&entry.1851397949={year}".format(year=subject.dose_2_year)
-        if subject.booster:
-            link = link + "&entry.2133936943=Yes"
-        elif subject.booster == False:
-            link = link + "&entry.2133936943=No"
-        link = link + "&entry.1233957808={month}".format(month=subject.booster_month)
-        link = link + "&entry.77692500={year}".format(year=subject.booster_year)
-        link = link + "&entry.2062908165={month}".format(month=subject.first_covid_case_month)
-        link = link + "&entry.757052800={year}".format(year=subject.first_covid_case_year)
-        link = link + "&entry.1598313138={month}".format(month=subject.second_covid_case_month)
-        link = link + "&entry.285308076={year}".format(year=subject.second_covid_case_year)
-        link = link + "&entry.762937797={month}".format(month=subject.third_covid_case_month)
-        link = link + "&entry.310013965={year}".format(year=subject.third_covid_case_year)
-        link = link + "&entry.1070433804={month}".format(month=subject.fourth_covid_case_month)
-        link = link + "&entry.925635335={year}".format(year=subject.fourth_covid_case_year)
-        link = link + "&entry.1824724562={month}".format(month=subject.fifth_covid_case_month)
-        link = link + "&entry.281374859={year}".format(year=subject.fifth_covid_case_year)
-        link = link + "&entry.1931846165={token}".format(token=values['token'])
-        values['link'] = link
-        subjects.append(values)
-    data = {'data': subjects}
-    print(time.time() - t1)
-    return JsonResponse(data)
-
+def google_form_json_view(request):
+    try:
+        subjects = []
+        for subject in Subject.objects.filter(consent_status="Consented"):
+            values = {k: v for k, v in subject.__dict__.items() if k in [
+                'subject_ui', 'first_name', 'last_name', 'consent_status', 'email', 'phone']}
+            values['location__name'] = subject.location.name
+            values['phone'] = str(values['phone'])
+            values['token'] = hashlib.sha1(subject.subject_ui.encode("utf-8")).hexdigest()
+            link = "https://docs.google.com/forms/d/e/1FAIpQLSd36HGXLXU53GePdrhZYE3FRh-qC7OeHsYygBwHqLgQsKfGfg/viewform?usp=pp_url"
+            link = link + "&entry.1867617705={fn}".format(fn=subject.first_name)
+            link = link + "&entry.238338737={ln}".format(ln=subject.last_name)
+            if subject.sex:
+                link = link + "&entry.1104308818={sex}".format(sex=subject.sex.lower().capitalize())
+            for race in subject.race.all():
+                link = link + "&entry.1352371561={race}".format(race=race.name.replace(" ", "+"))
+            if subject.ethnicity:
+                link = link + "&entry.203578053=Yes"
+            elif subject.ethnicity == False:
+                link = link + "&entry.203578053=No"
+            if subject.dose_1:
+                link = link + "&entry.2056866576=Yes"
+            elif subject.dose_1 == False:
+                link = link + "&entry.2056866576=No"
+            link = link + "&entry.697248355={month}".format(month=subject.dose_1_month)
+            link = link + "&entry.549125450={year}".format(year=subject.dose_1_year)
+            if subject.dose_2:
+                link = link + "&entry.1053334543=Yes"
+            elif subject.dose_2 == False:
+                link = link + "&entry.1053334543=No"
+            link = link + "&entry.2054062263={month}".format(month=subject.dose_2_month)
+            link = link + "&entry.1851397949={year}".format(year=subject.dose_2_year)
+            if subject.booster:
+                link = link + "&entry.2133936943=Yes"
+            elif subject.booster == False:
+                link = link + "&entry.2133936943=No"
+            link = link + "&entry.1233957808={month}".format(month=subject.booster_month)
+            link = link + "&entry.77692500={year}".format(year=subject.booster_year)
+            link = link + "&entry.2062908165={month}".format(month=subject.first_covid_case_month)
+            link = link + "&entry.757052800={year}".format(year=subject.first_covid_case_year)
+            link = link + "&entry.1598313138={month}".format(month=subject.second_covid_case_month)
+            link = link + "&entry.285308076={year}".format(year=subject.second_covid_case_year)
+            link = link + "&entry.762937797={month}".format(month=subject.third_covid_case_month)
+            link = link + "&entry.310013965={year}".format(year=subject.third_covid_case_year)
+            link = link + "&entry.1070433804={month}".format(month=subject.fourth_covid_case_month)
+            link = link + "&entry.925635335={year}".format(year=subject.fourth_covid_case_year)
+            link = link + "&entry.1824724562={month}".format(month=subject.fifth_covid_case_month)
+            link = link + "&entry.281374859={year}".format(year=subject.fifth_covid_case_year)
+            link = link + "&entry.1931846165={token}".format(token=values['token'])
+            values['link'] = link
+            subjects.append(values)
+        data = {'data': subjects}
+        return JsonResponse(data)
+    except Exception as e:
+        print(e)
+        return JsonResponse({'data': [], 'error': str(e)})
