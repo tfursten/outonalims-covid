@@ -2231,6 +2231,9 @@ def google_form_json_view(request):
                 link = link + "&entry.203578053=Yes"
             elif subject.ethnicity == False:
                 link = link + "&entry.203578053=No"
+            if subject.location.address:
+                link = link + "&entry.24415666={school}".format(
+                    school=subject.location.address.replace(" ", "+"))
             if subject.dose_1:
                 link = link + "&entry.2056866576=Yes"
             elif subject.dose_1 == False:
