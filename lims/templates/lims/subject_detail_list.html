@@ -35,6 +35,8 @@
                 <th>Dose 2 Date</th>
                 <th>Booster</th>
                 <th>Booster Date</th>
+                <th>Second Booster</th>
+                <th>Second Booster Date</th>
                 <th>1st COVID-19 Case</th>
                 <th>2nd COVID-19 Case</th>
                 <th>3rd COVID-19 Case</th>
@@ -85,6 +87,8 @@
                     <td>{{ subject.dose_2_month }}/{{ subject.dose_2_year }}</td>
                     <td>{{ subject.booster | yesno:"Yes,No,None"}}</td>
                     <td>{{ subject.booster_month }}/{{ subject.booster_year }}</td>
+                    <td>{{ subject.second_booster | yesno:"Yes,No,None"}}</td>
+                    <td>{{ subject.second_booster_month }}/{{ subject.second_booster_year }}</td>
                     <td>{{ subject.first_covid_case_month }}/{{ subject.first_covid_case_year }}</td>
                     <td>{{ subject.second_covid_case_month }}/{{ subject.second_covid_case_year }}</td>
                     <td>{{ subject.third_covid_case_month }}/{{ subject.third_covid_case_year }}</td>
