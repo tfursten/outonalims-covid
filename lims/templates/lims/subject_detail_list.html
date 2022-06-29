@@ -17,6 +17,7 @@
                 <th>Consent Status</th>
                 <th>Consent Date</th>
                 <th>Withdrawn Date</th>
+                <th>Continue in 2022-23</th>
                 <th>Project</th>
                 <th>Location</th>
                 <th>Grade</th>
@@ -69,6 +70,7 @@
                     {% endif %}
                     <td>{{ subject.consent_date }}</td>
                     <td>{{ subject.withdrawn_date }}</td>
+                    <td>{{ subject.continue_22_23_year }}</td>
                     <td>{{ subject.location.project.name }}</td>
                     <td>{{ subject.location.name }}</td>
                     <td>{{ subject.grade }}</td>

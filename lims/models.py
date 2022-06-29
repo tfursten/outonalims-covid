@@ -105,6 +105,7 @@ class Subject(models.Model):
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
     consent_status = models.CharField(max_length=15, choices=CONSENT_STATUS, default='Consented')
+    continue_22_23_year = models.BooleanField(null=True, blank=True)
     consent_date = models.DateField(null=True, blank=True)
     withdrawn_date = models.DateField(null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
