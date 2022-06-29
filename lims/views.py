@@ -2225,6 +2225,7 @@ def google_form_json_view(request):
         for subject in Subject.objects.filter(consent_status="Consented"):
             values = {k: v for k, v in subject.__dict__.items() if k in [
                 'subject_ui', 'first_name', 'last_name', 'consent_status',
+                'continue_22_23_year',
                 'gardian_name', 'grade', 'email', 'phone']}
             values['location__name'] = subject.location.name
             values['phone'] = str(values['phone'])
