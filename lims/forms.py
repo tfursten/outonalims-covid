@@ -81,7 +81,7 @@ class SubjectForm(ModelForm):
         model = Subject
         fields = ['first_name',
         'last_name', 'consent_status', 'consent_date',
-        'withdrawn_date',
+        'withdrawn_date', 'continue_22_23_year',
         'location', 'age', 'grade', 'sex', 'race',
         'ethnicity', 'phone', 'email',
         'gardian_name', 'gardian_relationship', 
@@ -99,6 +99,7 @@ class SubjectForm(ModelForm):
         ]
 
         labels = {
+            "continue_22_23_year": "Continue in 2022-23 year",
             "ethnicity": "Hispanic or Latino/a",
             "dose_1": "COVID-19 Vaccine Dose 1",
             "dose_2": "COVID-19 Vaccine Dose 2",

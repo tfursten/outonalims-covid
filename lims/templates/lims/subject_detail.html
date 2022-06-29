@@ -22,6 +22,7 @@
       {% endif %}
       <li class="list-group-item"><strong>Consent Date:</strong> {{ subject.consent_date }}</li>
       <li class="list-group-item"><strong>Withdrawn Date:</strong> {{ subject.withdrawn_date }}</li>
+      <li class="list-group-item"><strong>Continue in 2022-23:</strong> {{ subject.continue_22_23_year }}</li>
       <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>
       <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></li>
       <li class="list-group-item"><Strong>Age:</Strong> {{ subject.age }}</li>
