@@ -65,6 +65,8 @@
                     <td>{{ subject.last_name }}</td>
                     {% if subject.consent_status == "Consented" %}
                         <td><span class="badge bg-success">{{ subject.consent_status }}</span></td>
+                    {% elif subject.consent_status == "Inactive" %}
+                        <td><span class="badge bg-secondary">{{ subject.consent_status }}</span></td>
                     {% else %}
                         <td><span class="badge bg-danger">{{ subject.consent_status }}</span></td>
                     {% endif %}

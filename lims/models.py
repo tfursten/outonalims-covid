@@ -97,7 +97,8 @@ class Subject(models.Model):
     CONSENT_STATUS = [
         ('Consented', 'Consented'),
         ('Not Consented', 'Not Consented'),
-        ('Withdrawn', 'Withdrawn')
+        ('Withdrawn', 'Withdrawn'),
+        ('Inactive', 'Inactive')
     ]
     MONTH_CHOICES = [(m, m) for m in list(calendar.month_name[1:])]
 
