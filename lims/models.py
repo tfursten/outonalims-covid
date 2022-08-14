@@ -59,6 +59,7 @@ class Project(models.Model):
 
 class Location(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    grade = models.PositiveIntegerField(validators=[MinValueValidator(0), MaxValueValidator(12)], null=True, blank=True)
     address = models.CharField(max_length=100, blank=True, null=True)
     classroom = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)

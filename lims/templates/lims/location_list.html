@@ -17,6 +17,7 @@
             <tr>
                 <th>Location Name</th>
                 <th>Project</th>
+                <th>Grade</th>
                 <th>Address</th>
                 <th>Room</th>
             </tr>
@@ -32,6 +33,7 @@
                     {% else %}
                         <td>None</td>
                     {% endif %}
+                    <td>{{ location.grade }}</td>
                     <td>{{ location.address }}</td>
                     <td>{{ location.classroom }}</td>
                 </tr>
