@@ -17,6 +17,8 @@
         <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-success">{{ subject.consent_status }}</span></li>
       {% elif subject.consent_status == 'Not Consented' %}
       <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-danger">{{ subject.consent_status }}</span></li>
+      {% elif subject.consent_status == "Inactive" %}
+      <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-secondary">{{ subject.consent_status }}</span></li>
       {% else %}
       <li class="list-group-item"><strong>Consent Status: </strong><span class="badge bg-danger">{{ subject.consent_status }}</span></li>
       {% endif %}
