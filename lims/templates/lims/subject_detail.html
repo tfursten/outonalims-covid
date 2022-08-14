@@ -27,8 +27,9 @@
       <li class="list-group-item"><strong>Continue in 2022-23:</strong> {{ subject.continue_22_23_year }}</li>
       <li class="list-group-item"><strong>Project: </strong><a href="{% url 'lims:project_detail' subject.location.project.id %}">{{ subject.location.project.name }}</a></li>
       <li class="list-group-item"><strong>Location: </strong><a href="{% url 'lims:location_detail' subject.location.id %}">{{ subject.location.name }}</a></li>
-      <li class="list-group-item"><Strong>Age:</Strong> {{ subject.age }}</li>
-      <li class="list-group-item"><Strong>Grade:</Strong> {{ subject.grade}}</li>
+      <li class="list-group-item"><Strong>Age at consent:</Strong> {{ subject.age }}</li>
+      <li class="list-group-item"><Strong>Grade at consent:</Strong> {{ subject.grade}}</li>
+      <li class="list-group-item"><Strong>Current Grade:</Strong> {{ subject.location.grade}}</li>
       <li class="list-group-item"><Strong>Sex:</Strong> {{ subject.sex}}</li>
       <li class="list-group-item"><Strong>Race:</Strong> {{ subject.race.all | join:", " }}</li>
       <li class="list-group-item"><Strong>Hispanic or Latino/a:</Strong> {{ subject.ethnicity | yesno:"Yes,No,None"}}</li>

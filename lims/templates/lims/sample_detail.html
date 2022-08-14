@@ -29,10 +29,9 @@
         <strong>Collection Event: </strong><a href="{% url 'lims:event_detail' sample.collection_event.id %}">{{ sample.collection_event.name }}</a>
     </div>
     <div class="card-body">
-        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.location %}">{{ sample.location.name }}</a></p>
+        <p class="card-text">Location: <a href="{% url 'lims:location_detail' sample.location.id %}">{{ sample.location.name }}</a></p>
         <p class="card-text">Event Date: {{ sample.collection_event.date }}</p>
-        <p class="card-text">Researcher: <a href="{% url 'lims:researcher_detail' sample.collection_event.researcher %}">{{ sample.collection_event.researcher.name }}</a></p>
-        <p class="card-text">Created: {{ sample.created_on }}</p> 
+        <p class="card-text">Created: {{ sample.created_on }}</p>
     </div>
     
         {% for pos in sample.box_position %}
@@ -48,9 +47,7 @@
         {% endfor %}
 
     
-    <div class="card-body">
-        <p class="card-text">{{ sample.notes }}</p>
-    </div>
+
     {% for result in results %}
     <div class="card-header border-top"><strong>Result ID: </strong><a href="{% url 'lims:sample_result_detail' result.id %}">Result {{ result.id }}</a> </div>
     <div class="card-body">

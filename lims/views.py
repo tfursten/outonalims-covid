@@ -260,9 +260,10 @@ def subject_list_json_view(request):
             )
         values = {k: v for k, v in subject.__dict__.items() if k in [
             'subject_ui', 'first_name', 'last_name', 'consent_status',
-            'grade', 'id']}
+             'id']}
         values['location__name'] = subject.location.name
         values['location__id'] = subject.location.id
+        values['location__grade'] = subject.location.grade
         data.update(values)
         subjects.append(data)
 
@@ -374,7 +375,7 @@ class SampleListView(SamplePermissionsMixin, ListView):
 @login_required
 def sample_list_json_view(request):
     samples = Sample.objects.all().values(
-        'id', 'name', 'subject__subject_ui', 'subject__id', 'subject__grade',
+        'id', 'name', 'subject__subject_ui', 'subject__id', 'location__grade',
         'collection_event__name', 'collection_event__id', 'location__name',
         'location__id',
         'collection_status', 'sample_type'
@@ -597,7 +598,7 @@ def sample_labels_pdf(
     # Create a file-like buffer to receive PDF data.
     
     sortby = {
-            'GRADE': ['subject__grade'],
+            'GRADE': ['location__grade'],
             'NAME': ['subject__last_name', 'subject__first_name'],
             'LOCATION': ['subject__location'],
             'TYPE': ['sample_type'],
@@ -635,14 +636,14 @@ def sample_labels_pdf(
                 barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(sample.name, sample.sample_type[0]))
                 barcode_canvas.drawString(
                     x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0} {1}".format(
-                        sample.collection_event.name.replace("Wk", "")[:label.max_chars - 5], str(sample.subject.grade).replace("None", "") ))
+                        sample.collection_event.name.replace("Wk", "")[:label.max_chars - 5], str(sample.location.grade).replace("None", "") ))
             else:
                 barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(sample.name, sample.sample_type))
                 barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(
                     sample.subject.last_name[:label.max_chars - 2], sample.subject.first_name)[:label.max_chars + 1])
                 barcode_canvas.drawString(
                     x + (qr_size * mm), (y - ((label.line_spacing * 2) * mm)), "{0} {1}".format(
-                        sample.collection_event.name[:label.max_chars - 5], str(sample.subject.grade).replace("None", "")))
+                        sample.collection_event.name[:label.max_chars - 5], str(sample.location.grade).replace("None", "")))
                 barcode_canvas.drawString(x + (qr_size * mm), (y - ((label.line_spacing * 3) * mm)), "{0}".format(sample.location.name)[:label.max_chars])
             if c < ((rows*columns) - 1):
                 c += 1
@@ -1496,8 +1497,8 @@ def sample_storage_label_options(request):
         'sort_by1': 'LOCATION', 'sort_by2': 'EVENT', 'sort_by3': 'GRADE', 'sort_by4': 'NAME' })
     samples = Sample.objects.filter(collection_status="Collected").values(
         'id', 'name', 'subject__subject_ui', 'subject__first_name',
-        'subject__last_name', 'subject__grade',
-        'collection_event__name', 'location__name',
+        'subject__last_name', 'location__grade',
+        'collection_event__name', "collection_event__week", 'location__name',
         'sample_type'
         )
     context = {'data': json.dumps(list(samples)), 'form': form}
