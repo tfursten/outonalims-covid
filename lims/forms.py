@@ -33,7 +33,7 @@ class ProjectForm(ModelForm):
 class LocationForm(ModelForm):
     class Meta:
         model = Location
-        fields = ['name', 'project', 'address',
+        fields = ['name', 'project', 'grade', 'address',
         'classroom',
         'description', 'contact_name',
         'contact_email', 'contact_phone'
@@ -99,6 +99,8 @@ class SubjectForm(ModelForm):
         ]
 
         labels = {
+            "age": "Age at consent",
+            "grade": "Grade at consent",
             "continue_22_23_year": "Continue in 2022-23 year",
             "ethnicity": "Hispanic or Latino/a",
             "dose_1": "COVID-19 Vaccine Dose 1",
