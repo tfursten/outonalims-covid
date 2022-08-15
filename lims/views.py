@@ -467,7 +467,7 @@ def sample_notices_pdf(request, event_id, notice_text):
     event = Event.objects.get(pk=event_id)
     subjects = Sample.get_subjects_at_event(event)
     teachers = [str(subject.teacher_name) for subject in subjects]
-    grades = [str(subject.grade) for subject in subjects]
+    grades = [str(subject.location.grade) for subject in subjects]
     classrooms = [str(subject.location.classroom) for subject in subjects]
     last_names = [str(subject.last_name) for subject in subjects]
     first_names = [str(subject.first_name) for subject in subjects]
