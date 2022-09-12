@@ -638,9 +638,9 @@ def sample_labels_pdf(
                     x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0} {1}".format(
                         sample.collection_event.name.replace("Wk", "")[:label.max_chars - 5], str(sample.location.grade).replace("None", "") ))
             else:
-                barcode_canvas.drawString(x + (qr_size * mm), y, "{0} {1}".format(sample.name, sample.sample_type))
-                barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0},{1}".format(
+                barcode_canvas.drawString(x + (qr_size * mm), y, "{0},{1}".format(
                     sample.subject.last_name[:label.max_chars - 2], sample.subject.first_name)[:label.max_chars + 1])
+                barcode_canvas.drawString(x + (qr_size * mm), (y - (label.line_spacing * mm)), "{0} {1}".format(sample.name, sample.sample_type))
                 barcode_canvas.drawString(
                     x + (qr_size * mm), (y - ((label.line_spacing * 2) * mm)), "{0} {1}".format(
                         sample.collection_event.name[:label.max_chars - 5], str(sample.location.grade).replace("None", "")))
