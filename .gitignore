@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+*.DS_Store
+*.xlsx
+backup.db.sqlite3
+
+
 # Distribution / packaging
 .Python
 build/
@@ -38,6 +43,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+test/
 htmlcov/
 .tox/
 .nox/
@@ -60,6 +66,7 @@ coverage.xml
 settings.py
 db.sqlite3
 db.sqlite3-journal
+lims/migrations/*.py
 
 # Flask stuff:
 instance/
