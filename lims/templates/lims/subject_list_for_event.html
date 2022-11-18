@@ -7,7 +7,7 @@
 {% block content %}
 <h1 class="border-bottom">Participants for {{ event.name }}</h1>
 <div>
-    Toggle column: <a class="toggle-vis" data-column="0">Event</a> - <a class="toggle-vis" data-column="1">First Name</a> - <a class="toggle-vis" data-column="2">Last Name</a> - <a class="toggle-vis" data-column="3">Phone</a> - <a class="toggle-vis" data-column="4">Location</a> - <a class="toggle-vis" data-column="5">Grade</a> - <a class="toggle-vis" data-column="6">Teacher</a>
+    Toggle column: <a class="toggle-vis" data-column="0">Event</a> - <a class="toggle-vis" data-column="1">First Name</a> - <a class="toggle-vis" data-column="2">Last Name</a> - <a class="toggle-vis" data-column="3">Phone</a> - <a class="toggle-vis" data-column="4">Email</a> - <a class="toggle-vis" data-column="5">Location</a> - <a class="toggle-vis" data-column="6">Grade</a> - <a class="toggle-vis" data-column="7">Teacher</a>
 </div>
     <table id="participant_table" class="display table table-hover"> 
         <thead>
@@ -16,6 +16,7 @@
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Phone</th>
+                <th>Email</th>
                 <th>Location</th>
                 <th>Grade</th>
                 <th>Teacher</th>
@@ -28,6 +29,7 @@
                     <td>{{ subject.first_name }}</td>
                     <td>{{ subject.last_name }}</td>
                     <td>{{ subject.phone }}</td>
+                    <td>{{ subject.email }}</td>
                     <td>{{ subject.location.name }}</td>
                     <td>{{ subject.location.grade }}</td>
                     <td>{{ subject.teacher_name}}</td>
