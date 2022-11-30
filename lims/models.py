@@ -57,15 +57,21 @@ class Project(models.Model):
     def __str__(self):
         return str(self.name)
 
+
+
 class Location(models.Model):
     TYPE_CHOICES = [
     ('LTCF', 'LTCF'),
-    ('High School', 'High School'),
-    ('Middle School', 'Middle School'),
-    ('Elementary School', 'Elementary School')
+    ('School', 'School')
+    ]
+    SCHOOL_LEVEL = [
+        ('High', 'High'),
+        ('Middle', 'Middle'),
+        ('Elementary', 'Elementary')
     ]
     name = models.CharField(max_length=100, unique=True)
-    location_type = models.CharField(max_length=25, choices=TYPE_CHOICES, default='LTCF')
+    location_type = models.CharField(max_length=8, choices=TYPE_CHOICES, default='School')
+    school_level = models.CharField(max_length=16, choices=SCHOOL_LEVEL, blank=True, null=True)
     grade = models.PositiveIntegerField(validators=[MinValueValidator(0), MaxValueValidator(12)], null=True, blank=True)
     address = models.CharField(max_length=100, blank=True, null=True)
     classroom = models.CharField(max_length=100, blank=True, null=True)
