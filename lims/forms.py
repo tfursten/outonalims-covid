@@ -33,7 +33,7 @@ class ProjectForm(ModelForm):
 class LocationForm(ModelForm):
     class Meta:
         model = Location
-        fields = ['name', 'project', 'grade', 'address',
+        fields = ['name', 'project', 'location_type', 'grade', 'address',
         'classroom',
         'description', 'contact_name',
         'contact_email', 'contact_phone'
