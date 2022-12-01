@@ -29,7 +29,8 @@ from .forms import (
     BoxPositionSampleForm, BoxPositionPoolForm,
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
     SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
-    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm)
+    LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm,
+    ReportSelectionForm)
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -1490,6 +1491,206 @@ def select_analysis_view(request):
     return render(request, 'lims/analysis_select.html', {'form': form})
 
 
+@login_required
+def select_report(request):
+    form = ReportSelectionForm()
+    if request.method == "POST":
+        form = ReportSelectionForm(request.POST)
+        if form.is_valid():
+            project = Project.objects.get(pk=request.POST.get('project'))
+            test = Test.objects.get(pk=request.POST.get('test'))
+            start_date = datetime.datetime.strptime(request.POST.get('start_date'), "%Y-%m-%d")
+            end_date = datetime.datetime.strptime(request.POST.get('end_date'), "%Y-%m-%d")
+            start_date_str = start_date.strftime("%m-%d-%Y")
+            end_date_str = end_date.strftime("%m-%d-%Y")
+
+            samples_collected = Sample.objects.select_related().filter(
+                collection_event__date__gte=start_date,
+                collection_event__date__lte=end_date,
+                subject__location__project=project,
+                collection_status="Collected"
+            )
+            sample_results = SampleResult.objects.select_related().filter(
+                sample__collection_event__date__gte=start_date,
+                sample__collection_event__date__lte=end_date,
+                sample__subject__location__project=project,
+                test = test
+            )
+
+            samples_collected_count = (
+                samples_collected.values(
+                    'sample_type',
+                    'location__location_type',
+                    'subject__is_vaccinated'
+                    ).annotate(total=Count('id'),).order_by())
+
+            sample_results_count = (
+                sample_results.values(
+                    'sample__sample_type',
+                    'sample__location__location_type',
+                    'sample__subject__is_vaccinated',
+                    'result'
+                    ).annotate(total=Count('id'),).order_by())
+
+            if not len(samples_collected_count):
+                data = None
+            else:
+
+                samples_collected_count_df = pd.DataFrame(list(samples_collected_count))
+                samples_collected_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Collected']
+                samples_collected_count_df = samples_collected_count_df.set_index(['Sample Type', 'Location', 'Vax Status'])
+                sample_results_count_df = pd.DataFrame(list(sample_results_count))
+                sample_results_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Test Result', 'Processed']
+
+                sample_results_count_df = sample_results_count_df.pivot(
+                    index=['Sample Type', 'Location', 'Vax Status'],
+                    columns='Test Result', values='Processed')
+                sample_results_count_df['Total Processed'] = sample_results_count_df.sum(axis=1)
+                data = samples_collected_count_df.join(sample_results_count_df) 
+                data = data.fillna(0).astype(int)
+                print(data)
+                data = data.reset_index()
+                data['Vax Status'] = data['Vax Status'].replace({True: "Yes", False: "No"})
+
+                print(data)
+                data = data.to_html(
+                     table_id="report-table",
+                     classes=['display', 'table', 'table-hover'],
+                     sparsify=True, justify="left", index=False)
+
+
+                # Get map of winter months
+                month_map = {}
+                winter_months = [1, 2, 3, 12]
+                for e in Event.objects.all():
+                    if e.date.month in winter_months:
+                        month_map[e.week] = True
+                    else:
+                        month_map[e.week] = False
+
+                ###### LOCATION FIGURE ###################
+                # samples_collected_count_by_week_by_location = (
+                #     samples_collected.values(
+                #         # 'sample_type',
+                #         'location__location_type',
+                #         'collection_event__week'
+                #         ).annotate(total=Count('id'),).order_by()).filter(sample_type="Nasal")
+
+                # samples_collected_count_by_week_by_location_df = pd.DataFrame(
+                #     list(samples_collected_count_by_week_by_location))
+                # samples_collected_count_by_week_by_location_df.columns = [
+                #     "Location", "Week", "Total Collected"
+                # ]
+                # samples_collected_count_by_week_by_location_df = samples_collected_count_by_week_by_location_df.set_index(
+                #     ["Location", "Week"]
+                # )
+                sample_count_by_week_by_location = (
+                    sample_results.values(
+                        'sample__location__location_type',
+                        'sample__collection_event__week'
+                        ).annotate(total=Count('id'),).order_by()).filter(
+                            sample__sample_type="Nasal")
+
+                positive_sample_count_by_week_by_location = sample_count_by_week_by_location.filter(
+                        result="Positive")
+
+                print(sample_count_by_week_by_location)
+                print(positive_sample_count_by_week_by_location)
+
+
+                positive_sample_count_by_week_by_location_df = pd.DataFrame(
+                    list(positive_sample_count_by_week_by_location)
+                )
+                positive_sample_count_by_week_by_location_df.columns = [
+                    "Location", "Week", "Positive"
+                ]
+                positive_sample_count_by_week_by_location_df = positive_sample_count_by_week_by_location_df.set_index(
+                    ["Location", "Week"]
+                )
+                sample_count_by_week_by_location_df = pd.DataFrame(
+                    list(sample_count_by_week_by_location)
+                )
+                sample_count_by_week_by_location_df.columns = [
+                    "Location", "Week", "Total"
+                ]
+                sample_count_by_week_by_location_df = sample_count_by_week_by_location_df.set_index(
+                    ["Location", "Week"]
+                )
+
+                print(positive_sample_count_by_week_by_location_df)
+                print(sample_count_by_week_by_location_df)
+                loc_fig_data = sample_count_by_week_by_location_df.join(
+                    positive_sample_count_by_week_by_location_df
+                )
+                loc_fig_data = loc_fig_data.fillna(0).astype(int)
+                loc_fig_data['Percent Positivity'] = loc_fig_data['Positive'] / loc_fig_data['Total']
+                print(loc_fig_data)
+                # fig_data = samples_collected_count_by_week_by_location_df.join(
+                #     positive_sample_count_by_week_by_location_df)
+                # fig_data = fig_data.fillna(0).astype(int)
+                # print(fig_data)
+
+
+                ###### VACCINE FIGURE ###################
+                # collected_by_vax = {}
+                # for s in samples_collected:
+                #     week = s.collection_event.week
+
+
+                # samples_collected_count_by_week_by_vax = (
+                #     samples_collected.values(
+                #         'collection_event__week'
+                #         ).annotate(total=Count('id'),).order_by()).filter(sample_type="Nasal")
+
+                # print(samples_collected_count_by_week_by_vax)
+                # samples_collected_count_by_week_by_vax_df = pd.DataFrame(
+                #     list(samples_collected_count_by_week_by_vax))
+                # samples_collected_count_by_week_by_vax_df = [
+                #     "Vax Status", "Week", "Total Collected"
+                # ]
+                # samples_collected_count_by_week_by_vax_df = samples_collected_count_by_week_by_vax_df.set_index(
+                #     ["Vax Status", "Week"]
+                # )
+                # print(samples_collected_count_by_week_by_vax_df)
+
+                # positive_sample_count_by_week_by_vax = (
+                # sample_results.values(
+                #     'sample__collection_event__week'
+                #     ).annotate(total=Count('id'),).order_by()).filter(
+                #         sample__sample_type="Nasal", result="Positive")
+                # print(positive_sample_count_by_week_by_location)
+                # positive_sample_count_by_week_by_location_df = pd.DataFrame(
+                #     list(positive_sample_count_by_week_by_location)
+                # )
+                # positive_sample_count_by_week_by_location_df.columns = [
+                #     "Location", "Week", "Positive"
+                # ]
+                # positive_sample_count_by_week_by_location_df = positive_sample_count_by_week_by_location_df.set_index(
+                #     ["Location", "Week"]
+                # )
+                # fig_data = samples_collected_count_by_week_by_location_df.join(
+                #     positive_sample_count_by_week_by_location_df)
+                # fig_data = fig_data.fillna(0).astype(int)
+                # print(fig_data)
+
+            return render(
+                request, 'lims/report_table.html',
+                {'form': form,
+                 'project': project.name,
+                 'test': test.name,
+                 'start_date': start_date_str,
+                 'end_date': end_date_str,
+                 'title': "Report_{0}_{1}_{2}_{3}".format(
+                     project.name, test.name, start_date_str, end_date_str),
+                 'table': data}
+                )
+    return render(request, 'lims/report_select.html', {'form': form})
+            
+
+
+
+
+
 
 def sample_storage_label_options(request):
     form = SamplePrint(initial={
@@ -2281,3 +2482,8 @@ def google_form_json_view(request):
     except Exception as e:
         print(e)
         return JsonResponse({'data': [], 'error': str(e)})
+
+
+# def student_positivity_endpoint(request, location, test):
+#     json_response = {'data': [{'x': 1, 'y': 2}, {'x': 2, 'y': 3}]}
+#     return JsonResponse(json_response)

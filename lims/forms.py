@@ -344,4 +344,22 @@ class AnalysisSelectionForm(forms.Form):
         queryset=Test.objects.all()
     )
     
+class ReportSelectionForm(forms.Form):
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(), initial=1)
+    test = forms.ModelChoiceField(
+        queryset=Test.objects.all())
+    start_date = forms.DateField( initial=datetime.datetime(2021, 5, 1), widget=DateInput)
+    end_date = forms.DateField(initial=datetime.date.today, widget=DateInput)
+    
+    def clean(self):
+        cleaned_data = super(ReportSelectionForm, self).clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if start_date and end_date:
+            if end_date < start_date:
+                print("ERROR")
+                raise forms.ValidationError("End date cannot be earlier than start date!")
+        return cleaned_data
     
