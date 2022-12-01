@@ -118,5 +118,7 @@ urlpatterns = [
     path('giftcards/', views.giftcard_drawing_view, name="giftcards"),
     path('subjects/google-form-links/', views.SubjectGoogleFormsLink.as_view(), name="google_form_links"),
     path('subjects/google-form-json/', views.google_form_json_view, name="google_form_list_json"),
+    path('report/select/', views.select_report, name="report_data"),
+    # path('dashboard/student_positivity/', views.student_positivity_endpoint, name="student_positivity_endpoint"),
 
 ]

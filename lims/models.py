@@ -134,6 +134,7 @@ class Subject(models.Model):
     gardian_name = models.CharField(max_length=100, null=True, blank=True)
     gardian_relationship = models.CharField(max_length=100, null=True, blank=True)
     teacher_name = models.CharField(max_length=100, null=True, blank=True)
+    is_vaccinated = models.BooleanField(null=True, blank=True)
     dose_1 = models.BooleanField(null=True, blank=True)
     dose_2 = models.BooleanField(null=True, blank=True)
     booster = models.BooleanField(null=True, blank=True)
@@ -168,12 +169,18 @@ class Subject(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
         if not self.subject_ui: # only if subject_ui is blank
             existing_ids = [subj.subject_ui for subj in Subject.objects.all() if subj.subject_ui]
             cualid = create_ids(1, 6, existing_ids=existing_ids)
             self.subject_ui = [cid[0] for cid in cualid][0]
-            self.save()
+        # Update is_vaccinated
+        if self.dose_1 or self.dose_2 or self.booster or self.second_booster:
+            self.is_vaccinated = True
+        else:
+            self.is_vaccinated = False
+        super().save(*args, **kwargs)
+
+
     
     def get_number_of_samples(self, collection_status=None):
         if collection_status == None:
@@ -516,6 +523,30 @@ class SampleResult(models.Model):
 
     def __str__(self):
         return "{0}_{1}_{2}".format(self.sample.name, self.test, self.replicate)
+    
+    @property
+    def was_vaxxed(self):
+        """
+        Determine if the individual was vaccinated at the time of sample collection.
+        If no vax return false.
+        if vax but no date return start date
+        """
+        collection_date = self.sample.collection_event.date
+        if self.sample.subject.is_vaccinated:
+            first_vax_month = self.sample.subject.dose_1_month
+            first_vax_year = self.sample.subject.dose_1_year
+            if first_vax_month != None and first_vax_year != None:
+                vax_date = datetime.datetime.strptime(
+                    "{0}-1-{1}".format(first_vax_month, first_vax_year), "%m-%d-%Y")
+                if vax_date <= collection_date:
+                    return True
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return False
+
 
 
 class PoolResult(models.Model):
