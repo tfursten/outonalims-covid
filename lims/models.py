@@ -323,6 +323,7 @@ class Sample(models.Model):
     ]
     name = models.CharField(max_length=6, unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
+    subject_is_vax = models.BooleanField(null=True, blank=True)
     sample_type = models.CharField(max_length=15, choices=SITE, default='Nasal')
     # box = models.ForeignKey(Box, on_delete=models.PROTECT, null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True)
@@ -393,6 +394,32 @@ class Sample(models.Model):
     def box(self):
         position = self.box_position
         return [pos.box for pos in position]
+
+
+    def save(self, *args, **kwargs):
+        """
+        Determine if the individual was vaccinated at the time of sample collection.
+        If no vax return false.
+        if vax but no date return start date
+        """
+        collection_date = self.collection_event.date
+        if self.subject.is_vaccinated:
+            first_vax_month = self.subject.dose_1_month
+            first_vax_year = self.subject.dose_1_year
+            if first_vax_month != None and first_vax_year != None:
+                vax_date = datetime.date(datetime.strptime(
+                    "{0}-1-{1}".format(first_vax_month, first_vax_year), "%B-%d-%Y"))
+                if vax_date <= collection_date:
+                    self.subject_is_vax = True
+                else:
+                    self.subject_is_vax = False
+            else:
+                self.subject_is_vax = True
+        else:
+            self.subject_is_vax = False
+        
+        super().save(*args, **kwargs)
+
         
     
 class Pool(models.Model):
@@ -524,28 +551,7 @@ class SampleResult(models.Model):
     def __str__(self):
         return "{0}_{1}_{2}".format(self.sample.name, self.test, self.replicate)
     
-    @property
-    def was_vaxxed(self):
-        """
-        Determine if the individual was vaccinated at the time of sample collection.
-        If no vax return false.
-        if vax but no date return start date
-        """
-        collection_date = self.sample.collection_event.date
-        if self.sample.subject.is_vaccinated:
-            first_vax_month = self.sample.subject.dose_1_month
-            first_vax_year = self.sample.subject.dose_1_year
-            if first_vax_month != None and first_vax_year != None:
-                vax_date = datetime.datetime.strptime(
-                    "{0}-1-{1}".format(first_vax_month, first_vax_year), "%m-%d-%Y")
-                if vax_date <= collection_date:
-                    return True
-                else:
-                    return False
-            else:
-                return True
-        else:
-            return False
+
 
 
 

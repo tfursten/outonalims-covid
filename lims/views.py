@@ -1521,38 +1521,40 @@ def select_report(request):
                 samples_collected.values(
                     'sample_type',
                     'location__location_type',
-                    'subject__is_vaccinated'
+                    'subject_is_vax',
+                    'collection_event__week'
                     ).annotate(total=Count('id'),).order_by())
 
             sample_results_count = (
                 sample_results.values(
                     'sample__sample_type',
                     'sample__location__location_type',
-                    'sample__subject__is_vaccinated',
-                    'result'
+                    'sample__subject_is_vax',
+                    'sample__collection_event__week',
+                    'result',
                     ).annotate(total=Count('id'),).order_by())
+
+            print(samples_collected_count)
+            print(sample_results_count)
 
             if not len(samples_collected_count):
                 data = None
             else:
-
                 samples_collected_count_df = pd.DataFrame(list(samples_collected_count))
-                samples_collected_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Collected']
-                samples_collected_count_df = samples_collected_count_df.set_index(['Sample Type', 'Location', 'Vax Status'])
+                samples_collected_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Week', 'Collected']
+                samples_collected_count_df = samples_collected_count_df.set_index(['Sample Type', 'Location', 'Vax Status', 'Week'])
                 sample_results_count_df = pd.DataFrame(list(sample_results_count))
-                sample_results_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Test Result', 'Processed']
+                sample_results_count_df.columns = ['Sample Type', 'Location', 'Vax Status', 'Week', 'Test Result', 'Processed']
 
                 sample_results_count_df = sample_results_count_df.pivot(
-                    index=['Sample Type', 'Location', 'Vax Status'],
+                    index=['Sample Type', 'Location', 'Vax Status', 'Week'],
                     columns='Test Result', values='Processed')
                 sample_results_count_df['Total Processed'] = sample_results_count_df.sum(axis=1)
                 data = samples_collected_count_df.join(sample_results_count_df) 
                 data = data.fillna(0).astype(int)
-                print(data)
                 data = data.reset_index()
                 data['Vax Status'] = data['Vax Status'].replace({True: "Yes", False: "No"})
-
-                print(data)
+                data = data.sort_values(['Sample Type', 'Location', 'Vax Status', 'Week'])
                 data = data.to_html(
                      table_id="report-table",
                      classes=['display', 'table', 'table-hover'],
@@ -1568,111 +1570,7 @@ def select_report(request):
                     else:
                         month_map[e.week] = False
 
-                ###### LOCATION FIGURE ###################
-                # samples_collected_count_by_week_by_location = (
-                #     samples_collected.values(
-                #         # 'sample_type',
-                #         'location__location_type',
-                #         'collection_event__week'
-                #         ).annotate(total=Count('id'),).order_by()).filter(sample_type="Nasal")
-
-                # samples_collected_count_by_week_by_location_df = pd.DataFrame(
-                #     list(samples_collected_count_by_week_by_location))
-                # samples_collected_count_by_week_by_location_df.columns = [
-                #     "Location", "Week", "Total Collected"
-                # ]
-                # samples_collected_count_by_week_by_location_df = samples_collected_count_by_week_by_location_df.set_index(
-                #     ["Location", "Week"]
-                # )
-                sample_count_by_week_by_location = (
-                    sample_results.values(
-                        'sample__location__location_type',
-                        'sample__collection_event__week'
-                        ).annotate(total=Count('id'),).order_by()).filter(
-                            sample__sample_type="Nasal")
-
-                positive_sample_count_by_week_by_location = sample_count_by_week_by_location.filter(
-                        result="Positive")
-
-                print(sample_count_by_week_by_location)
-                print(positive_sample_count_by_week_by_location)
-
-
-                positive_sample_count_by_week_by_location_df = pd.DataFrame(
-                    list(positive_sample_count_by_week_by_location)
-                )
-                positive_sample_count_by_week_by_location_df.columns = [
-                    "Location", "Week", "Positive"
-                ]
-                positive_sample_count_by_week_by_location_df = positive_sample_count_by_week_by_location_df.set_index(
-                    ["Location", "Week"]
-                )
-                sample_count_by_week_by_location_df = pd.DataFrame(
-                    list(sample_count_by_week_by_location)
-                )
-                sample_count_by_week_by_location_df.columns = [
-                    "Location", "Week", "Total"
-                ]
-                sample_count_by_week_by_location_df = sample_count_by_week_by_location_df.set_index(
-                    ["Location", "Week"]
-                )
-
-                print(positive_sample_count_by_week_by_location_df)
-                print(sample_count_by_week_by_location_df)
-                loc_fig_data = sample_count_by_week_by_location_df.join(
-                    positive_sample_count_by_week_by_location_df
-                )
-                loc_fig_data = loc_fig_data.fillna(0).astype(int)
-                loc_fig_data['Percent Positivity'] = loc_fig_data['Positive'] / loc_fig_data['Total']
-                print(loc_fig_data)
-                # fig_data = samples_collected_count_by_week_by_location_df.join(
-                #     positive_sample_count_by_week_by_location_df)
-                # fig_data = fig_data.fillna(0).astype(int)
-                # print(fig_data)
-
-
-                ###### VACCINE FIGURE ###################
-                # collected_by_vax = {}
-                # for s in samples_collected:
-                #     week = s.collection_event.week
-
-
-                # samples_collected_count_by_week_by_vax = (
-                #     samples_collected.values(
-                #         'collection_event__week'
-                #         ).annotate(total=Count('id'),).order_by()).filter(sample_type="Nasal")
-
-                # print(samples_collected_count_by_week_by_vax)
-                # samples_collected_count_by_week_by_vax_df = pd.DataFrame(
-                #     list(samples_collected_count_by_week_by_vax))
-                # samples_collected_count_by_week_by_vax_df = [
-                #     "Vax Status", "Week", "Total Collected"
-                # ]
-                # samples_collected_count_by_week_by_vax_df = samples_collected_count_by_week_by_vax_df.set_index(
-                #     ["Vax Status", "Week"]
-                # )
-                # print(samples_collected_count_by_week_by_vax_df)
-
-                # positive_sample_count_by_week_by_vax = (
-                # sample_results.values(
-                #     'sample__collection_event__week'
-                #     ).annotate(total=Count('id'),).order_by()).filter(
-                #         sample__sample_type="Nasal", result="Positive")
-                # print(positive_sample_count_by_week_by_location)
-                # positive_sample_count_by_week_by_location_df = pd.DataFrame(
-                #     list(positive_sample_count_by_week_by_location)
-                # )
-                # positive_sample_count_by_week_by_location_df.columns = [
-                #     "Location", "Week", "Positive"
-                # ]
-                # positive_sample_count_by_week_by_location_df = positive_sample_count_by_week_by_location_df.set_index(
-                #     ["Location", "Week"]
-                # )
-                # fig_data = samples_collected_count_by_week_by_location_df.join(
-                #     positive_sample_count_by_week_by_location_df)
-                # fig_data = fig_data.fillna(0).astype(int)
-                # print(fig_data)
-
+                
             return render(
                 request, 'lims/report_table.html',
                 {'form': form,
