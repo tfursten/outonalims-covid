@@ -18,7 +18,7 @@ from django.views.generic import (
     ListView, CreateView, DeleteView, UpdateView, DetailView)
 from django.contrib import messages
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import ProtectedError, Count, Q
+from django.db.models import ProtectedError, Count, Q, Max, Min
 from .models import (
     Sample, Project, Location, Researcher, Event,
     Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
@@ -40,7 +40,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from difflib import get_close_matches
 
-
+from bokeh.plotting import figure
 
 class SamplePermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
@@ -1492,6 +1492,59 @@ def select_analysis_view(request):
 
 
 @login_required
+def dashboard_report(request):
+    test = Test.objects.get(name="N1")
+    
+    events = Event.objects.all()
+    event_dates = (
+        events.values('week').annotate(min_date=Min('date'))
+    )
+    event_dates = {d['week']: d['min_date'] for d in event_dates}
+    print(event_dates)
+    sample_results = SampleResult.objects.select_related().filter(
+                test = test,
+                sample__sample_type="Nasal" 
+            )
+
+    sample_results_count = (
+            sample_results.values(
+                'sample__location__name',
+                'sample__location__location_type',
+                'sample__collection_event__week',
+                'result',
+                ).annotate(total=Count('id'),).order_by())
+
+    sample_results_count_df = pd.DataFrame(list(sample_results_count))
+    sample_results_count_df.columns = [
+        'Location', 'Location Type', 'Week', 'Test Result', 'Processed']
+
+    sample_results_count_df = sample_results_count_df.pivot(
+        index=['Location', 'Location Type', 'Week'],
+        columns='Test Result', values='Processed').fillna(0)
+    sample_results_count_df['Total'] = sample_results_count_df.sum(axis=1)
+    sample_results_count_df = sample_results_count_df.reset_index()
+    sample_results_count_df['Date'] = sample_results_count_df['Week'].apply(lambda x: event_dates[x])
+    sample_results_count_df.columns.name = None
+    sample_results_count_df = sample_results_count_df.sort_values(
+        ['Week', 'Location Type', 'Location'])
+
+    print(sample_results_count_df.columns.name)
+    print(sample_results_count_df.index)
+    print(sample_results_count_df.head())
+    data = sample_results_count_df.to_html(
+        table_id="dashboard-table",
+        classes=['display', 'table', 'table-hover'],
+        sparsify=True, justify="left", index=False)
+    return render(
+                request, 'lims/dashboard_table.html',
+                {'table': data}
+                )
+        
+
+
+
+
+@login_required
 def select_report(request):
     form = ReportSelectionForm()
     if request.method == "POST":
@@ -1560,7 +1613,6 @@ def select_report(request):
                      classes=['display', 'table', 'table-hover'],
                      sparsify=True, justify="left", index=False)
 
-
                 # Get map of winter months
                 month_map = {}
                 winter_months = [1, 2, 3, 12]
@@ -1570,7 +1622,7 @@ def select_report(request):
                     else:
                         month_map[e.week] = False
 
-                
+
             return render(
                 request, 'lims/report_table.html',
                 {'form': form,
