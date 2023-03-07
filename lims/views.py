@@ -40,7 +40,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from difflib import get_close_matches
 
-from bokeh.plotting import figure
+# from bokeh.plotting import figure
 
 class SamplePermissionsMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
