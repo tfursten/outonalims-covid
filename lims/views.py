@@ -1500,7 +1500,6 @@ def dashboard_report(request):
         events.values('week').annotate(min_date=Min('date'))
     )
     event_dates = {d['week']: d['min_date'] for d in event_dates}
-    print(event_dates)
     sample_results = SampleResult.objects.select_related().filter(
                 test = test,
                 sample__sample_type="Nasal" 
@@ -1508,7 +1507,7 @@ def dashboard_report(request):
 
     sample_results_count = (
             sample_results.values(
-                'sample__location__name',
+                'sample__location__address',
                 'sample__location__location_type',
                 'sample__collection_event__week',
                 'result',
@@ -1528,9 +1527,7 @@ def dashboard_report(request):
     sample_results_count_df = sample_results_count_df.sort_values(
         ['Week', 'Location Type', 'Location'])
 
-    print(sample_results_count_df.columns.name)
-    print(sample_results_count_df.index)
-    print(sample_results_count_df.head())
+
     data = sample_results_count_df.to_html(
         table_id="dashboard-table",
         classes=['display', 'table', 'table-hover'],
