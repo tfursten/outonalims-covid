@@ -31,6 +31,8 @@ from .forms import (
     SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
     LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm,
     ReportSelectionForm)
+
+  
 from cualid import create_ids
 import reportlab
 from reportlab.graphics.barcode import code128
@@ -1534,9 +1536,47 @@ def dashboard_report(request):
         sparsify=True, justify="left", index=False)
     return render(
                 request, 'lims/dashboard_table.html',
-                {'table': data}
+                {'table': data,
+                 'title': "dashboard_table"
+                }
                 )
-        
+
+
+@login_required
+def dashboard_endpoint(request):
+    test = Test.objects.get(name="N1")
+    events = Event.objects.all()
+    event_dates = (
+        events.values('week').annotate(min_date=Min('date'))
+    )
+    event_dates = {d['week']: d['min_date'] for d in event_dates}
+    sample_results = SampleResult.objects.select_related().filter(
+                test = test,
+                sample__sample_type="Nasal"
+            )
+    sample_results_count = (
+            sample_results.values(
+                'sample__location__address',
+                'sample__location__location_type',
+                'sample__collection_event__week',
+                'result',
+                ).annotate(total=Count('id'),).order_by())
+
+    sample_results_count_df = pd.DataFrame(list(sample_results_count))
+    sample_results_count_df.columns = [
+        'Location', 'Location Type', 'Week', 'Test Result', 'Processed']
+
+    sample_results_count_df = sample_results_count_df.pivot(
+        index=['Location', 'Location Type', 'Week'],
+        columns='Test Result', values='Processed').fillna(0)
+    sample_results_count_df['Total'] = sample_results_count_df.sum(axis=1)
+    sample_results_count_df = sample_results_count_df.reset_index()
+    sample_results_count_df['Date'] = sample_results_count_df['Week'].apply(lambda x: event_dates[x])
+    sample_results_count_df.columns.name = None
+    sample_results_count_df = sample_results_count_df.sort_values(
+        ['Week', 'Location Type', 'Location'])
+    data = {'data': sample_results_count_df.to_dict(orient="records")}
+    return JsonResponse(data)
 
 
 
