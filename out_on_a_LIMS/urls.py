@@ -29,7 +29,7 @@ urlpatterns = [
     path('password_reset/complete/', auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
     path('password_change/', auth_views.PasswordChangeView.as_view(), name="password_change"),
     path('users/', include('users.urls')),
-    path('lims/', include('lims.urls'))
+    path('lims/', include('lims.urls')),
 ]
 
 
