@@ -120,5 +120,6 @@ urlpatterns = [
     path('subjects/google-form-json/', views.google_form_json_view, name="google_form_list_json"),
     path('report/select/', views.select_report, name="report_data"),
     path('dashboard/', views.dashboard_report, name="dashboard_report"),
+    path('dashboard/data/', views.dashboard_endpoint, name="dashboard_endpoint"),
 
 ]

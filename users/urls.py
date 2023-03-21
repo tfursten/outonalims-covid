@@ -6,4 +6,5 @@ app_name = 'users'
 
 urlpatterns = [
     path('profile/', views.profile, name='profile'),
+    path('apilogin/', views.LoginView.as_view()),
 ]
