@@ -7,7 +7,7 @@ from .models import (
     Event, Subject, SampleBox, PoolBox,
     SampleBoxPosition, PoolBoxPosition,
      Pool, Label, SampleResult, PoolResult,
-    Test)
+    Test, Sequencing)
 from string import capwords
 from django.utils.encoding import force_text
 from django.utils.html import escape
@@ -282,6 +282,17 @@ class TestForm(ModelForm):
     class Meta:
         model = Test
         fields = ['name', 'protocol', 'detects']
+
+class SequenceForm(ModelForm):
+    class Meta:
+        model = Sequencing
+        fields = ['name', 'run_id', 'targets', 'date', 'protocol', 'notes', 'samples']
+        widgets = {
+            'date': DateInput(),
+            'samples': forms.SelectMultiple(attrs={'size': '20'})}
+    def __init__(self, *args, **kwargs):
+        super(SequenceForm, self).__init__(*args, **kwargs)
+        self.fields['samples'].queryset = Sample.objects.filter(collection_status="Collected").order_by("name")
 
 
 class SampleResultForm(ModelForm):

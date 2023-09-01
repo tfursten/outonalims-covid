@@ -22,7 +22,7 @@ from django.db.models import ProtectedError, Count, Q, Max, Min
 from .models import (
     Sample, Project, Location, Researcher, Event,
     Subject, SampleBox, PoolBox, SampleBoxPosition, PoolBoxPosition,
-    Pool, Label, Test, SampleResult, PoolResult)
+    Pool, Label, Test, SampleResult, PoolResult, Sequencing)
 from .forms import (
     ProjectForm, LocationForm, ResearcherForm,
     EventForm, SubjectForm, SampleForm, SampleBoxForm, PoolBoxForm,
@@ -30,7 +30,7 @@ from .forms import (
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
     SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
     LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm,
-    ReportSelectionForm)
+    ReportSelectionForm, SequenceForm)
 
   
 from cualid import create_ids
@@ -1478,6 +1478,64 @@ class TestDeleteView(LoginRequiredMixin, DeleteView):
             return render(request, "lims/protected_error.html")
 
 
+
+# ============== SEQUENCING =================================
+
+class SequenceListView(LoginRequiredMixin, ListView):
+    template_name_suffix = "_list"
+    context_object_name = 'sequence_list'
+
+    def get_queryset(self):
+        """
+        Return all tests
+        """
+        return Sequencing.objects.all()
+
+
+class SequenceFormView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    model = Sequencing
+    template_name_suffix = '_new'
+    form_class = SequenceForm
+    success_message = "Sequencing run was successfully added: %(name)s"
+
+
+    def get_success_url(self):
+        return reverse('lims:sequence_detail', args=(self.object.id,))
+        
+
+class SequenceDetailView(LoginRequiredMixin, DetailView):
+    model = Sequencing
+
+
+class SequenceUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Sequencing
+    template_name_suffix = '_update'
+    form_class = SequenceForm
+    success_message = "Sequencing run was successfully updated:  %(name)s"
+    
+    def get_success_url(self):
+        return reverse('lims:sequence_detail', args=(self.object.id,))
+
+class SequenceDeleteView(LoginRequiredMixin, DeleteView):
+    model = Sequencing
+    success_url = reverse_lazy('lims:sequence_list', args=())
+    def post(self, request, *args, **kwargs):
+        try:
+            return self.delete(request, *args, **kwargs)
+        except ProtectedError:
+            return render(request, "lims/protected_error.html")
+
+@login_required
+def sequenced_samples(request):    
+    return render(
+                request, 'lims/sequenced_samples.html',
+                {
+                 'title': "sequenced_samples"
+                }
+                )
+
+
+
 # ============== ANALYSIS =================================
 
 @login_required
@@ -1578,6 +1636,29 @@ def dashboard_endpoint(request):
     data = {'data': sample_results_count_df.to_dict(orient="records")}
     return JsonResponse(data)
 
+@login_required
+def sequencing_endpoint(request):
+    data = []
+    seqs = Sequencing.objects.prefetch_related(
+        'samples__name',
+        'samples__subject__first_name',
+        'samples__subject__last_name',
+        'samples__subject__location__name',
+        'samples__subject__location__location_type',
+        'samples__sample_type',
+        'samples__collection_event__name',
+        'samples__collection_event__date')
+    data = seqs.values(
+        'name', 'run_id', 'date', 'targets',
+        'samples__name', 'samples__subject__first_name',
+        'samples__subject__last_name',
+        'samples__subject__location__name',
+        'samples__subject__location__location_type',
+        'samples__sample_type',
+        'samples__collection_event__name',
+        'samples__collection_event__date', 'protocol', 'notes')
+    return JsonResponse({'data': list(data)})
+    
 
 
 

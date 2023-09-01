@@ -40,6 +40,10 @@ class Test(models.Model):
     def __str__(self):
         return str(self.name)
 
+    
+
+
+
 
 
 class Project(models.Model):
@@ -420,7 +424,21 @@ class Sample(models.Model):
         
         super().save(*args, **kwargs)
 
-        
+class Sequencing(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    run_id = models.CharField(max_length=100, null=True, blank=True)
+    samples = models.ManyToManyField(Sample, blank=True)
+    protocol = models.TextField(null=True, blank=True)
+    targets = models.CharField(max_length=100, null=True, blank=True)
+    date = models.DateField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, db_index=True, null=True)
+
+    class Meta:
+        ordering = ("-created_on", )
+
+    def __str__(self):
+        return str(self.name)      
     
 class Pool(models.Model):
     NOTIFICATION_CHOICES = [

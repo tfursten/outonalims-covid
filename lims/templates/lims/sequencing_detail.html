@@ -1,0 +1,44 @@
+{% extends "lims/base.html" %}
+{% block content %}
+<div class="card">
+    <h1 class="card-header">Sequencing: {{ sequencing.name }}</h1>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><strong>Run ID:</strong> {{ sequencing.run_id }}</li>
+      <li class="list-group-item"><strong>Target:</strong> {{ sequencing.targets }}</li>
+      <li class="list-group-item"><strong>Date:</strong> {{ sequencing.date}}</li>
+      <li class="list-group-item"><strong>Protocol:</strong> {{ sequencing.protocol}}</li>
+      <li class="list-group-item"><strong>Notes:</strong> {{ sequencing.notes}}</li>
+      <li class="list-group-item"><strong>Created:</strong> {{ sequencing.created_on }}</li>
+    </ul>
+</div>
+{% if sequencing.samples.all %}
+<h3 class="border-bottom mt-2">Samples in Sequencing Run</h3>
+
+<table id="sample_table" class="display table table-hover"> 
+  <thead>
+      <tr>
+          <th>Sample ID</th>
+      </tr>
+  </thead>
+  <tbody>
+      {% for sample in sequencing.samples.all %}
+          <tr id="{{ sample.id }}">
+              <td><a class="table-link" href="{% url 'lims:sample_detail' sample.id %}">
+                  {{ sample.name }}
+              </a></td>  
+          </tr>
+      {% endfor %}
+  </tbody>
+</table>
+
+{% endif %}
+
+<div class="d-grid gap-0 d-md-block mt-2">
+    <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sequence' sequencing.id %}" role="button">Edit <span data-feather="edit"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_sequence' %}" role="button">Add New Run <span data-feather="plus"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sequence_list' %}" role="button">Sequencing Runs <span data-feather="corner-up-left"></span></a>
+    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
+    <a class="btn btn-outline-danger btn mb-2" href="{% url 'lims:delete_sequence' sequencing.id %}" role="button">Delete <span data-feather="trash"></span></a>
+</div>
+
+{% endblock content %}
