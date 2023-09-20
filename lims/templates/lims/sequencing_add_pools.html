@@ -1,0 +1,94 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.8/css/rowReorder.dataTables.min.css"/>
+{% endblock head %}
+
+{% block content %}
+<div class='content-section'>
+    <form id="pool-form" method="POST">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-6">Add Pools to Sequencing Run</legend>
+            <p>Click to select pools.</p>
+            <table id="pools" class="display table table-hover"> 
+                <thead>
+                    <tr>
+                        <th>Pool</th>
+                    </tr>
+                </thead>
+            </table>
+
+        </fieldset>
+        <div class="d-grid gap-2 d-md-block mt-2">
+            <button class="btn btn-success" type="submit">Add</button>
+           <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sequence_detail' sequencing.id %}" role="button">Cancel</a>
+       </div>
+    </form>
+</div>
+{% endblock content %}
+
+{% block js %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.0.1/b-colvis-2.0.1/b-html5-2.0.1/b-print-2.0.1/cr-1.5.4/date-1.1.1/fc-4.0.0/fh-3.2.0/kt-2.6.4/r-2.2.9/rr-1.2.8/sb-1.2.2/sl-1.3.3/datatables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+<script>
+    $(document).ready( function () {
+    let data = {{ data | safe }}
+    let table = $('#pools').DataTable({
+        fixedHeader: true,
+        rowCallback: function( row, data ) {
+            if ( data.selected == "true" ) {
+                this.api().row(row).select();
+        }},
+        data: data,
+        rowId: function(a) {
+            return a.id;
+        },
+        aLengthMenu: [
+            [10, 25, 50, 100, 200, -1],
+            [10, 25, 50, 100, 200, "All"]
+            ],
+        iDisplayLength: 10,
+        dom: 'B<"clear">lfrtip',
+        columns: [
+            {
+                data: "name",
+                title: "Pool Name"
+            }
+        ],
+        buttons: {
+            name: 'primary',
+            buttons: [ 'copy', 'csv', 'excel', 'pdf' ],
+        },
+            select: {
+                style: 'multi+shift'
+            },
+        
+        })
+    // Handle form submission event
+   $('#pool-form').on('submit', function(e){
+      let form = this;
+
+      let rows = table.rows( {selected: true} ).ids().toArray();
+      console.log(rows)
+        // Iterate over all selected rows
+      $.each(rows, function(idx, val){
+         // Create a hidden element
+         $(form).append(
+             $('<input>')
+                .attr('type', 'hidden')
+                .attr('name', 'ids')
+                .val(rows[idx])
+         );
+
+        });
+    });
+    })
+</script>
+{% endblock js %}
+

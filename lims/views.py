@@ -1516,6 +1516,84 @@ class SequenceUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse('lims:sequence_detail', args=(self.object.id,))
 
+
+
+class SequenceAddSamples(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Sequencing
+    fields = []
+    template_name_suffix = '_add_samples'
+    success_message = "Samples were successfully added to sequencing run"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        seq = context['sequencing']
+        non_selected_samples = list(Sample.objects.exclude(
+            sequencing__pk=seq.id).filter(
+                collection_status="Collected").values('id', 'name',
+        'collection_event__name', 'location__name',
+        'collection_status', 'sample_type'))
+        
+        selected_samples = list(Sample.objects.filter(sequencing__pk=seq.id).values('id', 'name',
+        'collection_event__name', 'location__name',
+        'collection_status', 'sample_type'))
+
+        for d in non_selected_samples:
+            d['selected'] = 'false'
+        for d in selected_samples:
+            d['selected'] = 'true'
+        context['data'] = selected_samples + non_selected_samples
+        return context
+        
+    def post(self, request, *args, **kwargs):
+        seq = self.get_object()
+        seq.samples.clear()
+        samples = [Sample.objects.get(pk=int(sample)) for sample in request.POST.getlist('ids')]
+        for sample in samples:
+            seq.samples.add(sample)
+        seq.save()
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('lims:sequence_detail', args=(self.object.id,))
+
+
+class SequenceAddPools(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Sequencing
+    fields = []
+    template_name_suffix = '_add_pools'
+    success_message = "Pools were successfully added to sequencing run"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        seq = context['sequencing']
+        non_selected_pools = list(Pool.objects.exclude(
+            sequencing__pk=seq.id).values('id', 'name')
+        )
+        selected_pools = list(Pool.objects.filter(sequencing__pk=seq.id).values('id', 'name'))
+        for d in non_selected_pools:
+            d['selected'] = 'false'
+        for d in selected_pools:
+            d['selected'] = 'true'
+        context['data'] = selected_pools + non_selected_pools
+        return context
+    
+        
+    def post(self, request, *args, **kwargs):
+        seq = self.get_object()
+        seq.pools.clear()
+        pools = [Pool.objects.get(pk=int(p)) for p in request.POST.getlist('ids')]
+        for p in pools:
+            seq.pools.add(p)
+        seq.save()
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('lims:sequence_detail', args=(self.object.id,))
+
+
+
+
+
 class SequenceDeleteView(LoginRequiredMixin, DeleteView):
     model = Sequencing
     success_url = reverse_lazy('lims:sequence_list', args=())
@@ -1638,9 +1716,13 @@ def dashboard_endpoint(request):
 
 @login_required
 def sequencing_endpoint(request):
-    data = []
     seqs = Sequencing.objects.prefetch_related(
         'samples__name',
+        'pools__name',
+        'pools__sample'
+        'pools__samples__subject',
+        'pools__samples__subject__location',
+        'pools__samples__collection_event',
         'samples__subject__first_name',
         'samples__subject__last_name',
         'samples__subject__location__name',
@@ -1648,7 +1730,7 @@ def sequencing_endpoint(request):
         'samples__sample_type',
         'samples__collection_event__name',
         'samples__collection_event__date')
-    data = seqs.values(
+    sample_data = list(seqs.values(
         'name', 'run_id', 'date', 'targets',
         'samples__name', 'samples__subject__first_name',
         'samples__subject__last_name',
@@ -1656,8 +1738,28 @@ def sequencing_endpoint(request):
         'samples__subject__location__location_type',
         'samples__sample_type',
         'samples__collection_event__name',
-        'samples__collection_event__date', 'protocol', 'notes')
-    return JsonResponse({'data': list(data)})
+        'samples__collection_event__date', 
+        'protocol', 'notes'))
+    for d in sample_data:
+        d['pools__name'] = ""
+    pool_data = list(seqs.values(
+        'name', 'run_id', 'date', 'targets',
+        'pools__name',
+        'pools__samples__name',
+        'pools__samples__subject__first_name',
+        'pools__samples__subject__last_name',
+        'pools__samples__subject__location__name',
+        'pools__samples__subject__location__location_type',
+        'pools__samples__sample_type',
+        'pools__samples__collection_event__name',
+        'pools__samples__collection_event__date',
+        'protocol', 'notes')
+    )
+    updated_pool_data = []
+    for d in pool_data:
+        dd = {k.replace("pools__", "") if k != "pools__name" else k: v for k, v in d.items()}
+        updated_pool_data.append(dd)
+    return JsonResponse({'data': sample_data + updated_pool_data})
     
 
 

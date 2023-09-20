@@ -13,6 +13,7 @@ from django.utils.encoding import force_text
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.forms import widgets
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 
 
@@ -286,13 +287,14 @@ class TestForm(ModelForm):
 class SequenceForm(ModelForm):
     class Meta:
         model = Sequencing
-        fields = ['name', 'run_id', 'targets', 'date', 'protocol', 'notes', 'samples']
+        fields = ['name', 'run_id', 'targets', 'date', 'protocol', 'notes']
         widgets = {
             'date': DateInput(),
-            'samples': forms.SelectMultiple(attrs={'size': '20'})}
-    def __init__(self, *args, **kwargs):
-        super(SequenceForm, self).__init__(*args, **kwargs)
-        self.fields['samples'].queryset = Sample.objects.filter(collection_status="Collected").order_by("name")
+            # 'samples': FilteredSelectMultiple('sample', False) #forms.SelectMultiple(attrs={'size': '20'})}
+        }
+    # def __init__(self, *args, **kwargs):
+    #     super(SequenceForm, self).__init__(*args, **kwargs)
+    #     self.fields['samples'].queryset = Sample.objects.filter(collection_status="Collected").order_by("name")
 
 
 class SampleResultForm(ModelForm):
