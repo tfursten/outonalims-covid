@@ -33,9 +33,33 @@
 
 {% endif %}
 
+{% if sequencing.pools.all %}
+<h3 class="border-bottom mt-2">Pools in Sequencing Run</h3>
+
+<table id="pool_table" class="display table table-hover"> 
+  <thead>
+      <tr>
+          <th>Pool ID</th>
+      </tr>
+  </thead>
+  <tbody>
+      {% for pool in sequencing.pools.all %}
+          <tr id="{{ sample.id }}">
+              <td><a class="table-link" href="{% url 'lims:pool_detail' pool.id %}">
+                  {{ pool.name }}
+              </a></td>  
+          </tr>
+      {% endfor %}
+  </tbody>
+</table>
+
+{% endif %}
+
 <div class="d-grid gap-0 d-md-block mt-2">
     <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sequence' sequencing.id %}" role="button">Edit <span data-feather="edit"></span></a>
-    <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:new_sequence' %}" role="button">Add New Run <span data-feather="plus"></span></a>
+    <a class="btn btn-primary btn mb-2" href="{% url 'lims:new_sequence' %}" role="button">Add New Run <span data-feather="plus"></span></a>
+    <a class="btn btn-primary btn mb-2" href="{% url 'lims:add_sequence_samples' sequencing.id %}" role="button">Add Samples to Run <span data-feather="plus"></span></a>
+    <a class="btn btn-primary btn mb-2" href="{% url 'lims:add_sequence_pools' sequencing.id %}" role="button">Add Pools to Run <span data-feather="plus"></span></a>
     <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:sequence_list' %}" role="button">Sequencing Runs <span data-feather="corner-up-left"></span></a>
     <a class="btn btn-outline-primary btn mb-2" href="{% url 'lims:index' %}" role="button">Home <span data-feather="corner-up-left"></span></a>
     <a class="btn btn-outline-danger btn mb-2" href="{% url 'lims:delete_sequence' sequencing.id %}" role="button">Delete <span data-feather="trash"></span></a>
