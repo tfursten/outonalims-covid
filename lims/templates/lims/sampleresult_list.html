@@ -26,6 +26,7 @@
                 <th>Event</th>
                 <th>Location</th>
                 <th>Test</th>
+                <th>Subject</th>
                 <th>Sample</th>
                 <th>Sample Type</th>
                 <th>Replicate</th>
@@ -87,6 +88,11 @@
                 type: "readonly",
             },
             {
+                label: "Subject",
+                name: "sample__subject__subject_ui",
+                type: "readonly"
+            },
+            {
                 label: "Sample",
                 name: "sample__name",
                 type: "readonly",
@@ -134,7 +140,7 @@
      } );
     
     // Activate an inline edit on click of a table cell
-    $('#result_table').on( 'click', 'tbody td:nth-child(8), td:nth-child(9), td:nth-child(10)', function (e) {
+    $('#result_table').on( 'click', 'tbody td:nth-child(9), td:nth-child(10), td:nth-child(11)', function (e) {
         editor.inline( this, {submit: 'all', onBlur: 'submit'} );
     } );
 
@@ -196,6 +202,14 @@
                     return newstr
                 }
 
+            },
+            {
+                data: "sample__subject__subject_ui",
+                render: function( data, type, row) {
+                    let str = '<a class="table-link" href="{% url 'lims:subject_detail' 1 %}">' + data + '</a>'
+                    let newstr = str.replace("1", row.sample__subject__id)
+                    return newstr
+                }
             },
             { 
                 data: "sample__name",
