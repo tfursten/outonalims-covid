@@ -695,7 +695,7 @@ class SampleResultListView(SamplePermissionsMixin, ListView):
         sample_results = SampleResult.objects.all().values(
         'id', 'sample__collection_event__name', 'sample__collection_event__id',
         'sample__location__id', 'sample__location__name',
-        'test__name', 'test__id', 'sample__id', 'sample__name',
+        'test__name', 'test__id', 'sample__subject__id', 'sample__subject__subject_ui', 'sample__id', 'sample__name',
         'sample__sample_type', 'replicate', 'result', 'value',
         'notes', 'created_on')
 
@@ -2345,7 +2345,7 @@ def sampleresults_table_update_view(request):
                 data = SampleResult.objects.filter(pk=obj_id).values(
                     'id', 'sample__collection_event__name', 'sample__collection_event__id',
                     'sample__location__id', 'sample__location__name',
-                    'test__name', 'test__id', 'sample__id', 'sample__name',
+                    'test__name', 'test__id', 'sample__subject__id', 'sample__subject__subject_ui', 'sample__id', 'sample__name',
                     'sample__sample_type', 'replicate', 'created_on', 'result',
                     'value', 'notes')[0]
                 data['result'] = vals['result']
