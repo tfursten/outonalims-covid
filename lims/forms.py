@@ -1,19 +1,19 @@
 import datetime
-import json
+# import json
 from django import forms
-from django.forms import ModelForm, CheckboxInput, SelectMultiple
+from django.forms import ModelForm#, CheckboxInput, SelectMultiple
 from .models import (
     Sample, Project, Location, Researcher,
     Event, Subject, SampleBox, PoolBox,
     SampleBoxPosition, PoolBoxPosition,
      Pool, Label, SampleResult, PoolResult,
     Test, Sequencing)
-from string import capwords
-from django.utils.encoding import force_text
-from django.utils.html import escape
-from django.utils.safestring import mark_safe
+# from string import capwords
+# from django.utils.encoding import force_text
+# from django.utils.html import escape
+# from django.utils.safestring import mark_safe
 from django.forms import widgets
-from django.contrib.admin.widgets import FilteredSelectMultiple
+# from django.contrib.admin.widgets import FilteredSelectMultiple
 
 
 
