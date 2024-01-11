@@ -15,7 +15,7 @@ django-table-select-widget==1.1.0
 django-yearmonth-widget==0.2.1
 gunicorn==20.1.0
 pandas==2.1.4
-Pillow==8.3.2
+pillow==10.2.0
 psycopg2-binary==2.9.9
 pylabels==1.2.1
 pytz==2020.1
