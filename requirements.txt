@@ -14,12 +14,6 @@ django-static-jquery3==5.1.0
 django-table-select-widget==1.1.0
 django-yearmonth-widget==0.2.1
 gunicorn==20.1.0
-idna==3.3
-importlib-metadata==4.8.1
-mkl-fft==1.2.0
-mkl-random==1.1.1
-mkl-service==2.3.0
-olefile==0.46
 pandas==1.2.4
 Pillow==8.3.2
 psycopg2-binary==2.9.9
