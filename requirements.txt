@@ -2,6 +2,7 @@ asgiref==3.7.2
 certifi==2023.7.22
 charset-normalizer==2.0.9
 click==8.0.3
+crispy-bootstrap4
 cual-id @ https://github.com/johnchase/cual-id/archive/master.zip
 dj-database-url==2.1.0
 Django==3.2.23
