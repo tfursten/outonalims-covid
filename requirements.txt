@@ -7,7 +7,7 @@ cual-id @ https://github.com/johnchase/cual-id/archive/master.zip
 dj-database-url==2.1.0
 Django==3.2.23
 django-ajax-datatable==4.4.4
-django-crispy-forms==1.13.0
+django-crispy-forms
 django-ebhealthcheck==2.0.1
 django-floppyforms==1.9.0
 django-phone-field==1.8.1
