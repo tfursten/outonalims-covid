@@ -14,6 +14,7 @@ from .models import (
 # from django.utils.safestring import mark_safe
 from django.forms import widgets
 # from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.core.validators import FileExtensionValidator
 
 
 
@@ -376,3 +377,20 @@ class ReportSelectionForm(forms.Form):
                 raise forms.ValidationError("End date cannot be earlier than start date!")
         return cleaned_data
     
+
+
+class SampleBoxUpload(forms.ModelForm):
+    file = forms.FileField(label='Upload sample positions in box')
+    sheet_number = forms.IntegerField(
+        min_value=1, label="Provide sheet number for excel files.", initial=1,
+        widget=widgets.NumberInput(attrs={'class': 'small_number_input'}))
+    class Meta:
+       model = SampleBox
+       fields = [] 
+
+
+    def __init__(self, *args, **kwargs):
+        print(args, kwargs)
+        super().__init__(*args, **kwargs)
+        # Add a FileExtensionValidator to the file_field
+        self.fields['file'].validators.append(FileExtensionValidator(allowed_extensions=['xlsx', 'csv']))

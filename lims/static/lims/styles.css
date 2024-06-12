@@ -8,6 +8,20 @@ body {
   vertical-align: text-bottom;
 }
 
+
+.small_number_input {
+  width: 75px;
+}
+
+
+.lm {
+  margin-left: 10px;
+}
+
+.rm {
+  margin-right: 10px; /* Adjust the value as needed */
+}
+
 /*
  * Sidebar
  */

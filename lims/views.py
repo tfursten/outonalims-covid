@@ -30,7 +30,8 @@ from .forms import (
     SelectEventForm, SamplePrint, PoolForm, PoolUpdateForm, PoolResultSelectTestForm,
     SampleResultSelectTestForm, PoolResultUploadFileForm, SampleResultUploadFileForm,
     LabelForm, TestForm, SampleResultForm, PoolResultForm, FixIDS, SampleNoticeForm, AnalysisSelectionForm,
-    ReportSelectionForm, SequenceForm)
+    ReportSelectionForm, SequenceForm, SampleBoxUpload)
+from django.db import transaction
 
   
 from cualid import create_ids
@@ -1113,6 +1114,56 @@ class SampleBoxDeleteView(LoginRequiredMixin, DeleteView):
 
 
 
+class SampleBoxPositionUploadView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    """
+    Upload a spreadsheet of box postions and samples
+    """
+    model = SampleBox
+    template_name_suffix = '_upload'
+    form_class = SampleBoxUpload
+    def get_success_url(self):
+        return reverse('lims:sample_box_detail', args=(self.object.id,))
+    
+    @transaction.atomic
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        box = SampleBox.objects.get(id=self.kwargs.get('pk'))
+        file = form.cleaned_data['file']
+        try:
+            try:
+                df = pd.read_csv(file, usecols=['Box Placement', 'Sample ID'], skip_blank_lines=True).dropna()
+            except Exception:
+                sheet = int(form.cleaned_data['sheet_number']) - 1
+                df = pd.read_excel(
+                    file, usecols=['Box Placement', 'Sample ID'],
+                    sheet_name=sheet).dropna()
+            # Raise error if file is empty
+            if not df.shape[0]:
+                raise IOError("File empty.")
+            for _, row in df.iterrows():
+                sample = Sample.objects.get(name=row['Sample ID'])
+                pos = int(row['Box Placement'])
+
+                if SampleBoxPosition.objects.filter(box=box, position=pos).exists():
+                    position = SampleBoxPosition.objects.filter(box=box, position=pos).first()
+                    position.sample = sample
+                    position.save()
+                else:
+                    raise IOError(f"Box position {pos} does not exist. Check input file or update size of box.")
+            
+            messages.success(self.request, f"Box {box.box_name} was updated successfully.")
+            return response
+            
+        except Exception as e:
+            transaction.set_rollback(True)
+            form.add_error(None, f"An error occurred while processing the file: {e}")
+            return self.form_invalid(form)
+        
+        
+    
+
+
+
 
 # ============== POOL BOXES ================================
 class PoolBoxListView(LoginRequiredMixin, ListView):
@@ -1192,6 +1243,8 @@ class SampleBoxPositionUpdateView(SuccessMessageMixin, LoginRequiredMixin, Updat
         return reverse('lims:sample_box_detail', args=(self.get_context_data()['samplebox'].id,))
 
 
+
+
 class SampleBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = SampleBoxPosition
     template_name_suffix = '_update_continuous'
@@ -1206,9 +1259,7 @@ class SampleBoxPositionContinuousUpdateView(SuccessMessageMixin, LoginRequiredMi
     
     def get_success_url(self):
         next_position = self.get_context_data()['samplebox'].get_next_empty_position()
-        print("NEXT POS: ", next_position)
         if next_position:
-            print("NEXT POSITION")
             return reverse(
                 'lims:edit_sample_box_position_continuous',
                 args=(self.get_context_data()['samplebox'].id,
@@ -1807,8 +1858,6 @@ def select_report(request):
                     'result',
                     ).annotate(total=Count('id'),).order_by())
 
-            print(samples_collected_count)
-            print(sample_results_count)
 
             if not len(samples_collected_count):
                 data = None
@@ -2430,7 +2479,6 @@ def events_table_update_view(request):
     if (request.method == "POST") and (request.POST.get('action') == "edit"):
         update_values = {}
         # pull values from request
-        print("POST", request.POST)
         for k, v in request.POST.items():
             if "data" in k:
                 row_id = int(k.replace("[", " ").replace("]", "").split(" ")[1])
@@ -2456,7 +2504,6 @@ def events_table_update_view(request):
             ori_post['week'] = vals
             for k, v in vals.items():
                 if k != 'object':
-                    print(k, v)
                     ori_post[k] = v
             form = EventForm(ori_post, instance=vals['object'])
             if not form.is_valid():
@@ -2650,7 +2697,6 @@ def google_form_json_view(request):
         data = {'data': subjects}
         return JsonResponse(data)
     except Exception as e:
-        print(e)
         return JsonResponse({'data': [], 'error': str(e)})
 
 

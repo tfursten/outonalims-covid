@@ -18,6 +18,7 @@
 
 <div class="d-grid gap-0 d-md-block mt-2">
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box' samplebox.id %}" role="button">Edit <span data-feather="edit"></span></a>
+  <a class="btn btn-primary btn mb-2" href="{% url 'lims:sample_box_upload_samples' samplebox.id %}" role="button">Upload Sample Positions <span data-feather="upload"></span></a>
   {% if samplebox.get_next_empty_position %}
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:edit_sample_box_position_continuous' samplebox.id samplebox.get_next_empty_position %}" role="button">Add Samples to Box <span data-feather="plus"></span></a>
   <a class="btn btn-primary btn mb-2" href="{% url 'lims:sample_box_copy_samples' samplebox.id %}" role="button">Copy Samples to Box <span data-feather="copy"></span></a>

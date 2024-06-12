@@ -1,0 +1,51 @@
+{% extends "lims/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class='content-section'>
+    <form method="POST" enctype="multipart/form-data" id="fileform">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-6">Select sample box location file to upload <i class="bi bi-filetype-xlsx lm"></i><i class="bi bi-filetype-csv lm"></i></legend>
+
+            {{ form | crispy }}
+            <p class="text-muted mt-3"><small>The file must contain the headers 'Box Placement' and 'Sample ID'.
+            </small>
+            </p>
+        </fieldset>
+        <div class="d-grid gap-2 d-md-block mt-2">
+            <button class="btn btn-success" type="submit" id="submitBtn"><i class="bi bi-upload rm"></i>Upload</button>
+           <a class="btn btn-outline-danger mr-5" href="{% url 'lims:sample_box_detail' samplebox.id %}" role="button"><i class="bi bi-x-lg rm"></i>Cancel</a>
+           <div id="workingMessage" style="display: none;" class="text-muted mt-3"><small>Still working...</small></div>
+
+       </div>
+    </form>
+</div>
+{% endblock content %}
+
+{% block js %}
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#fileform').submit(function (e) {
+            // Prevent the default form submission
+            // e.preventDefault();
+
+            // Disable the submit button to prevent multiple submissions
+            $('#submitBtn').prop('disabled', true);
+
+            // Change the button text to a loading indicator
+            $('#submitBtn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading');
+
+            setTimeout(function () {
+                // Show the "Still Working" message
+                $('#workingMessage').show();
+            }, 10000); // 10 seconds delay
+
+
+
+        });
+    });
+</script>
+
+{% endblock js %}

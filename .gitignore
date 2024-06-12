@@ -64,6 +64,7 @@ coverage.xml
 # Django stuff:
 *.log
 settings.py
+dev_settings.py
 db.sqlite3
 db.sqlite3-journal
 lims/migrations/*.py
