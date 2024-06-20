@@ -1141,7 +1141,10 @@ class SampleBoxPositionUploadView(SuccessMessageMixin, LoginRequiredMixin, Updat
             if not df.shape[0]:
                 raise IOError("File empty.")
             for _, row in df.iterrows():
-                sample = Sample.objects.get(name=row['Sample ID'])
+                try:
+                    sample = Sample.objects.get(name=str(row['Sample ID']))
+                except Sample.DoesNotExist:
+                    raise IOError(f"Sample {row['Sample ID']} does not exist.")
                 pos = int(row['Box Placement'])
 
                 if SampleBoxPosition.objects.filter(box=box, position=pos).exists():
