@@ -1,7 +1,13 @@
 import datetime
+import csv
+import io
+
+from django.contrib.admin.sites import AdminSite
 from django.urls import reverse
+from django.test import RequestFactory
 from django.test import TestCase
-from .models import (Event, Pool, PoolBox, PoolBoxPosition)
+from .admin import PoolAdmin
+from .models import Event, Location, Pool, PoolBox, PoolBoxPosition, Project, Sample, Subject
 # Create your tests here.
 
 
@@ -57,4 +63,51 @@ class PoolModelTests(TestCase):
         self.assertIs(pool.box_position, None)
         self.assertIs(pool.box, None)
 
+
+class PoolAdminTests(TestCase):
+
+    def test_export_selected_pools_csv_returns_pool_sample_rows(self):
+        project = Project.objects.create(name="Project 1")
+        location = Location.objects.create(
+            name="Location 1",
+            project=project,
+        )
+        event = Event.objects.create(
+            name="Event 1",
+            date=datetime.date.today(),
+            week=1,
+        )
+        subject = Subject.objects.create(
+            first_name="Test",
+            last_name="Subject",
+            location=location,
+        )
+        sample = Sample.objects.create(
+            name="S00001",
+            subject=subject,
+            location=location,
+            collection_event=event,
+            collection_status="Collected",
+        )
+        pool = Pool.objects.create(name="Pool 1")
+        pool.samples.add(sample)
+
+        request = RequestFactory().get("/admin/lims/pool/")
+        model_admin = PoolAdmin(Pool, AdminSite())
+
+        response = model_admin.export_selected_pools_csv(
+            request,
+            Pool.objects.filter(pk=pool.pk),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+
+        rows = list(csv.DictReader(io.StringIO(response.content.decode("utf-8"))))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["Pool"], "Pool 1")
+        self.assertEqual(rows[0]["Source Pool"], "Pool 1")
+        self.assertEqual(rows[0]["Sample ID"], "S00001")
+        self.assertEqual(rows[0]["Location"], "Location 1")
 
